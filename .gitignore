@@ -1,0 +1,6 @@
+settings.*
+*~
+examples/*crt
+examples/*key
+docs/*
+**/*pycache*
