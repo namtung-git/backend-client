@@ -1,6 +1,8 @@
 Backend client
 ==============
 
+.. image:: https://travis-ci.org/wirepas/backend-client.svg?branch=master
+    :target: https://travis-ci.org/wirepas/backend-client
 
 .. image:: https://badge.fury.io/py/wirepas-backend-client.svg
     :target: https://badge.fury.io/py/wirepas-backend-client
