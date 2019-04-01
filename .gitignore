@@ -1,6 +1,15 @@
+*.private
 settings.*
 *~
 examples/*crt
 examples/*key
-docs/*
 **/*pycache*
+docs/wm-bclidist/
+build
+**egg-info*
+pip-wheel-metad*
+dist/
+docs/wm-bcli/
+
+docs/source/modules.rst
+docs/source/wirepas_backend_client*.rst
