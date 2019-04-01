@@ -24,8 +24,11 @@ import queue
 # Following globals are used for delivering data between
 # HTTPObserver class and HTTPServer class
 http_tw_queue = None
-gateways_and_sinks = {}  # { 'gw_id': {'sink_id': {'started': True/False, 'app_config_seq': int, 'app_config_diag': int, 'app_config_data': bytes }}}
+gateways_and_sinks = (
+    {}
+)  # { 'gw_id': {'sink_id': {'started': True/False, 'app_config_seq': int, 'app_config_diag': int, 'app_config_data': bytes }}}
 mqtt_topics = Topics()
+
 
 class SinkAndGatewayStatusObserver(Thread):
     def __init__(self, exit_signal, gw_status_queue, logger):
@@ -38,27 +41,37 @@ class SinkAndGatewayStatusObserver(Thread):
         while not self.exit_signal.is_set():
             try:
                 status_msg = self.gw_status_queue.get(block=True, timeout=20)
-                self.logger.debug('HTTP status_msg={}'.format(status_msg))
-                if 'sink_id' in status_msg:
-                    sink = { status_msg['sink_id']: { 'started': status_msg['started'],
-                                                      'app_config_seq': status_msg['app_config_seq'],
-                                                      'app_config_diag': status_msg['app_config_diag'],
-                                                      'app_config_data': status_msg['app_config_data']}}
-                    if status_msg['gw_id'] in gateways_and_sinks:
-                        gateways_and_sinks[status_msg['gw_id']].update(sink)
+                self.logger.debug("HTTP status_msg={}".format(status_msg))
+                if "sink_id" in status_msg:
+                    sink = {
+                        status_msg["sink_id"]: {
+                            "started": status_msg["started"],
+                            "app_config_seq": status_msg["app_config_seq"],
+                            "app_config_diag": status_msg["app_config_diag"],
+                            "app_config_data": status_msg["app_config_data"],
+                        }
+                    }
+                    if status_msg["gw_id"] in gateways_and_sinks:
+                        gateways_and_sinks[status_msg["gw_id"]].update(sink)
                     else:
-                        gateways_and_sinks[status_msg['gw_id']] = sink
+                        gateways_and_sinks[status_msg["gw_id"]] = sink
                 else:
                     # No sink defined
-                    if status_msg['started']:
-                        self.logger.error('ERROR: sink_id must be specified when setting started=True')
+                    if status_msg["started"]:
+                        self.logger.error(
+                            "ERROR: sink_id must be specified when setting started=True"
+                        )
                     else:
                         # Whole gateway is gone, mark all sinks of it as not started
-                        for sink in gateways_and_sinks[status_msg['gw_id']]:
-                            if 'started' in sink:
-                                sink['started'] = False
+                        for sink in gateways_and_sinks[status_msg["gw_id"]]:
+                            if "started" in sink:
+                                sink["started"] = False
             except queue.Empty:
-                self.logger.debug('HTTP Server gateways_and_sinks={}'.format(gateways_and_sinks))
+                self.logger.debug(
+                    "HTTP Server gateways_and_sinks={}".format(
+                        gateways_and_sinks
+                    )
+                )
                 # mqtt client does not get notified if GW configuration changes,
                 # thus we have to poll GW to have its configuration. Fortunately
                 # the receiver part already exists, it is just matter of sending
@@ -69,7 +82,8 @@ class SinkAndGatewayStatusObserver(Thread):
                 global mqtt_topics
                 for gateway_id, sinks in gateways_and_sinks.items():
                     request = mqtt_topics.request_message(
-                                 "get_configs", dict(gw_id=gateway_id))
+                        "get_configs", dict(gw_id=gateway_id)
+                    )
                     # Insert the message(s) tx queue
                     http_tx_queue.put(request)
 
@@ -77,7 +91,7 @@ class SinkAndGatewayStatusObserver(Thread):
 class HTTPSettings(Settings):
     """HTTP Settings"""
 
-    def __init__(self, settings: Settings)-> 'HttpSettings':
+    def __init__(self, settings: Settings) -> "HttpSettings":
 
         super(HTTPSettings, self).__init__(settings)
 
@@ -93,18 +107,22 @@ class HTTPObserver(StreamObserver):
     monitors what gateways and sinks are online.
     """
 
-    def __init__(self,
-                 http_settings: Settings,
-                 start_signal: multiprocessing.Event,
-                 exit_signal: multiprocessing.Event,
-                 tx_queue: multiprocessing.Queue,
-                 rx_queue: multiprocessing.Queue,
-                 gw_status_queue: multiprocessing.Queue,
-                 logger=None) -> 'HTTPObserver':
-        super(HTTPObserver, self).__init__(start_signal=start_signal,
-                                           exit_signal=exit_signal,
-                                           tx_queue=tx_queue,
-                                           rx_queue=rx_queue)
+    def __init__(
+        self,
+        http_settings: Settings,
+        start_signal: multiprocessing.Event,
+        exit_signal: multiprocessing.Event,
+        tx_queue: multiprocessing.Queue,
+        rx_queue: multiprocessing.Queue,
+        gw_status_queue: multiprocessing.Queue,
+        logger=None,
+    ) -> "HTTPObserver":
+        super(HTTPObserver, self).__init__(
+            start_signal=start_signal,
+            exit_signal=exit_signal,
+            tx_queue=tx_queue,
+            rx_queue=rx_queue,
+        )
 
         self.logger = logger or logging.getLogger(__name__)
 
@@ -118,17 +136,24 @@ class HTTPObserver(StreamObserver):
         while not self.exit_signal.is_set():
             try:
                 # Crate the HTTP server.
-                self.httpd = socketserver.TCPServer((self.hostname, self.port), Handler)
-                self.logger.debug('HTTP Server is serving at port: {}'.format(self.port))
+                self.httpd = socketserver.TCPServer(
+                    (self.hostname, self.port), Handler
+                )
+                self.logger.debug(
+                    "HTTP Server is serving at port: {}".format(self.port)
+                )
                 break
             except Exception as ex:
-                self.logger.error('ERROR: Opening HTTP Server port {} failed. Reason: "{}". Retrying after 10 seconds.'.format(self.port, ex))
+                self.logger.error(
+                    'ERROR: Opening HTTP Server port {} failed. Reason: "{}". Retrying after 10 seconds.'.format(
+                        self.port, ex
+                    )
+                )
                 time.sleep(10)
 
-        self.status_observer = SinkAndGatewayStatusObserver(self.exit_signal,
-                                                            self.gw_status_queue,
-                                                            self.logger)
-
+        self.status_observer = SinkAndGatewayStatusObserver(
+            self.exit_signal, self.gw_status_queue, self.logger
+        )
 
     def run(self):
         # Start status observer thread
@@ -139,36 +164,38 @@ class HTTPObserver(StreamObserver):
             # Handle a http request.
             self.httpd.handle_request()
 
-        self.logger.debug('HTTP Control server killed')
+        self.logger.debug("HTTP Control server killed")
         self.status_observer.join()
 
     def kill(self):
-        '''Kill the gateway thread.
-        '''
+        """Kill the gateway thread.
+        """
 
         # Send a dummy request to let the handle_request to proceed.
-        urllib.urlopen("http://{}:{}".format(self.hostname,self.port)).read()
+        urllib.urlopen("http://{}:{}".format(self.hostname, self.port)).read()
 
 
 class HTTPServer(http.server.SimpleHTTPRequestHandler):
-    '''A simple HTTP server class.
+    """A simple HTTP server class.
 
     Only overrides the do_GET from the HTTP server so it catches
     all the GET requests and processes them into commands.
-    '''
+    """
 
     def do_GET(self):
-        '''Process a single HTTP GET request.
-        '''
+        """Process a single HTTP GET request.
+        """
 
         print("GET request: {}".format(self.path))
 
         # Parse into commands and parameters
         splitted = urllib.parse.urlsplit(self.path)
-        command = splitted.path.split('/')[1]
+        command = splitted.path.split("/")[1]
 
         # Convert the parameter list into a dictionary.
-        params = dict(urllib.parse.parse_qsl(urllib.parse.urlsplit(self.path).query))
+        params = dict(
+            urllib.parse.parse_qsl(urllib.parse.urlsplit(self.path).query)
+        )
 
         # By default assume good from people and their code
         http_response = 200
@@ -179,44 +206,52 @@ class HTTPServer(http.server.SimpleHTTPRequestHandler):
 
                 if command == "datatx":
 
-                    if not sink['started']:
+                    if not sink["started"]:
                         # Do not attempt to send to sink that doesn't have stack started
                         continue
                     try:
-                        dest_add=int(params['destination'])
-                        src_ep=int(params['source_ep'])
-                        dst_ep=int(params['dest_ep'])
-                        qos=int(params['qos'])
-                        payload=binascii.unhexlify(params['payload'])
+                        dest_add = int(params["destination"])
+                        src_ep = int(params["source_ep"])
+                        dst_ep = int(params["dest_ep"])
+                        qos = int(params["qos"])
+                        payload = binascii.unhexlify(params["payload"])
                         try:
-                            is_unack_csma_ca = params['fast'] in ['true', '1', 'yes', 'y']
+                            is_unack_csma_ca = params["fast"] in [
+                                "true",
+                                "1",
+                                "yes",
+                                "y",
+                            ]
                         except KeyError:
                             is_unack_csma_ca = False
                         try:
-                            hop_limit = int(params['hoplimit'])
+                            hop_limit = int(params["hoplimit"])
                         except KeyError:
                             hop_limit = 0
                         try:
-                            count = int(params['count'])
+                            count = int(params["count"])
                         except KeyError:
                             count = 1
 
-                        while (count):
+                        while count:
                             count -= 1
 
                             # Create sendable message.
                             global http_tx_queue
                             message = mqtt_topics.request_message(
-                                          "send_data",
-                                          dict(sink_id=sink_id,
-                                               gw_id=gateway_id,
-                                               dest_add=dest_add,
-                                               src_ep=src_ep,
-                                               dst_ep=dst_ep,
-                                               qos=qos,
-                                               payload=payload,
-                                               is_unack_csma_ca=is_unack_csma_ca,
-                                               hop_limit=hop_limit))
+                                "send_data",
+                                dict(
+                                    sink_id=sink_id,
+                                    gw_id=gateway_id,
+                                    dest_add=dest_add,
+                                    src_ep=src_ep,
+                                    dst_ep=dst_ep,
+                                    qos=qos,
+                                    payload=payload,
+                                    is_unack_csma_ca=is_unack_csma_ca,
+                                    hop_limit=hop_limit,
+                                ),
+                            )
                             # Insert the message(s) tx queue
                             http_tx_queue.put(message)
 
@@ -225,51 +260,60 @@ class HTTPServer(http.server.SimpleHTTPRequestHandler):
 
                 elif command == "start":
 
-                    new_config = {'started': True}
+                    new_config = {"started": True}
                     message = mqtt_topics.request_message(
-                                  "set_config",
-                                  dict(sink_id=sink_id,
-                                       gw_id=gateway_id,
-                                       new_config=new_config))
+                        "set_config",
+                        dict(
+                            sink_id=sink_id,
+                            gw_id=gateway_id,
+                            new_config=new_config,
+                        ),
+                    )
                     http_tx_queue.put(message)
 
                 elif command == "stop":
 
-                    new_config = {'started': False}
+                    new_config = {"started": False}
                     message = mqtt_topics.request_message(
-                                 "set_config",
-                                 dict(sink_id=sink_id,
-                                      gw_id=gateway_id,
-                                      new_config=new_config))
+                        "set_config",
+                        dict(
+                            sink_id=sink_id,
+                            gw_id=gateway_id,
+                            new_config=new_config,
+                        ),
+                    )
                     http_tx_queue.put(message)
 
                 elif command == "setconfig":
 
                     try:
-                        seq=int(params['seq'])
+                        seq = int(params["seq"])
                     except KeyError:
-                        if sink['app_config_seq'] == 254:
+                        if sink["app_config_seq"] == 254:
                             seq = 1
                         else:
-                            seq = sink['app_config_seq'] + 1
+                            seq = sink["app_config_seq"] + 1
                     try:
-                        diag=int(params['diag'])
+                        diag = int(params["diag"])
                     except KeyError:
-                        diag = sink['app_config_diag']
+                        diag = sink["app_config_diag"]
                     try:
-                        data=bytes.fromhex(params['data'])
+                        data = bytes.fromhex(params["data"])
                     except KeyError:
-                        data = sink['app_config_data']
-                    new_config={'app_config_diag': diag,
-                                'app_config_data': data,
-                                'app_config_seq': seq
-                               }
-                    message = mqtt_topics.request_message("set_config",
-                                                          dict(sink_id=sink_id,
-                                                               gw_id=gateway_id,
-                                                               new_config=new_config,
-                                                              )
-                                                         )
+                        data = sink["app_config_data"]
+                    new_config = {
+                        "app_config_diag": diag,
+                        "app_config_data": data,
+                        "app_config_seq": seq,
+                    }
+                    message = mqtt_topics.request_message(
+                        "set_config",
+                        dict(
+                            sink_id=sink_id,
+                            gw_id=gateway_id,
+                            new_config=new_config,
+                        ),
+                    )
                     http_tx_queue.put(message)
                 else:
                     http_response = 500
@@ -277,6 +321,6 @@ class HTTPServer(http.server.SimpleHTTPRequestHandler):
         self.send_response(http_response)
         self.send_header("Content-type", "text/html")
         self.end_headers()
-        self.wfile.write(bytes("Wirepas Python Gateway", 'utf-8'))
-        self.wfile.write(bytes(" ... Command: {}".format(command), 'utf-8'))
-        self.wfile.write(bytes(" ... Parameters: {}".format(params), 'utf-8'))
+        self.wfile.write(bytes("Wirepas Python Gateway", "utf-8"))
+        self.wfile.write(bytes(" ... Command: {}".format(command), "utf-8"))
+        self.wfile.write(bytes(" ... Parameters: {}".format(params), "utf-8"))

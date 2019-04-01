@@ -40,39 +40,33 @@ class RuuviMessage(GenericMessage):
     DESTINATION_EP = 11
 
     TYPES = {
-        1: {"name": "counter",
-            "unit": 1,
-            "format": "< H",
-            "type": "uint16"},
-        2: {"name": "temperature",
+        1: {"name": "counter", "unit": 1, "format": "< H", "type": "uint16"},
+        2: {
+            "name": "temperature",
             "unit": 1 / 100.0,
             "format": "< i",
-            "type": "int32"},
-        3: {"name": "humidity",
+            "type": "int32",
+        },
+        3: {
+            "name": "humidity",
             "unit": 1 / 1024.0,
             "format": "< I",
-            "type": "uint32"},
-        4: {"name": "pressure",
+            "type": "uint32",
+        },
+        4: {
+            "name": "pressure",
             "unit": 1 / 10000.0,
             "format": "< I",
-            "type": "uint32"},
-        5: {"name": "acc_x",
-            "unit": 1e-03,
-            "format": "< i",
-            "type": "int32"},
-        6: {"name": "acc_y",
-            "unit": 1e-03,
-            "format": "< i",
-            "type": "int32"},
-        7: {"name": "acc_z",
-            "unit": 1e-03,
-            "format": "< i",
-            "type": "int32"},
+            "type": "uint32",
+        },
+        5: {"name": "acc_x", "unit": 1e-03, "format": "< i", "type": "int32"},
+        6: {"name": "acc_y", "unit": 1e-03, "format": "< i", "type": "int32"},
+        7: {"name": "acc_z", "unit": 1e-03, "format": "< i", "type": "int32"},
     }
 
     MESSAGE_COUNTER = 0
 
-    def __init__(self, *args, **kwargs)-> 'RuuviMessage':
+    def __init__(self, *args, **kwargs) -> "RuuviMessage":
 
         super(RuuviMessage, self).__init__(*args, **kwargs)
 
@@ -122,9 +116,9 @@ class RuuviMessage(GenericMessage):
 
         """
 
-        self.decode_time = datetime.datetime.utcnow().isoformat('T')
+        self.decode_time = datetime.datetime.utcnow().isoformat("T")
 
-        s_header = struct.Struct('<B B')
+        s_header = struct.Struct("<B B")
 
         if isinstance(self.data_payload, str):
             self.data_payload = bytes(self.data_payload, "utf8")
@@ -148,19 +142,20 @@ class RuuviMessage(GenericMessage):
                 # switch on type and unpack
                 tlv_id = int(tlv_header[0])
                 tlv_name = self.TYPES[tlv_id]["name"]
-                tlv_field_format = struct.Struct(
-                    self.TYPES[tlv_id]["format"])
+                tlv_field_format = struct.Struct(self.TYPES[tlv_id]["format"])
 
                 _start = _end
                 _end = _start + tlv_field_format.size
 
                 tlv_value = tlv_field_format.unpack(
-                    self.data_payload[_start:_end])[0]
+                    self.data_payload[_start:_end]
+                )[0]
 
-                self.apdu_content[tlv_name] = tlv_value * \
-                    self.TYPES[tlv_id]["unit"]
+                self.apdu_content[tlv_name] = (
+                    tlv_value * self.TYPES[tlv_id]["unit"]
+                )
 
-                self.apdu_content['{}.raw'.format(tlv_name)] = tlv_value
+                self.apdu_content["{}.raw".format(tlv_name)] = tlv_value
 
         except KeyError:
             pass
@@ -174,7 +169,7 @@ class RuuviMessage(GenericMessage):
 
         try:
             for key in self.apdu_content.keys():
-                if '.raw' not in key:
+                if ".raw" not in key:
                     self.serialization[key] = self.apdu_content[key]
         except KeyError:
             pass

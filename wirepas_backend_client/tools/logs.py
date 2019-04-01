@@ -32,42 +32,44 @@ class ContextFilter(logging.Filter):
 
     def add_sequence(self, record):
         args = record.args
-        if 'sequence' in args:
+        if "sequence" in args:
             try:
-                record.msg['sequence'] = record.args['sequence']
+                record.msg["sequence"] = record.args["sequence"]
             except (KeyError, TypeError):
-                record.msg = dict(msg=record.msg,
-                                  sequence=record.args['sequence'])
+                record.msg = dict(
+                    msg=record.msg, sequence=record.args["sequence"]
+                )
 
 
 class LoggerHelper(object):
     """docstring for LoggerHelper"""
 
-    def __init__(self, module_name, args, level: str = 'debug', **kwargs):
+    def __init__(self, module_name, args, level: str = "debug", **kwargs):
         super(LoggerHelper, self).__init__()
 
         for key, value in args.__dict__.items():
-            if value is not None or 'fluent' in key:
+            if value is not None or "fluent" in key:
                 self.__dict__[key] = value
 
         self._logger = logging.getLogger(module_name)
         self._name = module_name
-        self._level = '{0}'.format(level.upper())
+        self._level = "{0}".format(level.upper())
         self._handlers = dict()
 
         self._log_format = dict()
-        self._log_format[
-            'stdout'] = logging.Formatter("%(asctime)s | [%(levelname)s] %(name)s: %(message)s")
+        self._log_format["stdout"] = logging.Formatter(
+            "%(asctime)s | [%(levelname)s] %(name)s: %(message)s"
+        )
 
-        self._log_format['fluentd'] = {
-            'host': '%(hostname)s',
-            'where': '%(module)s.%(funcName)s',
-            'type': '%(levelname)s',
-            'stack_trace': '%(exc_text)s'
+        self._log_format["fluentd"] = {
+            "host": "%(hostname)s",
+            "where": "%(module)s.%(funcName)s",
+            "type": "%(levelname)s",
+            "stack_trace": "%(exc_text)s",
         }
 
         try:
-            self._logger.setLevel(eval('logging.{0}'.format(self._level)))
+            self._logger.setLevel(eval("logging.{0}".format(self._level)))
         except Exception as err:
             self._logger.setLevel(logging.DEBUG)
 
@@ -79,10 +81,10 @@ class LoggerHelper(object):
     @level.setter
     def level(self, value):
         """ Sets the log level """
-        self._level = '{0}'.format(value.upper())
+        self._level = "{0}".format(value.upper())
 
         try:
-            self._logger.setLevel(eval('logging.{0}'.format(self._level)))
+            self._logger.setLevel(eval("logging.{0}".format(self._level)))
         except Exception as err:
             self._logger.setLevel(logging.DEBUG)
 
@@ -93,39 +95,47 @@ class LoggerHelper(object):
     def add_stdout(self):
         """ Adds a handler for stdout """
         try:
-            if self._handlers['stdout']:
-                self._handlers['stdout'].close()
+            if self._handlers["stdout"]:
+                self._handlers["stdout"].close()
         except KeyError:
-            self._handlers['stdout'] = None
+            self._handlers["stdout"] = None
 
-        self._handlers['stdout'] = logging.StreamHandler(stream=sys.stdout)
-        self._handlers['stdout'].setFormatter(self.format('stdout'))
-        self._logger.addHandler(self._handlers['stdout'])
+        self._handlers["stdout"] = logging.StreamHandler(stream=sys.stdout)
+        self._handlers["stdout"].setFormatter(self.format("stdout"))
+        self._logger.addHandler(self._handlers["stdout"])
 
     def add_fluentd(self):
         """ Adds a handler for fluentd if the hostname has been defined """
         if self.fluentd_hostname:
 
             try:
-                if self._handlers['fluentd']:
-                    self._handlers['fluentd'].close()
+                if self._handlers["fluentd"]:
+                    self._handlers["fluentd"].close()
             except KeyError:
-                self._handlers['fluentd'] = None
+                self._handlers["fluentd"] = None
 
-            print('sending logs to fluentd at: {}'.format((self.fluentd_tag,
-                                                           self.fluentd_record,
-                                                           self.fluentd_hostname,
-                                                           self.fluentd_port)))
+            print(
+                "sending logs to fluentd at: {}".format(
+                    (
+                        self.fluentd_tag,
+                        self.fluentd_record,
+                        self.fluentd_hostname,
+                        self.fluentd_port,
+                    )
+                )
+            )
 
-            self._handlers['fluentd'] = fluent_handler.FluentHandler('{}.{}'.format(self.fluentd_tag,
-                                                                                    self.fluentd_record),
-                                                                     host=self.fluentd_hostname,
-                                                                     port=self.fluentd_port)
+            self._handlers["fluentd"] = fluent_handler.FluentHandler(
+                "{}.{}".format(self.fluentd_tag, self.fluentd_record),
+                host=self.fluentd_hostname,
+                port=self.fluentd_port,
+            )
             fluentd_formatter = fluent_handler.FluentRecordFormatter(
-                self.format('fluentd'))
+                self.format("fluentd")
+            )
 
-            self._handlers['fluentd'].setFormatter(fluentd_formatter)
-            self._logger.addHandler(self._handlers['fluentd'])
+            self._handlers["fluentd"].setFormatter(fluentd_formatter)
+            self._logger.addHandler(self._handlers["fluentd"])
             self._logger.addFilter(ContextFilter())
 
     def setup(self, level: str = None):
@@ -163,8 +173,10 @@ class LoggerHelper(object):
 
         setattr(logging.Logger, debug_level_name, cb)
 
-        assert logging.getLevelName(
-            debug_level_number) == debug_level_name.upper()
+        assert (
+            logging.getLevelName(debug_level_number)
+            == debug_level_name.upper()
+        )
 
     def close(self):
         """ Attempts to close log handlers """

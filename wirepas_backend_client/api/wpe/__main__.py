@@ -18,7 +18,7 @@
         See file LICENSE.txt for full license details.
 
 """
-
+import datetime
 import json
 import argparse
 
@@ -39,49 +39,51 @@ def main():
 
     if args.wpe_service_definition:
         service_definition = json.loads(
-            open(args.wpe_service_definition).read())
+            open(args.wpe_service_definition).read()
+        )
     else:
-        raise ValueError('Please provide a valid service definition.')
+        raise ValueError("Please provide a valid service definition.")
 
-    service = Service(service_definition['flow'],
-                      service_handler=messaging.flow_managerStub)
+    service = Service(
+        service_definition["flow"], service_handler=messaging.flow_managerStub
+    )
     service.dial(secure=args.wpe_unsecure)
 
     try:
         response = service.stub.status(messaging.Query())
-        print('{status}'.format(status=response))
+        print("{status}".format(status=response))
 
     except Exception as error:
-        print('failed to query status - {error}'.format(error=error))
+        print("failed to query status - {error}".format(error=error))
 
     # subscribe to the flow if a network id is provided
     if args.wpe_network is not None:
         subscription = messaging.Query(network=args.wpe_network)
         status = service.stub.subscribe(subscription)
-        print('subscription status: {status}'.format(status=status))
+        print("subscription status: {status}".format(status=status))
 
-        if status.code == status.CODE.Value('SUCCESS'):
+        if status.code == status.CODE.Value("SUCCESS"):
 
             subscription.subscriber_id = status.subscriber_id
-            print('observation starting for: {0}'.format(subscription))
+            print("observation starting for: {0}".format(subscription))
 
             try:
                 for message in service.stub.observe(subscription):
-                    print('<< {}'.format(datetime.datetime.now()))
-                    print('{0}'.format(message))
-                    print('===')
+                    print("<< {}".format(datetime.datetime.now()))
+                    print("{0}".format(message))
+                    print("===")
 
             except KeyboardInterrupt:
                 pass
 
             subscription = service.stub.unsubscribe(subscription)
 
-            print('subscription termination:{0}'.format(subscription))
+            print("subscription termination:{0}".format(subscription))
 
         else:
-            print('unsuficient parameters')
+            print("unsuficient parameters")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     main()

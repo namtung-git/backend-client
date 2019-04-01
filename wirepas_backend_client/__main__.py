@@ -12,6 +12,7 @@
 import os
 import json
 import argparse
+import datetime
 import grpc
 import wirepas_messaging
 
@@ -33,8 +34,8 @@ def wnt_client():
     try:
         Backend(settings).run(False)
     except AttributeError:
-        print('There is something wrong with your wnt arguments.')
-        print('Here\'s the configuration interpreted:\n {}'.format(settings))
+        print("There is something wrong with your wnt arguments.")
+        print("Here's the configuration interpreted:\n {}".format(settings))
 
 
 def gw_cli():
@@ -44,13 +45,11 @@ def gw_cli():
     args = parser.arguments
 
     try:
-        debug_level = os.environ['WM_DEBUG_LEVEL']
+        debug_level = os.environ["WM_DEBUG_LEVEL"]
     except KeyError:
-        debug_level = 'warning'
+        debug_level = "warning"
 
-    my_log = LoggerHelper(module_name="gw-cli",
-                          args=args,
-                          level=debug_level)
+    my_log = LoggerHelper(module_name="gw-cli", args=args, level=debug_level)
     logger = my_log.setup()
     launch_cli(args, logger)
 
@@ -67,48 +66,52 @@ def wpe_client():
 
     if settings.wpe_service_definition:
         service_definition = json.loads(
-            open(settings.wpe_service_definition).read())
+            open(settings.wpe_service_definition).read()
+        )
     else:
-        raise ValueError('Please provide a valid service definition.')
+        raise ValueError("Please provide a valid service definition.")
 
-    service = Service(service_definition['flow'],
-                      service_handler=wirepas_messaging.wpe.flow_managerStub)
+    service = Service(
+        service_definition["flow"],
+        service_handler=wirepas_messaging.wpe.flow_managerStub,
+    )
     service.dial(secure=settings.wpe_unsecure)
 
     try:
         response = service.stub.status(wirepas_messaging.wpe.Query())
-        print('{status}'.format(status=response))
+        print("{status}".format(status=response))
 
     except Exception as error:
-        print('failed to query status - {error}'.format(error=error))
+        print("failed to query status - {error}".format(error=error))
 
     # subscribe to the flow if a network id is provided
     if settings.wpe_network is not None:
         subscription = wirepas_messaging.wpe.Query(
-            network=settings.wpe_network)
+            network=settings.wpe_network
+        )
         status = service.stub.subscribe(subscription)
-        print('subscription status: {status}'.format(status=status))
+        print("subscription status: {status}".format(status=status))
 
-        if status.code == status.CODE.Value('SUCCESS'):
+        if status.code == status.CODE.Value("SUCCESS"):
 
             subscription.subscriber_id = status.subscriber_id
-            print('observation starting for: {0}'.format(subscription))
+            print("observation starting for: {0}".format(subscription))
 
             try:
                 for message in service.stub.observe(subscription):
-                    print('<< {}'.format(datetime.datetime.now()))
-                    print('{0}'.format(message))
-                    print('===')
+                    print("<< {}".format(datetime.datetime.now()))
+                    print("{0}".format(message))
+                    print("===")
 
             except KeyboardInterrupt:
                 pass
 
             subscription = service.stub.unsubscribe(subscription)
 
-            print('subscription termination:{0}'.format(subscription))
+            print("subscription termination:{0}".format(subscription))
 
         else:
-            print('unsuficient parameters')
+            print("unsuficient parameters")
 
 
 if __name__ == "__main__":

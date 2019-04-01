@@ -38,13 +38,15 @@ class Inventory(object):
 
     """
 
-    def __init__(self,
-                 target_nodes=None,
-                 target_otap_sequence=None,
-                 target_frequency=None,
-                 start_delay=None,
-                 maximum_duration=None,
-                 logger=None)->'Inventory':
+    def __init__(
+        self,
+        target_nodes=None,
+        target_otap_sequence=None,
+        target_frequency=None,
+        start_delay=None,
+        maximum_duration=None,
+        logger=None,
+    ) -> "Inventory":
         super(Inventory, self).__init__()
 
         self._target_nodes = target_nodes
@@ -120,16 +122,25 @@ class Inventory(object):
 
         now = datetime.datetime.utcnow()
         self._start = now + datetime.timedelta(seconds=self._start_delay)
-        self._deadline = self._start + \
-            datetime.timedelta(seconds=self._maximum_duration)
+        self._deadline = self._start + datetime.timedelta(
+            seconds=self._maximum_duration
+        )
 
         time_to_wait = (self._start - now).total_seconds()
 
-        self.logger.debug('waiting {} seconds to start'.format(
-            time_to_wait),  dict(sequence=self.sequence))
+        self.logger.debug(
+            "waiting {} seconds to start".format(time_to_wait),
+            dict(sequence=self.sequence),
+        )
         time.sleep(time_to_wait)
 
-    def add(self, node_address: int, rss: list=None, otap_sequence: list=None, timestamp: int=None)->None:
+    def add(
+        self,
+        node_address: int,
+        rss: list = None,
+        otap_sequence: list = None,
+        timestamp: int = None,
+    ) -> None:
         """
         Adds a node to the inventory
 
@@ -150,34 +161,40 @@ class Inventory(object):
 
         # creates an event
         if otap_min and otap_max and any(rss):
-            event = dict(rss=rss,
-                         otap=otap_sequence,
-                         otap_max=max(otap_sequence),
-                         otap_min=min(otap_sequence))
+            event = dict(
+                rss=rss,
+                otap=otap_sequence,
+                otap_max=max(otap_sequence),
+                otap_min=min(otap_sequence),
+            )
         elif any(rss):
             event = dict(rss=rss)
 
         elif any(otap_sequence):
-            event = dict(otap=otap_sequence,
-                         otap_max=max(otap_sequence),
-                         otap_min=min(otap_sequence))
+            event = dict(
+                otap=otap_sequence,
+                otap_max=max(otap_sequence),
+                otap_min=min(otap_sequence),
+            )
         else:
             event = dict(rss=rss, otap=otap_sequence)
 
         # add nodes to index
         try:
-            self._index[node_address]['count'] += 1
-            self._index[node_address]['last_seen'] = timestamp
-            self._index[node_address]['events'].append(event)
+            self._index[node_address]["count"] += 1
+            self._index[node_address]["last_seen"] = timestamp
+            self._index[node_address]["events"].append(event)
 
         except KeyError:
-            self._index[node_address] = dict(last_seen=timestamp,
-                                             events=[event],
-                                             count=1)
-            self.logger.debug('adding node: {0} / {1}'.format(node_address, event),
-                              dict(sequence=self.sequence))
+            self._index[node_address] = dict(
+                last_seen=timestamp, events=[event], count=1
+            )
+            self.logger.debug(
+                "adding node: {0} / {1}".format(node_address, event),
+                dict(sequence=self.sequence),
+            )
 
-    def remove(self, node_address)-> None:
+    def remove(self, node_address) -> None:
         """ Removes a node from the known inventory """
         self.nodes.remove(node_address)
         del self._index[node_address]
@@ -187,13 +204,14 @@ class Inventory(object):
         Evaluates if the time has run out for the run
         """
         time_left = self.until(self.deadline)
-        self.logger.debug('time left {}s ...'.format(time_left),
-                          dict(sequence=self.sequence))
+        self.logger.debug(
+            "time left {}s ...".format(time_left), dict(sequence=self.sequence)
+        )
         if time_left <= 0:
             return True
         return False
 
-    def is_complete(self)->bool:
+    def is_complete(self) -> bool:
         """
         Compares a set of nodes return true if they are the same
         or False otherwise
@@ -205,12 +223,15 @@ class Inventory(object):
             if not self._target_otap_sequence:
                 return True
         else:
-            self.logger.critical('elapsed {} - missing {}'.format(self.elapsed,
-                                                                  self.nodes ^ self._target_nodes),
-                                 dict(sequence=self.sequence))
+            self.logger.critical(
+                "elapsed {} - missing {}".format(
+                    self.elapsed, self.nodes ^ self._target_nodes
+                ),
+                dict(sequence=self.sequence),
+            )
             return False
 
-    def is_otaped(self)->bool:
+    def is_otaped(self) -> bool:
         """
         Compares the ottaped nodes against the known nodes, returning True
         when the sets are the same and False otherwise.
@@ -221,12 +242,15 @@ class Inventory(object):
         if self.otaped_nodes.issuperset(self._target_nodes):
             return True
         else:
-            self.logger.critical('elapsed {} - otap missing {}'.format(self.elapsed,
-                                                                       self.otaped_nodes ^ self._target_nodes),
-                                 dict(sequence=self.sequence))
+            self.logger.critical(
+                "elapsed {} - otap missing {}".format(
+                    self.elapsed, self.otaped_nodes ^ self._target_nodes
+                ),
+                dict(sequence=self.sequence),
+            )
             return False
 
-    def is_frequency_reached(self)->bool:
+    def is_frequency_reached(self) -> bool:
         """
         Compares the node frequency against the predefined frequency
         target
@@ -238,7 +262,9 @@ class Inventory(object):
         if self._target_nodes:
             frequency = self._filter_dict(frequency)
 
-        return all(map(lambda x: x >= self._target_frequency, frequency.values()))
+        return all(
+            map(lambda x: x >= self._target_frequency, frequency.values())
+        )
 
     def _filter_dict(self, d: dict):
         w = dict()
@@ -250,7 +276,7 @@ class Inventory(object):
     def _account_for_target_nodes(self, d: dict):
         if self._target_nodes:
             for node in self._target_nodes:
-                if not node in d:
+                if node not in d:
                     d[node] = 0
 
     def difference(self):
@@ -288,8 +314,12 @@ class Inventory(object):
         self._otaped_nodes = set()
         for node_address, details in self._index.items():
             try:
-                if (details['events'][-1]['otap_min'] == self._target_otap_sequence
-                        or details['events'][-1]['otap_max'] == self._target_otap_sequence):
+                if (
+                    details["events"][-1]["otap_min"]
+                    == self._target_otap_sequence
+                    or details["events"][-1]["otap_max"]
+                    == self._target_otap_sequence
+                ):
                     self._otaped_nodes.add(node_address)
             except KeyError:
                 pass
@@ -302,9 +332,9 @@ class Inventory(object):
         for node in sorted(nodes):
 
             if self._target_otap_sequence:
-                frequency[node] = self._index[node]['events'][-1]['otap_max']
+                frequency[node] = self._index[node]["events"][-1]["otap_max"]
             else:
-                frequency[node] = self._index[node]['count']
+                frequency[node] = self._index[node]["count"]
 
         self._account_for_target_nodes(frequency)
 
@@ -317,20 +347,20 @@ class Inventory(object):
         for node in sorted(nodes):
 
             if self._target_otap_sequence:
-                value = self._index[node]['events'][-1]['otap_max']
+                value = self._index[node]["events"][-1]["otap_max"]
             else:
-                value = self._index[node]['count']
+                value = self._index[node]["count"]
 
             if value > max_value:
                 max_value = value
 
-            if not value in frequency:
+            if value not in frequency:
                 frequency[value] = set()
             frequency[value].add(node)
 
         ofreq = collections.OrderedDict()
         for key in sorted(frequency.keys()):
-            ofreq['frequency_{0:03}'.format(key)] = frequency[key]
+            ofreq["frequency_{0:03}".format(key)] = frequency[key]
 
         return ofreq
 
@@ -366,7 +396,7 @@ class AdvertiserMessage(GenericMessage):
 
     MESSAGE_COUNTER = 0
 
-    def __init__(self, *args, **kwargs)-> 'AdvertiserMessage':
+    def __init__(self, *args, **kwargs) -> "AdvertiserMessage":
 
         super(AdvertiserMessage, self).__init__(*args, **kwargs)
 
@@ -380,7 +410,9 @@ class AdvertiserMessage(GenericMessage):
         self.index = None
 
     def count(self):
-        AdvertiserMessage.MESSAGE_COUNTER = AdvertiserMessage.MESSAGE_COUNTER + 1
+        AdvertiserMessage.MESSAGE_COUNTER = (
+            AdvertiserMessage.MESSAGE_COUNTER + 1
+        )
         self.index = self.MESSAGE_COUNTER
         return self.index
 
@@ -398,10 +430,10 @@ class AdvertiserMessage(GenericMessage):
             Value: 1 byte (eg, RSS or OTAP)
         """
 
-        self.decode_time = datetime.datetime.utcnow().isoformat('T')
+        self.decode_time = datetime.datetime.utcnow().isoformat("T")
 
-        s_header = struct.Struct('<B B')
-        s_advertisement = struct.Struct('<B B B B')
+        s_header = struct.Struct("<B B")
+        s_advertisement = struct.Struct("<B B B B")
 
         logger = logging.getLogger(__name__)
 
@@ -439,13 +471,13 @@ class AdvertiserMessage(GenericMessage):
                 otap = None
 
             try:
-                self.advertisers[address]['time'] = self.timestamp
-                self.advertisers[address]['rss'].append(rss)
-                self.advertisers[address]['otap'].append(otap)
-                self.advertisers[address]['value'].append(value_field)
+                self.advertisers[address]["time"] = self.timestamp
+                self.advertisers[address]["rss"].append(rss)
+                self.advertisers[address]["otap"].append(otap)
+                self.advertisers[address]["value"].append(value_field)
             except KeyError:
                 self.advertisers[address] = {}
-                self.advertisers[address]['time'] = self.timestamp
-                self.advertisers[address]['rss'] = [rss]
-                self.advertisers[address]['otap'] = [otap]
-                self.advertisers[address]['value'] = [value_field]
+                self.advertisers[address]["time"] = self.timestamp
+                self.advertisers[address]["rss"] = [rss]
+                self.advertisers[address]["otap"] = [otap]
+                self.advertisers[address]["value"] = [value_field]

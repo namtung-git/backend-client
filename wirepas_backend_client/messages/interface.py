@@ -46,7 +46,9 @@ class MessageManager(object):
     @staticmethod
     def map(source_endpoint=0, destination_endpoint=0):
         try:
-            return MessageManager._endpoint[int(source_endpoint)][int(destination_endpoint)]
+            return MessageManager._endpoint[int(source_endpoint)][
+                int(destination_endpoint)
+            ]
         except KeyError:
             return GenericMessage
         except ValueError:

@@ -44,7 +44,7 @@ class BootDiagnosticsMessage(GenericMessage):
         cur_seq              uint16
     """
 
-    def __init__(self, *args, **kwargs)-> 'BootDiagnosticsMessage':
+    def __init__(self, *args, **kwargs) -> "BootDiagnosticsMessage":
         super(BootDiagnosticsMessage, self).__init__(*args, **kwargs)
 
         self.type = ApplicationTypes.BootDiagnosticsMessage
@@ -52,21 +52,23 @@ class BootDiagnosticsMessage(GenericMessage):
         if isinstance(self.data_payload, str):
             self.data_payload = bytes(self.data_payload, "utf8")
 
-        apdu_values = struct.unpack('<BBBBBBHHHBHHIIIH', self.data_payload)
-        apdu_names = ('boot_count',
-                      'node_role',
-                      'sw_dev_version',
-                      'sw_maint_version',
-                      'sw_minor_version',
-                      'sw_major_version',
-                      'scratchpad_sequence',
-                      'hw_magic',
-                      'stack_profile',
-                      'otap_enabled',
-                      'boot_line_number',
-                      'file_hash',
-                      'stack_trace_0',
-                      'stack_trace_1',
-                      'stack_trace_2',
-                      'cur_seq')
+        apdu_values = struct.unpack("<BBBBBBHHHBHHIIIH", self.data_payload)
+        apdu_names = (
+            "boot_count",
+            "node_role",
+            "sw_dev_version",
+            "sw_maint_version",
+            "sw_minor_version",
+            "sw_major_version",
+            "scratchpad_sequence",
+            "hw_magic",
+            "stack_profile",
+            "otap_enabled",
+            "boot_line_number",
+            "file_hash",
+            "stack_trace_0",
+            "stack_trace_1",
+            "stack_trace_2",
+            "cur_seq",
+        )
         self.apdu = self.map_list_to_dict(apdu_names, apdu_values)

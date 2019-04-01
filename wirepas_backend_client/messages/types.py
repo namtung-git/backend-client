@@ -3,6 +3,7 @@ import enum
 
 class ApplicationTypes(enum.Enum):
     """ ApplicationTypes defines the library's message types mapping """
+
     GenericMessage = 0
     AdvertiserMessage = 1
     BootDiagnosticsMessage = 2

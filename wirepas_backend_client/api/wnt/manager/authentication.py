@@ -19,22 +19,26 @@ from .manager import Manager
 class AuthenticationManager(Manager):
     """docstring for AuthenticationManager"""
 
-    def __init__(self,
-                 hostname,
-                 protocol_version,
-                 username,
-                 password,
-                 port=None,
-                 name='Authentication',
-                 logger=None,
-                 **kwargs):
+    def __init__(
+        self,
+        hostname,
+        protocol_version,
+        username,
+        password,
+        port=None,
+        name="Authentication",
+        logger=None,
+        **kwargs
+    ):
 
-        super(AuthenticationManager, self).__init__(name=name,
-                                                    hostname=hostname,
-                                                    port=port or WNTSocket.AUTHENTICATION_PORT,
-                                                    on_open=self.on_open,
-                                                    on_message=self.on_message,
-                                                    logger=logger)
+        super(AuthenticationManager, self).__init__(
+            name=name,
+            hostname=hostname,
+            port=port or WNTSocket.AUTHENTICATION_PORT,
+            on_open=self.on_open,
+            on_message=self.on_message,
+            logger=logger,
+        )
 
         self.username = username
         self.password = password
@@ -48,9 +52,11 @@ class AuthenticationManager(Manager):
             websocket (Websocket): communication socket
         """
         super().on_open(websocket)
-        self.socket.send(json.dumps(
-            self.messages.message_login(self.username,
-                                        self.password)))
+        self.socket.send(
+            json.dumps(
+                self.messages.message_login(self.username, self.password)
+            )
+        )
 
     def on_message(self, websocket, message) -> None:
         """Websocket callback when a new authentication message arrives

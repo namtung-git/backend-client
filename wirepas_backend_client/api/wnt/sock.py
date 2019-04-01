@@ -18,22 +18,25 @@ class WNTSocket(object):
 
     This class handles websocket connections to WNT backend
     """
-    PROTOCOL = 'wss'
+
+    PROTOCOL = "wss"
     AUTHENTICATION_PORT = 8813
     METADATA_PORT = 8812
     REALTIME_SITUATION_PORT = 8811
 
-    def __init__(self,
-                 hostname: str,
-                 port: int,
-                 on_open=None,
-                 on_message=None,
-                 on_error=None,
-                 on_close=None,
-                 tracing=True,
-                 tx_queue=None,
-                 rx_queue=None,
-                 logger=None):
+    def __init__(
+        self,
+        hostname: str,
+        port: int,
+        on_open=None,
+        on_message=None,
+        on_error=None,
+        on_close=None,
+        tracing=True,
+        tx_queue=None,
+        rx_queue=None,
+        logger=None,
+    ):
 
         super(WNTSocket, self).__init__()
 
@@ -47,9 +50,9 @@ class WNTSocket(object):
         self.on_close = on_close
         self.tracing = tracing
 
-        self.url = "{0}://{1}:{2}".format(self.PROTOCOL,
-                                          self.hostname,
-                                          self.port)
+        self.url = "{0}://{1}:{2}".format(
+            self.PROTOCOL, self.hostname, self.port
+        )
         self._thread = None
         self._socket = None
 
@@ -60,11 +63,13 @@ class WNTSocket(object):
     # socket establishment
     def connect(self, url, with_trace=True) -> websocket.WebSocketApp:
         websocket.enableTrace(with_trace)
-        self._socket = websocket.WebSocketApp(url,
-                                              on_open=self.on_open,
-                                              on_message=self.on_message,
-                                              on_error=self.on_error,
-                                              on_close=self.on_close)
+        self._socket = websocket.WebSocketApp(
+            url,
+            on_open=self.on_open,
+            on_message=self.on_message,
+            on_error=self.on_error,
+            on_close=self.on_close,
+        )
         self._socket.keep_running = True
 
     def start(self, daemon=True, sslopt=None, **kwargs):
@@ -75,13 +80,14 @@ class WNTSocket(object):
         if sslopt is None:
             sslopt = dict(cert_reqs=ssl.CERT_NONE, check_hostname=False)
 
-        self._thread = threading.Thread(target=self.run,
-                                        kwargs=dict(sslopt=sslopt))
+        self._thread = threading.Thread(
+            target=self.run, kwargs=dict(sslopt=sslopt)
+        )
         self._thread.socket = self._socket
         self._thread.daemon = daemon
         self._thread.start()
 
-    def send(self, message: str)-> None:
+    def send(self, message: str) -> None:
         self._socket.send(message)
 
     def stop(self):
@@ -90,5 +96,6 @@ class WNTSocket(object):
     def run(self, sslopt=None):
         """Starts the websocket loop"""
         self._socket.run_forever(sslopt=sslopt)
+
 
 #

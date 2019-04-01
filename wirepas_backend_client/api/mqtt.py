@@ -46,7 +46,7 @@ class Topics(object):
 
     """
 
-    def __init__(self, api_version: str="1"):
+    def __init__(self, api_version: str = "1"):
         super(Topics, self).__init__()
         if not api_version == "1":
             raise ValueError("Unsupported API version")
@@ -55,98 +55,113 @@ class Topics(object):
         self._topics = dict()
         self._build_topics(str(api_version))
 
-        self._default_attributes = dict(gw_id='+',
-                                        sink_id='+',
-                                        network_id='+',
-                                        src_ep='+',
-                                        dst_ep='+')
+        self._default_attributes = dict(
+            gw_id="+", sink_id="+", network_id="+", src_ep="+", dst_ep="+"
+        )
 
     def list(self):
         return dict(
             requests=self._topics[self.api_version]["request"].values(),
             events=self._topics[self.api_version]["event"].values(),
-            responses=self._topics[self.api_version]["request"].values())
+            responses=self._topics[self.api_version]["request"].values(),
+        )
 
-    def _build_topics(self, api_version: str="1"):
+    def _build_topics(self, api_version: str = "1"):
 
-        self._topics = {api_version: dict(request=dict(),
-                                          response=dict(),
-                                          event=dict())
-                        }
+        self._topics = {
+            api_version: dict(request=dict(), response=dict(), event=dict())
+        }
 
         # Requests
         self._topics[api_version]["request"]["get_configs"] = dict(
             path="gw-request/get_configs/{gw_id}",
-            constructor=wirepas_messaging.gateway.api.GetConfigsRequest)
+            constructor=wirepas_messaging.gateway.api.GetConfigsRequest,
+        )
 
         self._topics[api_version]["request"]["set_config"] = dict(
             path="gw-request/set_config/{gw_id}/{sink_id}",
-            constructor=wirepas_messaging.gateway.api.SetConfigRequest)
+            constructor=wirepas_messaging.gateway.api.SetConfigRequest,
+        )
 
         self._topics[api_version]["request"]["send_data"] = dict(
             path="gw-request/send_data/{gw_id}/{sink_id}",
-            constructor=wirepas_messaging.gateway.api.SendDataRequest)
+            constructor=wirepas_messaging.gateway.api.SendDataRequest,
+        )
 
         self._topics[api_version]["request"]["otap_status"] = dict(
             path="gw-request/otap_status/{gw_id}/{sink_id}",
-            constructor=wirepas_messaging.gateway.api.GetScratchpadStatusRequest)
+            constructor=wirepas_messaging.gateway.api.GetScratchpadStatusRequest,
+        )
 
         self._topics[api_version]["request"]["otap_load_scratchpad"] = dict(
             path="gw-request/otap_load_scratchpad/{gw_id}/{sink_id}",
-            constructor=wirepas_messaging.gateway.api.UploadScratchpadRequest)
+            constructor=wirepas_messaging.gateway.api.UploadScratchpadRequest,
+        )
 
         self._topics[api_version]["request"]["otap_process_scratchpad"] = dict(
             path="gw-request/otap_process_scratchpad/{gw_id}/{sink_id}",
-            constructor=wirepas_messaging.gateway.api.ProcessScratchpadRequest)
+            constructor=wirepas_messaging.gateway.api.ProcessScratchpadRequest,
+        )
 
         # Responses
         self._topics[api_version]["response"]["get_configs"] = dict(
             path="gw-response/get_configs/{gw_id}",
-            constructor=wirepas_messaging.gateway.api.GetConfigsResponse)
+            constructor=wirepas_messaging.gateway.api.GetConfigsResponse,
+        )
 
         self._topics[api_version]["response"]["set_config"] = dict(
             path="gw-response/set_config/{gw_id}/{sink_id}",
-            constructor=wirepas_messaging.gateway.api.SetConfigResponse)
+            constructor=wirepas_messaging.gateway.api.SetConfigResponse,
+        )
 
         self._topics[api_version]["response"]["send_data"] = dict(
             path="gw-response/send_data/{gw_id}/{sink_id}",
-            constructor=wirepas_messaging.gateway.api.SendDataResponse)
+            constructor=wirepas_messaging.gateway.api.SendDataResponse,
+        )
 
         self._topics[api_version]["response"]["otap_status"] = dict(
             path="gw-response/otap_status/{gw_id}/{sink_id}",
-            constructor=wirepas_messaging.gateway.api.GetScratchpadStatusResponse)
+            constructor=wirepas_messaging.gateway.api.GetScratchpadStatusResponse,
+        )
 
         self._topics[api_version]["response"]["otap_load_scratchpad"] = dict(
             path="gw-response/otap_load_scratchpad/{gw_id}/{sink_id}",
-            constructor=wirepas_messaging.gateway.api.UploadScratchpadResponse)
+            constructor=wirepas_messaging.gateway.api.UploadScratchpadResponse,
+        )
 
-        self._topics[api_version]["response"]["otap_process_scratchpad"] = dict(
+        self._topics[api_version]["response"][
+            "otap_process_scratchpad"
+        ] = dict(
             path="gw-response/otap_process_scratchpad/{gw_id}/{sink_id}",
-            constructor=wirepas_messaging.gateway.api.ProcessScratchpadResponse)
+            constructor=wirepas_messaging.gateway.api.ProcessScratchpadResponse,
+        )
 
         # Asynchronous events
         self._topics[api_version]["event"]["clear"] = dict(
             path="gw-event/status/{gw_id}",
-            constructor=wirepas_messaging.gateway.GenericMessage)
+            constructor=wirepas_messaging.gateway.GenericMessage,
+        )
 
         self._topics[api_version]["event"]["status"] = dict(
             path="gw-event/status/{gw_id}",
-            constructor=wirepas_messaging.gateway.api.StatusEvent)
+            constructor=wirepas_messaging.gateway.api.StatusEvent,
+        )
 
         self._topics[api_version]["event"]["received_data"] = dict(
             path="gw-event/received_data/{gw_id}/{sink_id}/{network_id}/{src_ep}/{dst_ep}",
-            constructor=wirepas_messaging.gateway.api.ReceivedDataEvent)
+            constructor=wirepas_messaging.gateway.api.ReceivedDataEvent,
+        )
 
         # Generic fallback
         self._topics[api_version]["event"]["generic"] = dict(
-            path="",
-            constructor=wirepas_messaging.gateway.api.Event)
+            path="", constructor=wirepas_messaging.gateway.api.Event
+        )
         self._topics[api_version]["request"]["generic"] = dict(
-            path="",
-            constructor=wirepas_messaging.gateway.api.Request)
+            path="", constructor=wirepas_messaging.gateway.api.Request
+        )
         self._topics[api_version]["response"]["generic"] = dict(
-            path="",
-            constructor=wirepas_messaging.gateway.api.Response)
+            path="", constructor=wirepas_messaging.gateway.api.Response
+        )
 
     def request(self, name, kwargs):
         return self.path(topic_type="request", name=name, kwargs=kwargs)
@@ -163,8 +178,9 @@ class Topics(object):
             topic_info = self._topics[self.api_version]["request"][name]
             if topic_info["constructor"]:
                 path = topic_info["path"].format(**kwargs)
-                message = dict(topic=path, data=topic_info[
-                               "constructor"](**kwargs))
+                message = dict(
+                    topic=path, data=topic_info["constructor"](**kwargs)
+                )
         return message
 
     def response_message(self, name, kwargs):
@@ -173,8 +189,9 @@ class Topics(object):
             topic_info = self._topics[self.api_version]["response"][name]
             if topic_info["constructor"]:
                 path = topic_info["path"].format(**kwargs)
-                message = dict(topic=path, data=topic_info[
-                    "constructor"](**kwargs))
+                message = dict(
+                    topic=path, data=topic_info["constructor"](**kwargs)
+                )
         return message
 
     def event_message(self, name, kwargs):
@@ -184,14 +201,16 @@ class Topics(object):
             if topic_info["constructor"]:
                 path = topic_info["path"].format(**kwargs)
                 try:
-                    message = dict(topic=path, data=topic_info[
-                        "constructor"](**kwargs))
+                    message = dict(
+                        topic=path, data=topic_info["constructor"](**kwargs)
+                    )
                 except:
-                    message = dict(topic=path, data=topic_info[
-                        "constructor"]())
+                    message = dict(
+                        topic=path, data=topic_info["constructor"]()
+                    )
         return message
 
-    def path(self, topic_type: str, name: str, kwargs: dict=None):
+    def path(self, topic_type: str, name: str, kwargs: dict = None):
         """
         Builds a topic based on its type, name and kwargs
 
@@ -229,12 +248,14 @@ class Topics(object):
         if topic_type not in self._topics[self.api_version]:
             return None
 
-        constructor = self._topics[self.api_version][
-            topic_type][name]["constructor"]
+        constructor = self._topics[self.api_version][topic_type][name][
+            "constructor"
+        ]
 
         if constructor is None:
-            constructor = self._topics[self.api_version][
-                topic_type]["generic"]["constructor"]
+            constructor = self._topics[self.api_version][topic_type][
+                "generic"
+            ]["constructor"]
 
         return constructor
 
@@ -242,7 +263,7 @@ class Topics(object):
 class MQTTSettings(Settings):
     """MQTTSettings"""
 
-    def __init__(self, settings: Settings)-> 'MQTTSettings':
+    def __init__(self, settings: Settings) -> "MQTTSettings":
 
         self.userdata = None
         self.transport = "tcp"
@@ -289,15 +310,16 @@ class MQTTSettings(Settings):
 
 def decode_topic_message(f):
     """ Decorator to decode incoming proto message """
+
     @wraps(f)
     def wrapper_retrieve_message(client, userdata, message, **kwargs):
         """ Receives an MQTT message and retrieves its protobuffer """
-        topic = message.topic.split('/')
+        topic = message.topic.split("/")
         source_endpoint = topic[-2]
         destination_endpoint = topic[-1]
-        message = MessageManager.map(source_endpoint,
-                                     destination_endpoint
-                                     ).from_bus(message.payload)
+        message = MessageManager.map(
+            source_endpoint, destination_endpoint
+        ).from_bus(message.payload)
         f(message, topic)
 
     return wrapper_retrieve_message
@@ -305,10 +327,11 @@ def decode_topic_message(f):
 
 def topic_message(f):
     """ Decorator to decode incoming proto message """
+
     @wraps(f)
     def wrapper_retrieve_message(client, userdata, message, **kwargs):
         """ Receives an MQTT message and retrieves its protobuffer """
-        topic = message.topic.split('/')
+        topic = message.topic.split("/")
         f(message.payload, topic)
 
     return wrapper_retrieve_message
@@ -316,14 +339,16 @@ def topic_message(f):
 
 def retrieve_message(f):
     """ Decorator to decode incoming proto message """
+
     @wraps(f)
     def wrapper_retrieve_message(client, userdata, message, **kwargs):
         """ Receives an MQTT message and retrieves its protobuffer """
-        topic = message.topic.split('/')
+        topic = message.topic.split("/")
         source_endpoint = topic[-2]
         destination_endpoint = topic[-1]
         data = MessageManager.map(
-            source_endpoint, destination_endpoint).from_bus(message.payload)
+            source_endpoint, destination_endpoint
+        ).from_bus(message.payload)
         f(data)
 
     return wrapper_retrieve_message
@@ -332,21 +357,25 @@ def retrieve_message(f):
 class MQTTObserver(StreamObserver):
     """MQTTObserver monitors the MQTT topics for test data"""
 
-    def __init__(self,
-                 mqtt_settings: Settings,
-                 start_signal: multiprocessing.Event,
-                 exit_signal: multiprocessing.Event,
-                 tx_queue: multiprocessing.Queue,
-                 rx_queue: multiprocessing.Queue,
-                 allowed_endpoints: set=None,
-                 message_subscribe_handlers: dict=None,
-                 message_publish_handlers: dict=None,
-                 logger=None) -> 'MQTTObserver':
+    def __init__(
+        self,
+        mqtt_settings: Settings,
+        start_signal: multiprocessing.Event,
+        exit_signal: multiprocessing.Event,
+        tx_queue: multiprocessing.Queue,
+        rx_queue: multiprocessing.Queue,
+        allowed_endpoints: set = None,
+        message_subscribe_handlers: dict = None,
+        message_publish_handlers: dict = None,
+        logger=None,
+    ) -> "MQTTObserver":
         """ MQTT Observer constructor """
-        super(MQTTObserver, self).__init__(start_signal=start_signal,
-                                           exit_signal=exit_signal,
-                                           tx_queue=tx_queue,
-                                           rx_queue=rx_queue)
+        super(MQTTObserver, self).__init__(
+            start_signal=start_signal,
+            exit_signal=exit_signal,
+            tx_queue=tx_queue,
+            rx_queue=rx_queue,
+        )
 
         self.logger = logger or logging.getLogger(__name__)
 
@@ -357,28 +386,31 @@ class MQTTObserver(StreamObserver):
 
         if message_publish_handlers is None:
             self.message_publish_handlers = {
-                'publish/example': self.generate_data_send_cb()}
+                "publish/example": self.generate_data_send_cb()
+            }
         else:
             self.message_publish_handlers = message_publish_handlers
 
-        self.mqtt = MQTT(username=mqtt_settings.username,
-                         password=mqtt_settings.password,
-                         hostname=mqtt_settings.hostname,
-                         port=mqtt_settings.port,
-                         ca_certs=mqtt_settings.ca_certs,
-                         userdata=mqtt_settings.userdata,
-                         transport=mqtt_settings.transport,
-                         clean_session=mqtt_settings.clean_session,
-                         reconnect_min_delay=mqtt_settings.reconnect_min_delay,
-                         reconnect_max_delay=mqtt_settings.reconnect_max_delay,
-                         allow_untrusted=mqtt_settings.allow_untrusted,
-                         force_unsecure=mqtt_settings.force_unsecure,
-                         heartbeat=mqtt_settings.heartbeat,
-                         keep_alive=mqtt_settings.keep_alive,
-                         exit_signal=self.exit_signal,
-                         message_subscribe_handlers=message_subscribe_handlers,
-                         message_publish_handlers=self.message_publish_handlers,
-                         logger=self.logger)
+        self.mqtt = MQTT(
+            username=mqtt_settings.username,
+            password=mqtt_settings.password,
+            hostname=mqtt_settings.hostname,
+            port=mqtt_settings.port,
+            ca_certs=mqtt_settings.ca_certs,
+            userdata=mqtt_settings.userdata,
+            transport=mqtt_settings.transport,
+            clean_session=mqtt_settings.clean_session,
+            reconnect_min_delay=mqtt_settings.reconnect_min_delay,
+            reconnect_max_delay=mqtt_settings.reconnect_max_delay,
+            allow_untrusted=mqtt_settings.allow_untrusted,
+            force_unsecure=mqtt_settings.force_unsecure,
+            heartbeat=mqtt_settings.heartbeat,
+            keep_alive=mqtt_settings.keep_alive,
+            exit_signal=self.exit_signal,
+            message_subscribe_handlers=message_subscribe_handlers,
+            message_publish_handlers=self.message_publish_handlers,
+            logger=self.logger,
+        )
 
         self.timeout = mqtt_settings.heartbeat
 
@@ -392,21 +424,24 @@ class MQTTObserver(StreamObserver):
     def simple_mqtt_print(message):
         print("MQTT >> {}".format(message))
 
-    def generate_data_received_cb(self)->callable:
+    def generate_data_received_cb(self) -> callable:
         """ Returns a callback to process the incoming data """
+
         @retrieve_message
         def on_data_received(message):
             """ Retrieves a MQTT message and sends it to the tx_queue """
 
             if len(self.allowed_endpoints) == 0 or (
-                    message.source_endpoint in self.allowed_endpoints
-                    and message.destination_endpoint in self.allowed_endpoints):
+                message.source_endpoint in self.allowed_endpoints
+                and message.destination_endpoint in self.allowed_endpoints
+            ):
 
                 if self.start_signal.is_set():
-                    self.logger.debug('sending message {}'.format(message))
+                    self.logger.debug("sending message {}".format(message))
                     self.tx_queue.put(message)
                 else:
-                    self.logger.debug('waiting for manager readiness')
+                    self.logger.debug("waiting for manager readiness")
+
         return on_data_received
 
     def send_data(self, mqtt_publish, topic):
@@ -423,7 +458,9 @@ class MQTTObserver(StreamObserver):
             data = None
             self.logger.error("Unable to fetch from unintilized queue")
 
-    def run(self, message_subscribe_handlers=None, message_publish_handlers=None):
+    def run(
+        self, message_subscribe_handlers=None, message_publish_handlers=None
+    ):
         """
         Executes MQTT loop
 
@@ -449,32 +486,34 @@ class MQTT(object):
     Generic MQTT handler for backend client sessions
     """
 
-    def __init__(self,
-                 username: str,
-                 password: str,
-                 hostname: str,
-                 port: int,
-                 ca_certs: str,
-                 cert_required=None,
-                 tls_version=None,
-                 certfile=None,
-                 keyfile=None,
-                 cert_reqs=None,
-                 ciphers=None,
-                 userdata: object=None,
-                 transport: str="tcp",
-                 clean_session: bool=True,
-                 reconnect_min_delay: int=10,
-                 reconnect_max_delay: int=120,
-                 allow_untrusted: bool=False,
-                 force_unsecure: bool=False,
-                 exit_signal: object=None,
-                 heartbeat: int=100,
-                 keep_alive: int=120,
-                 message_subscribe_handlers: dict=None,
-                 message_publish_handlers: dict=None,
-                 mqtt_protocol=None,
-                 logger: logging.Logger=None):
+    def __init__(
+        self,
+        username: str,
+        password: str,
+        hostname: str,
+        port: int,
+        ca_certs: str,
+        cert_required=None,
+        tls_version=None,
+        certfile=None,
+        keyfile=None,
+        cert_reqs=None,
+        ciphers=None,
+        userdata: object = None,
+        transport: str = "tcp",
+        clean_session: bool = True,
+        reconnect_min_delay: int = 10,
+        reconnect_max_delay: int = 120,
+        allow_untrusted: bool = False,
+        force_unsecure: bool = False,
+        exit_signal: object = None,
+        heartbeat: int = 100,
+        keep_alive: int = 120,
+        message_subscribe_handlers: dict = None,
+        message_publish_handlers: dict = None,
+        mqtt_protocol=None,
+        logger: logging.Logger = None,
+    ):
 
         super(MQTT, self).__init__()
 
@@ -483,7 +522,7 @@ class MQTT(object):
         self.running = False
         self.heartbeat = heartbeat
         self.exit_signal = ExitSignal(exit_signal)
-        self.id = 'wm-gw-cli:{0}'.format(uuid.uuid1(clock_seq=0).urn)
+        self.id = "wm-gw-cli:{0}".format(uuid.uuid1(clock_seq=0).urn)
 
         self.username = username
         self.password = password
@@ -509,14 +548,17 @@ class MQTT(object):
         self.userdata = userdata
         self.transport = transport
 
-        self.client = mqtt.Client(client_id=self.id,
-                                  clean_session=self.clean_session,
-                                  userdata=self.userdata,
-                                  protocol=self.mqtt_protocol,
-                                  transport=self.transport)
+        self.client = mqtt.Client(
+            client_id=self.id,
+            clean_session=self.clean_session,
+            userdata=self.userdata,
+            protocol=self.mqtt_protocol,
+            transport=self.transport,
+        )
         self.client.username_pw_set(self.username, self.password)
-        self.client.reconnect_delay_set(min_delay=reconnect_min_delay,
-                                        max_delay=reconnect_max_delay)
+        self.client.reconnect_delay_set(
+            min_delay=reconnect_min_delay, max_delay=reconnect_max_delay
+        )
         self.client.enable_logger(self.logger)
 
         self.client.on_connect = self.on_connect
@@ -541,7 +583,7 @@ class MQTT(object):
 
         self.subscription = set()
 
-    def serve(self: 'MQTT'):
+    def serve(self: "MQTT"):
         """
         Connects and serves for ever.
 
@@ -559,7 +601,7 @@ class MQTT(object):
         self.client.loop_start()
 
         while not self.exit_signal.is_set():
-            self.logger.debug('mqtt loop running')
+            self.logger.debug("mqtt loop running")
             if len(self.message_publish_handlers) == 0:
                 time.sleep(self.heartbeat)
             else:
@@ -574,16 +616,19 @@ class MQTT(object):
 
         return self.running
 
-    def connect(self: 'MQTT'):
+    def connect(self: "MQTT"):
         """ Establishes a connection and service loop. """
 
-        self.logger.info('connecting to {user}:{password}'
-                         '@{host}:{port} - {cert}'.format(
-                             user=self.username,
-                             password=self.password,
-                             host=self.hostname,
-                             port=self.port,
-                             cert=self.ca_certs))
+        self.logger.info(
+            "connecting to {user}:{password}"
+            "@{host}:{port} - {cert}".format(
+                user=self.username,
+                password=self.password,
+                host=self.hostname,
+                port=self.port,
+                cert=self.ca_certs,
+            )
+        )
 
         if self.force_unsecure is False:
 
@@ -591,18 +636,20 @@ class MQTT(object):
                 self.client.tls_insecure_set(self.allow_untrusted)
 
             elif self.ca_certs:
-                self.client.tls_set(ca_certs=self.ca_certs,
-                                    certfile=self.certfile,
-                                    keyfile=self.keyfile,
-                                    cert_reqs=self.cert_reqs,
-                                    tls_version=self.tls_version,
-                                    ciphers=self.ciphers)
+                self.client.tls_set(
+                    ca_certs=self.ca_certs,
+                    certfile=self.certfile,
+                    keyfile=self.keyfile,
+                    cert_reqs=self.cert_reqs,
+                    tls_version=self.tls_version,
+                    ciphers=self.ciphers,
+                )
 
-        self.client.connect(self.hostname,
-                            port=self.port,
-                            keepalive=self.keep_alive)
+        self.client.connect(
+            self.hostname, port=self.port, keepalive=self.keep_alive
+        )
 
-    def close(self: 'MQTT') -> None:
+    def close(self: "MQTT") -> None:
         """ Handles disconnect from the pubsub. """
         if self.running:
             self.running = False
@@ -624,11 +671,17 @@ class MQTT(object):
 
             self.message_subscribe_handlers = handlers
 
-    def on_close(self: 'MQTT') -> None:
+    def on_close(self: "MQTT") -> None:
         """ Override for handling before closing events, like last will"""
         pass
 
-    def on_connect(self: 'MQTT', client: 'paho.mqtt.client', userdata: object, flags: list, rc: int) -> None:
+    def on_connect(
+        self: "MQTT",
+        client: "paho.mqtt.client",
+        userdata: object,
+        flags: list,
+        rc: int,
+    ) -> None:
         """
         Callback that is called when connection to MQTT has succeeded.
 
@@ -644,34 +697,46 @@ class MQTT(object):
 
         # Check the connection result.
         if rc == mqtt.CONNACK_ACCEPTED:
-            self.logger.info('connected to MQTT {0} {1}'.format(
-                flags, mqtt.connack_string(rc)))
+            self.logger.info(
+                "connected to MQTT {0} {1}".format(
+                    flags, mqtt.connack_string(rc)
+                )
+            )
 
             for topic in self.subscription:
                 rc, mid = client.subscribe(topic)
 
                 if rc == mqtt.MQTT_ERR_SUCCESS:
-                    self.logger.info('subscribed to topic: '
-                                     '{topic} ({mid}, {rc})'.format(topic=topic,
-                                                                    mid=mid,
-                                                                    rc=rc))
+                    self.logger.info(
+                        "subscribed to topic: "
+                        "{topic} ({mid}, {rc})".format(
+                            topic=topic, mid=mid, rc=rc
+                        )
+                    )
 
                 elif rc == mqtt.MQTT_ERR_SUCCESS:
-                    self.logger.error('failed topic subscription with '
-                                      '{msg}: {topic} ({mid}, {rc})'.format(
-                                          topic=topic,
-                                          mid=mid,
-                                          rc=rc,
-                                          msg=mqtt.error_string(rc)))
+                    self.logger.error(
+                        "failed topic subscription with "
+                        "{msg}: {topic} ({mid}, {rc})".format(
+                            topic=topic,
+                            mid=mid,
+                            rc=rc,
+                            msg=mqtt.error_string(rc),
+                        )
+                    )
                     self.client.disconnect()
 
         else:
-            self.logger.error('connection error: {msg} {flags}'.format(
-                msg=mqtt.error_string(rc),
-                flags=flags))
+            self.logger.error(
+                "connection error: {msg} {flags}".format(
+                    msg=mqtt.error_string(rc), flags=flags
+                )
+            )
             self.client.disconnect()
 
-    def on_disconnect(self: 'MQTT', client: paho.mqtt.client, userdata: object, rc: int):
+    def on_disconnect(
+        self: "MQTT", client: paho.mqtt.client, userdata: object, rc: int
+    ):
         """
         Handles a disconnect request.
 
@@ -681,8 +746,11 @@ class MQTT(object):
         If the disconnect is due to a call to disconnect, then the
 
         """
-        self.logger.error("disconnect: server is down ({1})".format(
-            mqtt.error_string(rc), rc))
+        self.logger.error(
+            "disconnect: server is down ({1})".format(
+                mqtt.error_string(rc), rc
+            )
+        )
 
         if rc == mqtt.MQTT_ERR_SUCCESS and self.running:
             self.running = False
@@ -693,32 +761,51 @@ class MQTT(object):
                 for topic in self.subscription:
                     self.client.unsubscribe(topic)
 
-    def on_subscribe(self: 'MQTT', client: paho.mqtt.client, userdata: object, mid: int, granted_qos: int):
+    def on_subscribe(
+        self: "MQTT",
+        client: paho.mqtt.client,
+        userdata: object,
+        mid: int,
+        granted_qos: int,
+    ):
         """
         Callback generated when the broker acknowledges a subscription event
         """
-        self.logger.debug('subscribed with mid:{0} / qos: {1}'.format(mid,
-                                                                      granted_qos))
+        self.logger.debug(
+            "subscribed with mid:{0} / qos: {1}".format(mid, granted_qos)
+        )
 
-    def on_unsubscribe(self: 'MQTT', client: paho.mqtt.client,  userdata: object, mid: int):
+    def on_unsubscribe(
+        self: "MQTT", client: paho.mqtt.client, userdata: object, mid: int
+    ):
         """
         Callback generated when the broker acknowledges an unsubscribe event
         """
-        self.logger.debug('unsubscribed with mid:{0}'.format(mid))
+        self.logger.debug("unsubscribed with mid:{0}".format(mid))
 
-    def on_publish(self: 'MQTT', client: paho.mqtt.client,  userdata: object, mid: int):
+    def on_publish(
+        self: "MQTT", client: paho.mqtt.client, userdata: object, mid: int
+    ):
         """
         Callback generated when the broker acknowledges a pubished message
         """
-        self.logger.debug('sent message {0}'.format(mid))
+        self.logger.debug("sent message {0}".format(mid))
 
-    def on_log(self: 'MQTT', client: paho.mqtt.client,  userdata: object, level: int, buf: str):
+    def on_log(
+        self: "MQTT",
+        client: paho.mqtt.client,
+        userdata: object,
+        level: int,
+        buf: str,
+    ):
         """
         Internal mqtt logging where buf is the message being sent
         """
-        self.logger.debug('mqtt-log: {0}'.format(buf))
+        self.logger.debug("mqtt-log: {0}".format(buf))
 
-    def on_message(self: 'MQTT', client: paho.mqtt.client,  userdata: object, message: str):
+    def on_message(
+        self: "MQTT", client: paho.mqtt.client, userdata: object, message: str
+    ):
         """
         Generic topic to handle message requests
 
@@ -728,34 +815,48 @@ class MQTT(object):
             message (object): Incoming message.
         """
 
-        self.logger.debug('{topic}:{payload}:{qos}'.format(
-            topic=message.topic,
-            payload=message.payload,
-            qos=message.qos))
+        self.logger.debug(
+            "{topic}:{payload}:{qos}".format(
+                topic=message.topic, payload=message.payload, qos=message.qos
+            )
+        )
 
-    def _print(self: 'MQTT', client: paho.mqtt.client, userdata: object, message: str):
-        self.logger.debug('Message print > {topic}:{payload}:{qos}'.format(topic=message.topic,
-                                                                           payload=message.payload,
-                                                                           qos=message.qos))
+    def _print(
+        self: "MQTT", client: paho.mqtt.client, userdata: object, message: str
+    ):
+        self.logger.debug(
+            "Message print > {topic}:{payload}:{qos}".format(
+                topic=message.topic, payload=message.payload, qos=message.qos
+            )
+        )
 
-    def send(self, message: str, topic: str, qos: int=1, retain: bool=False, wait_for_publish: bool=False):
-        pubinfo = self.client.publish('{0}'.format(topic),
-                                      message,
-                                      qos=qos,
-                                      retain=retain)
+    def send(
+        self,
+        message: str,
+        topic: str,
+        qos: int = 1,
+        retain: bool = False,
+        wait_for_publish: bool = False,
+    ):
+        pubinfo = self.client.publish(
+            "{0}".format(topic), message, qos=qos, retain=retain
+        )
 
         if pubinfo.rc != mqtt.MQTT_ERR_SUCCESS:
-            self.logger.error('publish: {0} ({1})'.format(
-                mqtt.error_string(pubinfo.rc), pubinfo.rc))
+            self.logger.error(
+                "publish: {0} ({1})".format(
+                    mqtt.error_string(pubinfo.rc), pubinfo.rc
+                )
+            )
             self.exit_signal.set()
 
         elif wait_for_publish:
             try:
-                self.logger.info('Waiting for publish.')
+                self.logger.info("Waiting for publish.")
                 pubinfo.wait_for_publish()  # proper way, but it can hang
             except ValueError:
-                self.logger.error('Could not validate publish.')
+                self.logger.error("Could not validate publish.")
                 pass
 
     def __str__(self):
-        return str('{}{}{}', self.username, self.hostname, self.port)
+        return str("{}{}{}", self.username, self.hostname, self.port)

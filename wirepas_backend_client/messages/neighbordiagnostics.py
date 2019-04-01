@@ -36,7 +36,7 @@ class NeighborDiagnosticsMessage(GenericMessage):
             rssi             uint8
     """
 
-    def __init__(self, *args, **kwargs)-> 'NeighborDiagnosticsMessage':
+    def __init__(self, *args, **kwargs) -> "NeighborDiagnosticsMessage":
         super(NeighborDiagnosticsMessage, self).__init__(*args, **kwargs)
 
         self.type = ApplicationTypes.NeighborDiagnosticsMessage
@@ -45,18 +45,20 @@ class NeighborDiagnosticsMessage(GenericMessage):
             self.data_payload = bytes(self.data_payload, "utf8")
 
         self.neighbor = dict()
-        s_address = struct.Struct('<I')
+        s_address = struct.Struct("<I")
         i = 0
         j = 0
         while j < len(self.data_payload):
-            address = s_address.unpack(self.data_payload[j:j + 3] + b'\x00')[0]
+            address = s_address.unpack(self.data_payload[j : j + 3] + b"\x00")[
+                0
+            ]
             if address != 0:
                 self.neighbor[i] = dict()
-                self.neighbor[i]['address'] = address
-                self.neighbor[i]['cluster_channel'] = self.data_payload[j + 3]
-                self.neighbor[i]['radio_power'] = self.data_payload[j + 4]
-                self.neighbor[i]['node_info'] = self.data_payload[j + 5]
-                self.neighbor[i]['rssi'] = self.data_payload[j + 6]
+                self.neighbor[i]["address"] = address
+                self.neighbor[i]["cluster_channel"] = self.data_payload[j + 3]
+                self.neighbor[i]["radio_power"] = self.data_payload[j + 4]
+                self.neighbor[i]["node_info"] = self.data_payload[j + 5]
+                self.neighbor[i]["rssi"] = self.data_payload[j + 6]
                 i += 1
                 j += 7
             else:

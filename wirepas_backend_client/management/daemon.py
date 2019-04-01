@@ -27,12 +27,14 @@ class Daemon(object):
 
     """
 
-    def __init__(self,
-                 heartbeat: int = 60,
-                 join_timeout: int = 1,
-                 loop_cb: callable = None,
-                 loop_kwargs: dict = None,
-                 logger=None):
+    def __init__(
+        self,
+        heartbeat: int = 60,
+        join_timeout: int = 1,
+        loop_cb: callable = None,
+        loop_kwargs: dict = None,
+        logger=None,
+    ):
         super(Daemon, self).__init__()
 
         self._manager = multiprocessing.Manager()
@@ -55,25 +57,24 @@ class Daemon(object):
 
         self.logger = logger or logging.getLogger(__name__)
 
-    def _process_details(self)->dict:
+    def _process_details(self) -> dict:
         """ Initialises the process entry dictionary """
-        return dict(tx_queue=self._manager.Queue(),
-                    rx_queue=self._manager.Queue(),
-                    exit_signal=None,
-                    object=None,
-                    object_kwargs=None,
-                    runtime=dict(task=None,
-                                 kwargs=None,
-                                 as_daemon=None)
-                    )
+        return dict(
+            tx_queue=self._manager.Queue(),
+            rx_queue=self._manager.Queue(),
+            exit_signal=None,
+            object=None,
+            object_kwargs=None,
+            runtime=dict(task=None, kwargs=None, as_daemon=None),
+        )
 
     @property
-    def manager(self)->multiprocessing.Manager:
+    def manager(self) -> multiprocessing.Manager:
         """ Returns the manager object """
         return self._manager
 
     @property
-    def queue(self, name, queue_name="rx_queue")->multiprocessing.Queue:
+    def queue(self, name, queue_name="rx_queue") -> multiprocessing.Queue:
         """ Returns a process queue """
         return self.process[name][queue_name]
 
@@ -92,13 +93,22 @@ class Daemon(object):
 
     def init_process(self, name):
         """ Initialises a process entry """
-        if not name in self.process:
+        if name not in self.process:
             self.process[name] = self._process_details()
             self.logger.debug("Creating message queues for {}".format(name))
         else:
             self.logger.debug("Message queues already created")
 
-    def build(self, name: str, cls: callable, kwargs: dict, receive_from=None, send_to=None, storage=False, storage_name="mysql"):
+    def build(
+        self,
+        name: str,
+        cls: callable,
+        kwargs: dict,
+        receive_from=None,
+        send_to=None,
+        storage=False,
+        storage_name="mysql",
+    ):
         """ Creates the object which will interact with the process """
 
         self.init_process(name)
@@ -111,7 +121,8 @@ class Daemon(object):
         # chose on which queue to put data to
         if send_to:
             self.logger.info(
-                "{} sending messages to {}[rx_queue]".format(name, send_to))
+                "{} sending messages to {}[rx_queue]".format(name, send_to)
+            )
             kwargs["tx_queue"] = self.process[send_to]["rx_queue"]
         else:
             if "tx_queue" not in kwargs:
@@ -120,7 +131,10 @@ class Daemon(object):
         # chose on which queue to get data from
         if receive_from:
             self.logger.info(
-                "{} receiving messages from {}[tx_queue]".format(name, receive_from))
+                "{} receiving messages from {}[tx_queue]".format(
+                    name, receive_from
+                )
+            )
             kwargs["rx_queue"] = self.process[receive_from]["tx_queue"]
         else:
             if "rx_queue" not in kwargs:
@@ -139,7 +153,8 @@ class Daemon(object):
             self.process[name]["runtime"]["task"] = obj.run
         except:
             self.logger.warning(
-                "Object does not have a run method. Runtime task undefined!")
+                "Object does not have a run method. Runtime task undefined!"
+            )
             pass
         self.process[name]["runtime"]["kwargs"] = dict()
         self.process[name]["runtime"]["as_daemon"] = True
@@ -175,10 +190,11 @@ class Daemon(object):
                 register["runtime"]["object"] = multiprocessing.Process(
                     target=register["runtime"]["task"],
                     kwargs=register["runtime"]["kwargs"],
-                    daemon=register["runtime"]["as_daemon"])
+                    daemon=register["runtime"]["as_daemon"],
+                )
 
                 register["runtime"]["object"].start()
-                self.logger.debug('started process: {}'.format(name))
+                self.logger.debug("started process: {}".format(name))
             except KeyError:
                 raise
             except TypeError:
@@ -192,22 +208,23 @@ class Daemon(object):
         except KeyboardInterrupt:
             self.exit_signal.set()
         except:
-            self.logger.exception('main excution loop exited with error')
+            self.logger.exception("main excution loop exited with error")
             if not self.exit_signal.is_set():
                 self.exit_signal.set()
 
         for name, register in self.process.items():
-            self.logger.debug('daemon killing {}'.format(name))
+            self.logger.debug("daemon killing {}".format(name))
             if "main" in name:
                 continue
             try:
                 if register["runtime"]["object"].is_alive():
                     register["runtime"]["object"].terminate()
                     register["runtime"]["object"].join(
-                        timeout=self.join_timeout)
+                        timeout=self.join_timeout
+                    )
 
             except:
-                self.logger.exception('error killing {}'.format(name))
+                self.logger.exception("error killing {}".format(name))
                 continue
 
-        self.logger.debug('daemon has left')
+        self.logger.debug("daemon has left")

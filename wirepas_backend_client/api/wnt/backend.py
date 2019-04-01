@@ -17,26 +17,33 @@ from .manager import AuthenticationManager, RealtimeManager, MetadataManager
 
 
 class Backend(object):
-
-    def __init__(self, settings, callback_queue=None, logger=None, **kwargs) -> None:
+    def __init__(
+        self, settings, callback_queue=None, logger=None, **kwargs
+    ) -> None:
         """Initialization"""
 
         self.logger = logger or logging.getLogger(__name__)
         self.settings = settings
 
-        self.authentication = AuthenticationManager(hostname=self.settings.wnt_hostname,
-                                                    username=self.settings.wnt_username,
-                                                    password=self.settings.wnt_password,
-                                                    protocol_version=self.settings.wnt_protocol_version,
-                                                    logger=self.logger)
+        self.authentication = AuthenticationManager(
+            hostname=self.settings.wnt_hostname,
+            username=self.settings.wnt_username,
+            password=self.settings.wnt_password,
+            protocol_version=self.settings.wnt_protocol_version,
+            logger=self.logger,
+        )
 
-        self.realtime = RealtimeManager(hostname=self.settings.wnt_hostname,
-                                        protocol_version=self.settings.wnt_protocol_version,
-                                        logger=self.logger)
+        self.realtime = RealtimeManager(
+            hostname=self.settings.wnt_hostname,
+            protocol_version=self.settings.wnt_protocol_version,
+            logger=self.logger,
+        )
 
-        self.metadata = MetadataManager(hostname=self.settings.wnt_hostname,
-                                        protocol_version=self.settings.wnt_protocol_version,
-                                        logger=self.logger)
+        self.metadata = MetadataManager(
+            hostname=self.settings.wnt_hostname,
+            protocol_version=self.settings.wnt_protocol_version,
+            logger=self.logger,
+        )
 
     def login(self) -> None:
 
@@ -44,7 +51,7 @@ class Backend(object):
         message = self.authentication.tx_queue.get(block=True)
 
         try:
-            self.session_id = message['session_id']
+            self.session_id = message["session_id"]
         except KeyError:
             raise
 
@@ -70,11 +77,14 @@ class Backend(object):
             try:
                 message = self.realtime.tx_queue.get(block=True, timeout=10)
                 if message:
-                    print('<< new message @ {local} ({utc})'.format(
-                        local=datetime.datetime.now().isoformat(),
-                        utc=datetime.datetime.utcnow().isoformat()))
+                    print(
+                        "<< new message @ {local} ({utc})".format(
+                            local=datetime.datetime.now().isoformat(),
+                            utc=datetime.datetime.utcnow().isoformat(),
+                        )
+                    )
                     print(message)
-                    print('== EOM')
+                    print("== EOM")
             except queue.Empty:
                 pass
 
@@ -89,7 +99,7 @@ class Backend(object):
         self.connect_all(exit_signal)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     parse = ParserHelper(description="WNT backend client arguments")
 

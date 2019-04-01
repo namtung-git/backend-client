@@ -36,7 +36,7 @@ from .stream import StreamObserver
 class InfluxSettings(Settings):
     """MySQL Settings"""
 
-    def __init__(self, settings: Settings)-> 'InfluxSettings':
+    def __init__(self, settings: Settings) -> "InfluxSettings":
 
         super(InfluxSettings, self).__init__(settings)
 
@@ -52,26 +52,32 @@ class InfluxSettings(Settings):
 class InfluxObserver(StreamObserver):
     """ InfluxObserver monitors the internal queues and dumps events to the database """
 
-    def __init__(self,
-                 influx_settings: Settings,
-                 start_signal: multiprocessing.Event,
-                 exit_signal: multiprocessing.Event,
-                 tx_queue: multiprocessing.Queue,
-                 rx_queue: multiprocessing.Queue,
-                 logger=None) -> 'InfluxObserver':
-        super(InfluxObserver, self).__init__(start_signal=start_signal,
-                                             exit_signal=exit_signal,
-                                             tx_queue=tx_queue,
-                                             rx_queue=rx_queue)
+    def __init__(
+        self,
+        influx_settings: Settings,
+        start_signal: multiprocessing.Event,
+        exit_signal: multiprocessing.Event,
+        tx_queue: multiprocessing.Queue,
+        rx_queue: multiprocessing.Queue,
+        logger=None,
+    ) -> "InfluxObserver":
+        super(InfluxObserver, self).__init__(
+            start_signal=start_signal,
+            exit_signal=exit_signal,
+            tx_queue=tx_queue,
+            rx_queue=rx_queue,
+        )
 
         self.logger = logger or logging.getLogger(__name__)
 
-        self.influx = Influx(username=influx_settings.username,
-                             password=influx_settings.password,
-                             hostname=influx_settings.hostname,
-                             port=influx_settings.port,
-                             database=influx_settings.database,
-                             logger=self.logger)
+        self.influx = Influx(
+            username=influx_settings.username,
+            password=influx_settings.password,
+            hostname=influx_settings.hostname,
+            port=influx_settings.port,
+            database=influx_settings.database,
+            logger=self.logger,
+        )
 
         self.timeout = 1
 
@@ -86,17 +92,17 @@ class InfluxObserver(StreamObserver):
         except queue.Empty:
             message = None
             pass
-        self.logger.debug('Influx query: {}'.format(message))
+        self.logger.debug("Influx query: {}".format(message))
         result = self.influx.query(message)
         self.tx_queue.put(result)
-        self.logger.debug('Influx result: {}'.format(result))
+        self.logger.debug("Influx result: {}".format(result))
 
     def run(self):
         """ Runs until asked to exit """
         try:
             self.influx.connect()
         except Exception as err:
-            self.logger.error('error connecting to database {}'.format(err))
+            self.logger.error("error connecting to database {}".format(err))
             pass
 
         while not self.exit_signal.is_set():
@@ -124,7 +130,16 @@ class Influx(object):
 
     """
 
-    def __init__(self, hostname: str, port: int, user: str, password: str, database: str, ssl: bool, verify_ssl: bool):
+    def __init__(
+        self,
+        hostname: str,
+        port: int,
+        user: str,
+        password: str,
+        database: str,
+        ssl: bool,
+        verify_ssl: bool,
+    ):
         super(Influx, self).__init__()
 
         self.hostname = hostname
@@ -141,7 +156,8 @@ class Influx(object):
         self._message_number_map = dict()
 
         self._message_fields = list(
-            wirepas_messaging.wnt.Message.DESCRIPTOR.fields)
+            wirepas_messaging.wnt.Message.DESCRIPTOR.fields
+        )
 
         self._field_init()
 
@@ -167,19 +183,19 @@ class Influx(object):
         Returns:
             An array with named fields as dictionary
         """
-        payload = payload.replace('[', '').replace(']', '')
-        payload = payload.split(',')
+        payload = payload.replace("[", "").replace("]", "")
+        payload = payload.split(",")
 
         # elements = name:{base:int}
         array = list()
         target = dict()
 
         for entry in payload:
-            values = entry.split(':')
+            values = entry.split(":")
 
             for k, v in elements.items():
                 if k in values[0]:
-                    target[k] = elements[k]['base'](values[1])
+                    target[k] = elements[k]["base"](values[1])
                     break
 
             if len(target.keys()) == len(elements.keys()):
@@ -188,10 +204,12 @@ class Influx(object):
 
         return array
 
-    def _map_nested_field(self,
-                          parent_name: str,
-                          parent_pseudo_name: str,
-                          field: 'google.protobuf.descriptor.FieldDescriptor')->None:
+    def _map_nested_field(
+        self,
+        parent_name: str,
+        parent_pseudo_name: str,
+        field: "google.protobuf.descriptor.FieldDescriptor",
+    ) -> None:
         """
         Maps nested fields inside a proto definition.
 
@@ -206,19 +224,21 @@ class Influx(object):
 
         """
 
-        parent_pseudo_name = '{}_{{}}'.format(parent_pseudo_name)
+        parent_pseudo_name = "{}_{{}}".format(parent_pseudo_name)
 
         if field.message_type:
             nested_fields = list(field.message_type.fields)
             for nested_field in nested_fields:
 
                 pseudo_name = parent_pseudo_name.format(nested_field.number)
-                name = '{}.{}'.format(parent_name, nested_field.name)
+                name = "{}.{}".format(parent_name, nested_field.name)
 
                 self._message_field_map[pseudo_name] = name
-                self._map_nested_field(parent_name=name,
-                                       parent_pseudo_name=pseudo_name,
-                                       field=nested_field)
+                self._map_nested_field(
+                    parent_name=name,
+                    parent_pseudo_name=pseudo_name,
+                    field=nested_field,
+                )
 
     def _field_init(self):
         """
@@ -227,56 +247,60 @@ class Influx(object):
 
         for field in self._message_fields:
 
-            name = 'Message_{}'.format(field.number)
+            name = "Message_{}".format(field.number)
 
             self._message_number_map[field.number] = {name: field.name}
             self._message_field_map[name] = field.name
 
-            self._map_nested_field(parent_name=field.name,
-                                   parent_pseudo_name=name,
-                                   field=field)
+            self._map_nested_field(
+                parent_name=field.name, parent_pseudo_name=name, field=field
+            )
 
         return self._message_field_map
 
     def connect(self):
         """ Setup an Influx client connection """
-        self.client = influxdb.DataFrameClient(host=self.hostname,
-                                               port=self.port,
-                                               username=self.user,
-                                               password=self.password,
-                                               database=self.database,
-                                               ssl=self.ssl,
-                                               verify_ssl=self.verify_ssl)
+        self.client = influxdb.DataFrameClient(
+            host=self.hostname,
+            port=self.port,
+            username=self.user,
+            password=self.password,
+            database=self.database,
+            ssl=self.ssl,
+            verify_ssl=self.verify_ssl,
+        )
 
     def location_measurements(self, last_n_seconds=60):
         """ Retrieves location measurements from the server """
-        __measurement = 'location_measurement'
+        __measurement = "location_measurement"
         __table = '"wirepas"."autogen"."{}"'.format(__measurement)
-        __elements = dict(type={'base': int},
-                          value={'base': float},
-                          target={'base': int})
+        __elements = dict(
+            type={"base": int}, value={"base": float}, target={"base": int}
+        )
 
-        query = ('SELECT * FROM {} '
-                 'WHERE time > now() - {}s').format(__table,
-                                                    last_n_seconds)
+        query = ("SELECT * FROM {} " "WHERE time > now() - {}s").format(
+            __table, last_n_seconds
+        )
         df = self.query(query)[__measurement]
 
-        df['positioning_mesh_data.payload'] = df[
-            'positioning_mesh_data.payload'].map(lambda x: self._map_array_fields(x))
+        df["positioning_mesh_data.payload"] = df[
+            "positioning_mesh_data.payload"
+        ].map(lambda x: self._map_array_fields(x))
 
-        df['positioning_mesh_data.payload'] = df['positioning_mesh_data.payload'].map(
-            lambda x: self._decode_array(x, __elements))
+        df["positioning_mesh_data.payload"] = df[
+            "positioning_mesh_data.payload"
+        ].map(lambda x: self._decode_array(x, __elements))
 
         return df
 
     def location_updates(self, last_n_seconds=120):
         """ Retrieves location measurements from the server """
-        __measurement = 'location_update'
+        __measurement = "location_update"
         __table = '"wirepas"."autogen"."{}"'.format(__measurement)
 
-        query = ('SELECT * FROM {} '
-                 'WHERE time > now() - {}s').format(__table,
-                                                    last_n_seconds)
+        query = ("SELECT * FROM {} " "WHERE time > now() - {}s").format(
+            __table, last_n_seconds
+        )
         df = self.query(query)[__measurement]
 
         print(query)
@@ -284,7 +308,7 @@ class Influx(object):
 
         return df
 
-    def query(self, statement: str, named_fields=True)-> pandas.DataFrame:
+    def query(self, statement: str, named_fields=True) -> pandas.DataFrame:
         """ Sends the query to the database object """
 
         result = self.client.query(statement)
@@ -295,19 +319,28 @@ class Influx(object):
         return result
 
 
-if __name__ == '__main__':
-    def main(hostname='localhost',
-             port=8086,
-             user='influxuser',
-             password='influxuserpassword',
-             database='wirepas',
-             ssl=True,
-             verify_ssl=True):
+if __name__ == "__main__":
+
+    def main(
+        hostname="localhost",
+        port=8086,
+        user="influxuser",
+        password="influxuserpassword",
+        database="wirepas",
+        ssl=True,
+        verify_ssl=True,
+    ):
         """Instantiate a connection to the InfluxDB."""
 
-        db = Influx(hostname=hostname, port=port, user=user,
-                    password=password, database=database, ssl=ssl,
-                    verify_ssl=verify_ssl)
+        db = Influx(
+            hostname=hostname,
+            port=port,
+            user=user,
+            password=password,
+            database=database,
+            ssl=ssl,
+            verify_ssl=verify_ssl,
+        )
 
         results = list()
 
@@ -317,52 +350,64 @@ if __name__ == '__main__':
             results.append(db.location_updates())
 
         except requests.exceptions.ConnectionError:
-            results = 'Could not find host'
+            results = "Could not find host"
 
         return results
 
     def parse_args():
         """Parse the args."""
         parser = argparse.ArgumentParser(
-            description='example code to play with InfluxDB')
-        parser.add_argument('--influx_hostname',
-                            type=str,
-                            required=False,
-                            default='localhost',
-                            help='hostname of InfluxDB http API')
+            description="example code to play with InfluxDB"
+        )
+        parser.add_argument(
+            "--influx_hostname",
+            type=str,
+            required=False,
+            default="localhost",
+            help="hostname of InfluxDB http API",
+        )
 
-        parser.add_argument('--influx_port',
-                            type=int,
-                            required=False,
-                            default=8886,
-                            help='port of InfluxDB http API')
+        parser.add_argument(
+            "--influx_port",
+            type=int,
+            required=False,
+            default=8886,
+            help="port of InfluxDB http API",
+        )
 
-        parser.add_argument('--influx_user',
-                            type=str,
-                            required=False,
-                            default='influxuser',
-                            help='user of InfluxDB http API')
+        parser.add_argument(
+            "--influx_user",
+            type=str,
+            required=False,
+            default="influxuser",
+            help="user of InfluxDB http API",
+        )
 
-        parser.add_argument('--influx_password',
-                            type=str,
-                            required=False,
-                            default='influxuserpassword',
-                            help='password of InfluxDB http API')
+        parser.add_argument(
+            "--influx_password",
+            type=str,
+            required=False,
+            default="influxuserpassword",
+            help="password of InfluxDB http API",
+        )
 
-        parser.add_argument('--influx_database',
-                            type=str,
-                            required=False,
-                            default='wirepas',
-                            help='port of InfluxDB http API')
+        parser.add_argument(
+            "--influx_database",
+            type=str,
+            required=False,
+            default="wirepas",
+            help="port of InfluxDB http API",
+        )
 
-        parser.add_argument('--influx_ssl',
-                            action='store_false',
-                            required=False,
-                            help='use https when talking to the API')
+        parser.add_argument(
+            "--influx_ssl",
+            action="store_false",
+            required=False,
+            help="use https when talking to the API",
+        )
 
         return parser.parse_args()
 
     args = parse_args()
 
-    df = main(hostname=args.influx_hostname,
-              port=args.influx_port)
+    df = main(hostname=args.influx_hostname, port=args.influx_port)

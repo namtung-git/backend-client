@@ -29,12 +29,14 @@ class TestManager(object):
 
     """
 
-    def __init__(self,
-                 tx_queue: multiprocessing.Queue,
-                 rx_queue: multiprocessing.Queue,
-                 start_signal: multiprocessing.Event,
-                 exit_signal: multiprocessing.Event,
-                 logger=None):
+    def __init__(
+        self,
+        tx_queue: multiprocessing.Queue,
+        rx_queue: multiprocessing.Queue,
+        start_signal: multiprocessing.Event,
+        exit_signal: multiprocessing.Event,
+        logger=None,
+    ):
 
         super(TestManager, self).__init__()
         self.tx_queue = tx_queue
@@ -53,7 +55,7 @@ class TestManager(object):
         return (deadline - now).total_seconds()
 
     # Move to interface
-    def register_task(self, cb: callable, number_of_runs=1)->None:
+    def register_task(self, cb: callable, number_of_runs=1) -> None:
         """
         Registers a task within the Manager's stack
 
@@ -66,14 +68,15 @@ class TestManager(object):
 
     def execution_jitter(self, min=0, max=0):
         """ Defines the jitter amount"""
-        self._jitter_interval['min'] = min
-        self._jitter_interval['max'] = max
+        self._jitter_interval["min"] = min
+        self._jitter_interval["max"] = max
 
     def jitter(self):
         """ sleep for a random amount of seconds """
-        rnd = random.uniform(self._jitter_interval[
-                             'min'], self._jitter_interval['max'])
-        self.logger.info('Applying task jitter {}s'.format(rnd))
+        rnd = random.uniform(
+            self._jitter_interval["min"], self._jitter_interval["max"]
+        )
+        self.logger.info("Applying task jitter {}s".format(rnd))
         time.sleep(rnd)
 
     def reset(self):
@@ -83,7 +86,7 @@ class TestManager(object):
         except:
             pass
 
-    def run(self)->None:
+    def run(self) -> None:
         """ Executes each task in the Manager's stack, one by one """
         try:
             task_counter = 0
@@ -94,5 +97,5 @@ class TestManager(object):
                 task(task_counter)
                 self.reset()
         except:
-            print('something went wrong')
+            print("something went wrong")
             self.exit_signal.set()

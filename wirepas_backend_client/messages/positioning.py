@@ -40,7 +40,7 @@ class PositioningMessage(GenericMessage):
     DESTINATION_EP = 238
     MESSAGE_COUNTER = 0
 
-    def __init__(self, *args, **kwargs)-> 'PositioningMessage':
+    def __init__(self, *args, **kwargs) -> "PositioningMessage":
 
         super(PositioningMessage, self).__init__(*args, **kwargs)
 
@@ -52,14 +52,14 @@ class PositioningMessage(GenericMessage):
     def decode(self) -> None:
         """ Decodes the APDU content base on the application """
 
-        self.decode_time = datetime.datetime.utcnow().isoformat('T')
+        self.decode_time = datetime.datetime.utcnow().isoformat("T")
 
         if isinstance(self.data_payload, str):
             self.data_payload = bytes(self.data_payload, "utf8")
 
         apdu_len = len(self.data_payload)
-        format_header = struct.Struct('<H B B')
-        format_meas = struct.Struct('<B B B B')
+        format_header = struct.Struct("<H B B")
+        format_meas = struct.Struct("<B B B B")
 
         # get the first 4 bytes
         header = format_header.unpack(self.data_payload[0:4])
@@ -69,7 +69,7 @@ class PositioningMessage(GenericMessage):
         payload_len = header[2]
 
         if len(body) % 4:
-            self.logger.error('invalid payload {0}'.format(len(body) / 4))
+            self.logger.error("invalid payload {0}".format(len(body) / 4))
             return None
 
         measurements = list()
@@ -86,11 +86,13 @@ class PositioningMessage(GenericMessage):
 
             measurements.append(dict(address=addr, rss=rss))
 
-        self.apdu_content = dict(sequence=sequence,
-                                 type=msg_type,
-                                 length=payload_len,
-                                 nb_measurements=len(measurements),
-                                 measurements=measurements)
+        self.apdu_content = dict(
+            sequence=sequence,
+            type=msg_type,
+            length=payload_len,
+            nb_measurements=len(measurements),
+            measurements=measurements,
+        )
 
         if self.data_payload:
             self.data_payload = self.data_payload.hex()
@@ -100,7 +102,7 @@ class PositioningMessage(GenericMessage):
 
         self.serialization = super().serialize()
 
-        for meas in self.apdu_content['measurements']:
-            self.serialization[str(meas['address'])] = meas['rss']
+        for meas in self.apdu_content["measurements"]:
+            self.serialization[str(meas["address"])] = meas["rss"]
 
         return self.serialization

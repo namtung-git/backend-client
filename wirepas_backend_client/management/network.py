@@ -11,7 +11,7 @@ from ..api import topic_message
 from ..api import decode_topic_message
 from ..api import StreamObserver
 from ..tools import ExitSignal
-from .. messages.interface import MessageManager
+from ..messages.interface import MessageManager
 
 
 class NetworkDiscovery(StreamObserver):
@@ -25,17 +25,19 @@ class NetworkDiscovery(StreamObserver):
 
     """
 
-    def __init__(self,
-                 mqtt_settings,
-                 shared_state=None,
-                 data_queue=None,
-                 event_queue=None,
-                 gateway_id: str = '+',
-                 sink_id: str = '+',
-                 network_id: str = '+',
-                 source_endpoint: str = '+',
-                 destination_endpoint: str = '+',
-                 ** kwargs):
+    def __init__(
+        self,
+        mqtt_settings,
+        shared_state=None,
+        data_queue=None,
+        event_queue=None,
+        gateway_id: str = "+",
+        sink_id: str = "+",
+        network_id: str = "+",
+        source_endpoint: str = "+",
+        destination_endpoint: str = "+",
+        **kwargs
+    ):
         """ MQTT Observer constructor """
 
         try:
@@ -66,11 +68,13 @@ class NetworkDiscovery(StreamObserver):
         self.data_queue = data_queue
         self.event_queue = event_queue
 
-        self.network_parameters = dict(gw_id=str(gateway_id),
-                                       sink_id=str(sink_id),
-                                       network_id=str(network_id),
-                                       src_ep=str(source_endpoint),
-                                       dst_ep=str(destination_endpoint))
+        self.network_parameters = dict(
+            gw_id=str(gateway_id),
+            sink_id=str(sink_id),
+            network_id=str(network_id),
+            src_ep=str(source_endpoint),
+            dst_ep=str(destination_endpoint),
+        )
 
         self.mqtt_settings = mqtt_settings
         self.mqtt_topics = Topics()
@@ -79,30 +83,34 @@ class NetworkDiscovery(StreamObserver):
 
         self.message_publish_handlers = {"from_message": self.send_data}
 
-        self.logger.debug('setting up MQTT to: {}')
-        self.mqtt = MQTT(username=mqtt_settings.username,
-                         password=mqtt_settings.password,
-                         hostname=mqtt_settings.hostname,
-                         port=mqtt_settings.port,
-                         ca_certs=mqtt_settings.ca_certs,
-                         userdata=mqtt_settings.userdata,
-                         transport=mqtt_settings.transport,
-                         clean_session=mqtt_settings.clean_session,
-                         reconnect_min_delay=mqtt_settings.reconnect_min_delay,
-                         reconnect_max_delay=mqtt_settings.reconnect_max_delay,
-                         allow_untrusted=mqtt_settings.mqtt_allow_untrusted,
-                         force_unsecure=mqtt_settings.mqtt_force_unsecure,
-                         heartbeat=mqtt_settings.heartbeat,
-                         keep_alive=mqtt_settings.keep_alive,
-                         exit_signal=self.exit_signal,
-                         message_subscribe_handlers=self.message_subscribe_handlers,
-                         message_publish_handlers=self.message_publish_handlers,
-                         logger=self.logger)
+        self.logger.debug("setting up MQTT to: {}")
+        self.mqtt = MQTT(
+            username=mqtt_settings.username,
+            password=mqtt_settings.password,
+            hostname=mqtt_settings.hostname,
+            port=mqtt_settings.port,
+            ca_certs=mqtt_settings.ca_certs,
+            userdata=mqtt_settings.userdata,
+            transport=mqtt_settings.transport,
+            clean_session=mqtt_settings.clean_session,
+            reconnect_min_delay=mqtt_settings.reconnect_min_delay,
+            reconnect_max_delay=mqtt_settings.reconnect_max_delay,
+            allow_untrusted=mqtt_settings.mqtt_allow_untrusted,
+            force_unsecure=mqtt_settings.mqtt_force_unsecure,
+            heartbeat=mqtt_settings.heartbeat,
+            keep_alive=mqtt_settings.keep_alive,
+            exit_signal=self.exit_signal,
+            message_subscribe_handlers=self.message_subscribe_handlers,
+            message_publish_handlers=self.message_publish_handlers,
+            logger=self.logger,
+        )
 
         self.shared_state = shared_state
         self.device_manager = MeshManagement()
 
-    def run(self, message_subscribe_handlers=None, message_publish_handlers=None):
+    def run(
+        self, message_subscribe_handlers=None, message_publish_handlers=None
+    ):
         """
         Executes MQTT loop
 
@@ -136,35 +144,40 @@ class NetworkDiscovery(StreamObserver):
 
         # track gateway events
         event_status = self.mqtt_topics.event(
-            'status', self.network_parameters)
+            "status", self.network_parameters
+        )
         event_received_data = self.mqtt_topics.event(
-            'received_data', self.network_parameters)
+            "received_data", self.network_parameters
+        )
 
         response_get_configs = self.mqtt_topics.response(
-            "get_configs", self.network_parameters)
+            "get_configs", self.network_parameters
+        )
         response_set_config = self.mqtt_topics.response(
-            "set_config", self.network_parameters)
+            "set_config", self.network_parameters
+        )
         response_send_data = self.mqtt_topics.response(
-            "send_data", self.network_parameters)
+            "send_data", self.network_parameters
+        )
         response_otap_status = self.mqtt_topics.response(
-            "otap_status", self.network_parameters)
+            "otap_status", self.network_parameters
+        )
         response_otap_load_scratchpad = self.mqtt_topics.response(
-            "otap_load_scratchpad", self.network_parameters)
+            "otap_load_scratchpad", self.network_parameters
+        )
         response_otap_process_scratchpad = self.mqtt_topics.response(
-            "otap_process_scratchpad", self.network_parameters)
+            "otap_process_scratchpad", self.network_parameters
+        )
 
         message_subscribe_handlers = {
             event_status: self.generate_gateway_status_event_cb(),
             event_received_data: self.generate_gateway_data_event_cb(),
-
             response_get_configs: self.generate_gateway_response_get_configs_cb(),
             response_set_config: self.generate_gateway_response_set_config_cb(),
-
             response_send_data: self.generate_gateway_data_response_cb(),
-
             response_otap_status: self.generate_gateway_otap_status_response_cb(),
             response_otap_load_scratchpad: self.generate_gateway_load_scratchpad_response_cb(),
-            response_otap_process_scratchpad: self.generate_gateway_process_scratchpad_response_cb()
+            response_otap_process_scratchpad: self.generate_gateway_process_scratchpad_response_cb(),
         }
 
         return message_subscribe_handlers
@@ -183,17 +196,17 @@ class NetworkDiscovery(StreamObserver):
             if "from_message" in topic:
                 topic = message["topic"]
 
-            if 'qos' in message:
+            if "qos" in message:
                 qos = message["qos"]
             else:
                 qos = 1
 
-            if 'retain' in message:
+            if "retain" in message:
                 retain = message["retain"]
             else:
                 retain = False
 
-            if 'wait_for_publish' in message:
+            if "wait_for_publish" in message:
                 wait_for_publish = message["wait_for_publish"]
             else:
                 wait_for_publish = False
@@ -203,11 +216,13 @@ class NetworkDiscovery(StreamObserver):
             except AttributeError:
                 message = message["data"]
 
-            mqtt_publish(message=message,
-                         retain=retain,
-                         qos=qos,
-                         topic=topic,
-                         wait_for_publish=wait_for_publish)
+            mqtt_publish(
+                message=message,
+                retain=retain,
+                qos=qos,
+                topic=topic,
+                wait_for_publish=wait_for_publish,
+            )
 
         except queue.Empty:
             data = None
@@ -223,7 +238,7 @@ class NetworkDiscovery(StreamObserver):
             pass
 
     # Subscribing
-    def generate_gateway_status_event_cb(self)->callable:
+    def generate_gateway_status_event_cb(self) -> callable:
         @topic_message
         def on_gateway_status_event_cb(message, topic: list):
             """ Decodes an incoming gateway status event """
@@ -231,7 +246,8 @@ class NetworkDiscovery(StreamObserver):
             self.logger.info("status event {}".format(message))
             try:
                 message = wirepas_messaging.gateway.api.StatusEvent.from_payload(
-                    message)
+                    message
+                )
 
                 # updates gateway details
                 gateway = self.device_manager.add(message.gw_id)
@@ -243,26 +259,28 @@ class NetworkDiscovery(StreamObserver):
 
         return on_gateway_status_event_cb
 
-    def generate_gateway_data_event_cb(self)->callable:
+    def generate_gateway_data_event_cb(self) -> callable:
         @decode_topic_message
         def on_gateway_data_event_cb(message, topic: list):
             """ Decodes an incoming data event callback """
 
             self.logger.info("data event: {}".format(message))
-            self.device_manager.add_from_mqtt_topic(topic,
-                                                    message.source_address)
+            self.device_manager.add_from_mqtt_topic(
+                topic, message.source_address
+            )
             self.notify(message=message, path="data")
 
         return on_gateway_data_event_cb
 
-    def generate_gateway_response_get_configs_cb(self)->callable:
+    def generate_gateway_response_get_configs_cb(self) -> callable:
         @topic_message
         def on_gateway_get_configs_cb(message, topic: list):
             """ Decodes and incoming configuration response """
 
             self.logger.info("configs response: {}".format(message))
-            message = self.mqtt_topics.constructor("response",
-                                                   "get_configs").from_payload(message)
+            message = self.mqtt_topics.constructor(
+                "response", "get_configs"
+            ).from_payload(message)
 
             self.device_manager.add_from_mqtt_topic(topic)
             self.device_manager.update(message.gw_id, message.configs)
@@ -270,64 +288,69 @@ class NetworkDiscovery(StreamObserver):
 
         return on_gateway_get_configs_cb
 
-    def generate_gateway_otap_status_response_cb(self)->callable:
+    def generate_gateway_otap_status_response_cb(self) -> callable:
         @topic_message
         def on_gateway_otap_status_cb(message, topic: list):
             """ Decodes an otap status response """
             self.logger.info("otap status response: {}".format(message))
-            message = self.mqtt_topics.constructor("response",
-                                                   "otap_status").from_payload(message)
+            message = self.mqtt_topics.constructor(
+                "response", "otap_status"
+            ).from_payload(message)
             self.notify(message, path="response")
 
         return on_gateway_otap_status_cb
 
-    def generate_gateway_response_set_config_cb(self)->callable:
+    def generate_gateway_response_set_config_cb(self) -> callable:
         @topic_message
         def on_gateway_set_config_response_cb(message, topic: list):
             """ Decodes a set config response """
             self.logger.info("set config response: {}".format(message))
-            message = self.mqtt_topics.constructor("response",
-                                                   "set_config").from_payload(message)
+            message = self.mqtt_topics.constructor(
+                "response", "set_config"
+            ).from_payload(message)
             self.notify(message, path="response")
 
         return on_gateway_set_config_response_cb
 
-    def generate_gateway_data_response_cb(self)->callable:
+    def generate_gateway_data_response_cb(self) -> callable:
         @topic_message
         def on_gateway_data_response_cb(message, topic: list):
             """ Decodes a data response """
             self.logger.info("send data response: {}".format(message))
             self.device_manager.add_from_mqtt_topic(topic)
-            message = self.mqtt_topics.constructor("response",
-                                                   "send_data").from_payload(message)
+            message = self.mqtt_topics.constructor(
+                "response", "send_data"
+            ).from_payload(message)
 
             self.notify(message, path="response")
 
         return on_gateway_data_response_cb
 
-    def generate_gateway_load_scratchpad_response_cb(self)->callable:
+    def generate_gateway_load_scratchpad_response_cb(self) -> callable:
         @topic_message
         def on_gateway_load_scratchpad_response_cb(message, topic: list):
             """ """
             self.logger.info("load scratchpad response: {}".format(message))
-            message = self.mqtt_topics.constructor("response",
-                                                   "otap_load_scratchpad").from_payload(message)
+            message = self.mqtt_topics.constructor(
+                "response", "otap_load_scratchpad"
+            ).from_payload(message)
             self.notify(message, path="response")
 
         return on_gateway_load_scratchpad_response_cb
 
-    def generate_gateway_process_scratchpad_response_cb(self)->callable:
+    def generate_gateway_process_scratchpad_response_cb(self) -> callable:
         @topic_message
         def on_gateway_process_scratchpad_cb(message, topic: list):
             """ """
             self.logger.info("process scratchpad response: {}".format(message))
-            message = self.mqtt_topics.constructor("response",
-                                                   "otap_process_scratchpad").from_payload(message)
+            message = self.mqtt_topics.constructor(
+                "response", "otap_process_scratchpad"
+            ).from_payload(message)
             self.notify(message, path="response")
 
         return on_gateway_process_scratchpad_cb
 
-    def generate_gateway_response_cb(self)->callable:
+    def generate_gateway_response_cb(self) -> callable:
         @topic_message
         def on_response_cb(message, topic: list):
             """ generic message handler """
@@ -342,15 +365,18 @@ class MeshDevice(object):
 
     Lowest representation of a WM device
     """
+
     __name = "node"
 
-    def __init__(self,
-                 device_id: str,
-                 network_id: str=None,
-                 gateway_id: str=None,
-                 state: int=None,
-                 role: int=None,
-                 **kwargs):
+    def __init__(
+        self,
+        device_id: str,
+        network_id: str = None,
+        gateway_id: str = None,
+        state: int = None,
+        role: int = None,
+        **kwargs
+    ):
         super(MeshDevice, self).__init__()
         self._device_id = str(device_id)
         self.__dict__["device_type"] = self.__name
@@ -370,18 +396,18 @@ class MeshDevice(object):
         for k, v in configuration.items():
             if v is not None:
                 self.__dict__[k] = v
-                if 'network_address' in k:
-                    self.__dict__['network_id'] = v
+                if "network_address" in k:
+                    self.__dict__["network_id"] = v
 
     @property
     def device_id(self):
         return self._device_id
 
     def __str__(self):
-        id_str = 'Device type: {}\n'.format(self.__name)
-        id_str = '{}Device attributes: \n'.format(id_str)
+        id_str = "Device type: {}\n".format(self.__name)
+        id_str = "{}Device attributes: \n".format(id_str)
         for k, v in self.__dict__.items():
-            id_str = '{}  {}={}\n'.format(id_str, k, v)
+            id_str = "{}  {}={}\n".format(id_str, k, v)
         return id_str
 
 
@@ -391,6 +417,7 @@ class Sink(MeshDevice):
 
     Lowest representation of a WM device
     """
+
     __name = "sink"
 
     # add allowed properties to filter out clutter
@@ -408,13 +435,15 @@ class Sink(MeshDevice):
 
     def __str__(self):
 
-        id_str = ('Sink id: {_device_id}\n'
-                  'Attached to network: {network_id}\n'
-                  'Address: {node_address}\n'
-                  'Appconfig: {app_config_data}\n'
-                  'Appconfig interval: {app_config_diag}\n'
-                  'Role: {role}\n'
-                  'Firmware: {firmware_version}\n').format(**self.__dict__)
+        id_str = (
+            "Sink id: {_device_id}\n"
+            "Attached to network: {network_id}\n"
+            "Address: {node_address}\n"
+            "Appconfig: {app_config_data}\n"
+            "Appconfig interval: {app_config_diag}\n"
+            "Role: {role}\n"
+            "Firmware: {firmware_version}\n"
+        ).format(**self.__dict__)
 
         return id_str
 
@@ -425,12 +454,13 @@ class Gateway(MeshDevice):
 
     Lowest representation of a WM device
     """
+
     __name = "gateway"
 
     def __init__(self, device_id, network_id=None, **kwargs):
-        super(Gateway, self).__init__(device_id=device_id,
-                                      network_id=network_id,
-                                      **kwargs)
+        super(Gateway, self).__init__(
+            device_id=device_id, network_id=network_id, **kwargs
+        )
         self.gateway_id = device_id
         self.state = None
         self._sinks = dict()
@@ -446,7 +476,7 @@ class Gateway(MeshDevice):
 
         if devices and attribute:
             for device in devices:
-                if not device.device_id in attribute:
+                if device.device_id not in attribute:
                     attribute[device.device_id] = device
 
     def remove(self, device_id):
@@ -469,18 +499,22 @@ class Gateway(MeshDevice):
     @sinks.setter
     def sinks(self, value: list):
         for sink in value:
-            if sink and not sink in self._sinks:
-                self._sinks[sink] = Sink(device_id=sink,
-                                         network_id=self.network_id,
-                                         gateway_id=self.device_id)
+            if sink and sink not in self._sinks:
+                self._sinks[sink] = Sink(
+                    device_id=sink,
+                    network_id=self.network_id,
+                    gateway_id=self.device_id,
+                )
 
     @nodes.setter
     def nodes(self, value: list):
         for node in value:
-            if node and not node in self._nodes:
-                self._nodes[node] = MeshDevice(device_id=node,
-                                               network_id=self.network_id,
-                                               gateway_id=self.device_id)
+            if node and node not in self._nodes:
+                self._nodes[node] = MeshDevice(
+                    device_id=node,
+                    network_id=self.network_id,
+                    gateway_id=self.device_id,
+                )
 
     def update(self, configurations: list):
         for configuration in configurations:
@@ -492,14 +526,16 @@ class Gateway(MeshDevice):
         pass
 
     def __str__(self):
-        id_str = ('Gateway id: {gateway_id}\n'
-                  '  Attached to network: {network_id}\n').format(
-            gateway_id=self.gateway_id,
-            network_id=self.network_id)
-        id_str = '{}  Sinks:{}\n'.format(id_str, str(
-            list(map(lambda x: str(x), self.sinks))))
-        id_str = '{}  Nodes:{}\n'.format(id_str, str(
-            list(map(lambda x: str(x), self.nodes))))
+        id_str = (
+            "Gateway id: {gateway_id}\n"
+            "  Attached to network: {network_id}\n"
+        ).format(gateway_id=self.gateway_id, network_id=self.network_id)
+        id_str = "{}  Sinks:{}\n".format(
+            id_str, str(list(map(lambda x: str(x), self.sinks)))
+        )
+        id_str = "{}  Nodes:{}\n".format(
+            id_str, str(list(map(lambda x: str(x), self.nodes)))
+        )
         return id_str
 
 
@@ -509,6 +545,7 @@ class Network(object):
 
     Lowest representation of a WM device
     """
+
     name = "network"
 
     def __init__(self, network_id: str, gateways=None, sinks=None, nodes=None):
@@ -542,7 +579,7 @@ class Network(object):
     def devices(self):
         return {str(self._network_id): self._gateways}
 
-    def add(self, gateway: 'MeshDevice', sinks: list, nodes: list):
+    def add(self, gateway: "MeshDevice", sinks: list, nodes: list):
         """ Adds devices in the network """
         gateway_id = str(gateway.device_id)
         self._gateways[gateway_id] = gateway
@@ -568,18 +605,18 @@ class Network(object):
     def __str__(self):
         """ Provides a string with the summary of its contents """
 
-        id_str = 'Network: {}\n'.format(self._network_id)
+        id_str = "Network: {}\n".format(self._network_id)
 
         for gateway_id, gateway in self._gateways.items():
-            id_str = '{}  Gateway: {}\n'.format(id_str, gateway_id)
+            id_str = "{}  Gateway: {}\n".format(id_str, gateway_id)
 
             sinks = gateway.sinks
             for sink in sinks:
-                id_str = '{}    Sink:{}\n'.format(id_str, sink.device_id)
+                id_str = "{}    Sink:{}\n".format(id_str, sink.device_id)
 
             nodes = gateway.nodes
             for node in nodes:
-                id_str = '{}    Node:{}\n'.format(id_str, node.device_id)
+                id_str = "{}    Node:{}\n".format(id_str, node.device_id)
 
         return id_str
 
@@ -597,7 +634,9 @@ class MeshManagement(object):
 
     def __init__(self):
         super(MeshManagement, self).__init__()
-        self._gateways = dict()  # holds gateways because they might not have a network
+        self._gateways = (
+            dict()
+        )  # holds gateways because they might not have a network
         self._networks = dict()
 
     @property
@@ -628,7 +667,14 @@ class MeshManagement(object):
         for network in self._networks:  # generator magic
             return self._networks[network].nodes
 
-    def add(self, gw_id: str, network_id: str=None, sink_id: str=None, node_id: str=None, **kwargs):
+    def add(
+        self,
+        gw_id: str,
+        network_id: str = None,
+        sink_id: str = None,
+        node_id: str = None,
+        **kwargs
+    ):
         """
         Creates a device entry in the node management.
 
@@ -654,16 +700,17 @@ class MeshManagement(object):
 
         if network_id is not None:
             if network_id not in self._networks:
-                self._networks[network_id] = Network(network_id=network_id,
-                                                     gateways=[
-                                                         gateway_device],
-                                                     sinks=[sink_id],
-                                                     nodes=[node_id],
-                                                     **kwargs)
+                self._networks[network_id] = Network(
+                    network_id=network_id,
+                    gateways=[gateway_device],
+                    sinks=[sink_id],
+                    nodes=[node_id],
+                    **kwargs
+                )
             else:
-                self._networks[network_id].add(gateway=gateway_device,
-                                               sinks=[sink_id],
-                                               nodes=[node_id])
+                self._networks[network_id].add(
+                    gateway=gateway_device, sinks=[sink_id], nodes=[node_id]
+                )
 
         return gateway_device
 
@@ -682,13 +729,16 @@ class MeshManagement(object):
             if network_id is not None:
                 network_id = str(network_id)
                 if network_id not in self._networks:
-                    self._networks[network_id] = Network(network_id=network_id,
-                                                         gateways=[self._gateways[gateway_id]])
+                    self._networks[network_id] = Network(
+                        network_id=network_id,
+                        gateways=[self._gateways[gateway_id]],
+                    )
                 else:
                     self._networks[network_id].update(
-                        gateway_id=gateway_id, sink_configuration=configuration)
+                        gateway_id=gateway_id, sink_configuration=configuration
+                    )
 
-    def add_from_mqtt_topic(self, topic: list, node_id: list=None):
+    def add_from_mqtt_topic(self, topic: list, node_id: list = None):
         """
         Receives a ordered topic list split at the / delimiter and a node id
         if it refers to a data message
@@ -713,10 +763,12 @@ class MeshManagement(object):
         except IndexError:
             pass
 
-        self.add(gw_id=gateway_id,
-                 network_id=network_id,
-                 sink_id=sink_id,
-                 node_id=node_id)
+        self.add(
+            gw_id=gateway_id,
+            network_id=network_id,
+            sink_id=sink_id,
+            node_id=node_id,
+        )
 
     def remove(self, device_id):
         """ Removes a device or a network interely"""
@@ -728,9 +780,9 @@ class MeshManagement(object):
             network.remove(device_id)
 
     def __str__(self):
-        obj = ''
+        obj = ""
 
         for k, v in self._networks.items():
-            obj = '{}{}\n'.format(obj, str(v))
+            obj = "{}{}\n".format(obj, str(v))
 
         return obj

@@ -70,7 +70,7 @@ class NodeDiagnosticsMessage(GenericMessage):
         current_antenna               uint8
     """
 
-    def __init__(self, *args, **kwargs)-> 'NodeDiagnosticsMessage':
+    def __init__(self, *args, **kwargs) -> "NodeDiagnosticsMessage":
         super(NodeDiagnosticsMessage, self).__init__(*args, **kwargs)
         self.type = ApplicationTypes.NodeDiagnosticsMessage
 
@@ -78,71 +78,80 @@ class NodeDiagnosticsMessage(GenericMessage):
             self.data_payload = bytes(self.data_payload, "utf8")
 
         apdu_values = struct.unpack(
-            '<HBBBBBBBBHHHHHHHHBBHBHBBBHBBBBBBBBBBBBBBBBBBHB', self.data_payload)
-        apdu_names = ('access_cycle',
-                      'role',
-                      'voltage',
-                      'max_buffer_usage',
-                      'average_buffer_usage',
-                      'mem_alloc_fails',
-                      'normal_priority_buf_delay',
-                      'high_priority_buf_delay',
-                      'scans',
-                      'dl_delay_avg_0',
-                      'dl_delay_min_0',
-                      'dl_delay_max_0',
-                      'dl_delay_samples_0',
-                      'dl_delay_avg_1',
-                      'dl_delay_min_1',
-                      'dl_delay_max_1',
-                      'dl_delay_samples_1',
-                      'dropped_packets_0',
-                      'dropped_packets_1',
-                      'route_address_lo',
-                      'route_address_hi',
-                      'cost_info_next_hop_0_lo',
-                      'cost_info_next_hop_0_hi',
-                      'cost_info_cost_0',
-                      'cost_info_link_quality_0',
-                      'cost_info_next_hop_1_lo',
-                      'cost_info_next_hop_1_hi',
-                      'cost_info_cost_1',
-                      'cost_info_link_quality_1',
-                      'events_0',
-                      'events_1',
-                      'events_2',
-                      'events_3',
-                      'events_4',
-                      'events_5',
-                      'events_6',
-                      'events_7',
-                      'events_8',
-                      'events_9',
-                      'events_10',
-                      'events_11',
-                      'events_12',
-                      'events_13',
-                      'events_14',
-                      'duty_cycle',
-                      'current_antenna')
+            "<HBBBBBBBBHHHHHHHHBBHBHBBBHBBBBBBBBBBBBBBBBBBHB",
+            self.data_payload,
+        )
+        apdu_names = (
+            "access_cycle",
+            "role",
+            "voltage",
+            "max_buffer_usage",
+            "average_buffer_usage",
+            "mem_alloc_fails",
+            "normal_priority_buf_delay",
+            "high_priority_buf_delay",
+            "scans",
+            "dl_delay_avg_0",
+            "dl_delay_min_0",
+            "dl_delay_max_0",
+            "dl_delay_samples_0",
+            "dl_delay_avg_1",
+            "dl_delay_min_1",
+            "dl_delay_max_1",
+            "dl_delay_samples_1",
+            "dropped_packets_0",
+            "dropped_packets_1",
+            "route_address_lo",
+            "route_address_hi",
+            "cost_info_next_hop_0_lo",
+            "cost_info_next_hop_0_hi",
+            "cost_info_cost_0",
+            "cost_info_link_quality_0",
+            "cost_info_next_hop_1_lo",
+            "cost_info_next_hop_1_hi",
+            "cost_info_cost_1",
+            "cost_info_link_quality_1",
+            "events_0",
+            "events_1",
+            "events_2",
+            "events_3",
+            "events_4",
+            "events_5",
+            "events_6",
+            "events_7",
+            "events_8",
+            "events_9",
+            "events_10",
+            "events_11",
+            "events_12",
+            "events_13",
+            "events_14",
+            "duty_cycle",
+            "current_antenna",
+        )
         self.apdu = self.map_list_to_dict(apdu_names, apdu_values)
 
         # Create 24bit fields from 16bit and 8bit parts.
-        self.apdu['route_address'] = self.apdu[
-            'route_address_lo'] | (self.apdu['route_address_hi'] << 16)
-        self.apdu['cost_info_next_hop_0'] = self.apdu[
-            'cost_info_next_hop_0_lo'] | (self.apdu['cost_info_next_hop_0_hi'] << 16)
-        self.apdu['cost_info_next_hop_1'] = self.apdu[
-            'cost_info_next_hop_1_lo'] | (self.apdu['cost_info_next_hop_1_hi'] << 16)
+        self.apdu["route_address"] = self.apdu["route_address_lo"] | (
+            self.apdu["route_address_hi"] << 16
+        )
+        self.apdu["cost_info_next_hop_0"] = self.apdu[
+            "cost_info_next_hop_0_lo"
+        ] | (self.apdu["cost_info_next_hop_0_hi"] << 16)
+        self.apdu["cost_info_next_hop_1"] = self.apdu[
+            "cost_info_next_hop_1_lo"
+        ] | (self.apdu["cost_info_next_hop_1_hi"] << 16)
         # 4.0 interpretation of message fields:
-        self.apdu['lltx_msg_w_ack'] = self.apdu['dl_delay_avg_0']
-        self.apdu['lltx_msg_unack'] = self.apdu['dl_delay_min_0']
-        self.apdu['llrx_w_unack_ok'] = self.apdu['dl_delay_max_0']
-        self.apdu['llrx_ack_not_received'] = self.apdu['dl_delay_samples_0']
-        self.apdu['lltx_cca_unack_fail'] = self.apdu['dl_delay_avg_1']
-        self.apdu['lltx_cca_w_ack_fail'] = self.apdu['dl_delay_min_1']
-        self.apdu['llrx_w_ack_ok'] = self.apdu['dl_delay_max_1']
-        self.apdu['llrx_ack_otherreasons'] = self.apdu['dl_delay_samples_1']
-        self.apdu['blacklistexceeded'] = self.apdu['cost_info_next_hop_1'] | (
-            self.apdu['cost_info_cost_1'] << 24) | (
-            self.apdu['cost_info_link_quality_1'] << 32)
+        self.apdu["lltx_msg_w_ack"] = self.apdu["dl_delay_avg_0"]
+        self.apdu["lltx_msg_unack"] = self.apdu["dl_delay_min_0"]
+        self.apdu["llrx_w_unack_ok"] = self.apdu["dl_delay_max_0"]
+        self.apdu["llrx_ack_not_received"] = self.apdu["dl_delay_samples_0"]
+        self.apdu["lltx_cca_unack_fail"] = self.apdu["dl_delay_avg_1"]
+        self.apdu["lltx_cca_w_ack_fail"] = self.apdu["dl_delay_min_1"]
+        self.apdu["llrx_w_ack_ok"] = self.apdu["dl_delay_max_1"]
+        self.apdu["llrx_ack_otherreasons"] = self.apdu["dl_delay_samples_1"]
+        self.apdu["blacklistexceeded"] = (
+            self.apdu["cost_info_next_hop_1"]
+            | (self.apdu["cost_info_cost_1"] << 24)
+            | (self.apdu["cost_info_link_quality_1"] << 32)
+        )

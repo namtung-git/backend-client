@@ -20,6 +20,7 @@ from .generic import GenericMessage
 
 from .. import tools
 
+
 class TestNWMessage(GenericMessage):
     """
     NodeDiagnosticsMessage
@@ -36,7 +37,8 @@ class TestNWMessage(GenericMessage):
                          bytes_per_field_minus_one  2 highest bits
             datafields[number_of_fields][bytes_per_field]
     """
-    def __init__(self, *args, **kwargs)-> 'TestNWMessage':
+
+    def __init__(self, *args, **kwargs) -> "TestNWMessage":
         super(TestNWMessage, self).__init__(*args, **kwargs)
         self.type = ApplicationTypes.TestNWMessage
 
@@ -57,23 +59,27 @@ class TestNWMessage(GenericMessage):
                 if self.data_payload[apdu_offset] == 0:
                     break
                 # Test data ID is the 4 lowest bits from the first byte
-                self.testdata_id.append(self.data_payload[apdu_offset] & 0x0f)
+                self.testdata_id.append(self.data_payload[apdu_offset] & 0x0F)
                 # ID_ctrl is the 4 highest bits of the first byte
-                self.id_ctrl.append(self.data_payload[apdu_offset] & 0xf0)
+                self.id_ctrl.append(self.data_payload[apdu_offset] & 0xF0)
                 apdu_offset += 1
                 # Number of fields is the lowest 6 bits of second byte
-                self.number_of_fields.append(self.data_payload[apdu_offset] & 0x3f)
+                self.number_of_fields.append(
+                    self.data_payload[apdu_offset] & 0x3F
+                )
                 # Bytes per field is the two highest bits of second byte + 1
-                self.bytes_per_field.append((self.data_payload[apdu_offset] >> 6) + 1)
-                apdu_offset +=1
+                self.bytes_per_field.append(
+                    (self.data_payload[apdu_offset] >> 6) + 1
+                )
+                apdu_offset += 1
 
                 self.datafields.append([])
                 for i in range(self.number_of_fields[self.row_count]):
                     value = 0
                     for j in range(self.bytes_per_field[self.row_count]):
-                        value += self.data_payload[apdu_offset] << (j*8)
+                        value += self.data_payload[apdu_offset] << (j * 8)
                         apdu_offset += 1
                     self.datafields[self.row_count].append(value)
                 self.row_count += 1
         except IndexError:
-            print('A broken testnw apdu')
+            print("A broken testnw apdu")

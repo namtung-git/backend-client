@@ -26,12 +26,14 @@ class StreamObserver(object):
 
     """
 
-    def __init__(self,
-                 start_signal: multiprocessing.Event,
-                 tx_queue: multiprocessing.Queue,
-                 rx_queue: multiprocessing.Queue,
-                 exit_signal: multiprocessing.Event=None,
-                 logger: logging.Logger=None) -> 'StreamObserver':
+    def __init__(
+        self,
+        start_signal: multiprocessing.Event,
+        tx_queue: multiprocessing.Queue,
+        rx_queue: multiprocessing.Queue,
+        exit_signal: multiprocessing.Event = None,
+        logger: logging.Logger = None,
+    ) -> "StreamObserver":
         super(StreamObserver, self).__init__()
 
         self.start_signal = start_signal
@@ -47,10 +49,10 @@ class StreamObserver(object):
         if self.push_data.is_set() and message is not None:
             self.tx_queue.put(message)
 
-    def generate_data_received_cb(self)->callable:
+    def generate_data_received_cb(self) -> callable:
         """ Returns a callback to process the incoming data """
         return self.receive
 
-    def generate_data_send_cb(self)->callable:
+    def generate_data_send_cb(self) -> callable:
         """ Returns a callback to publish the outgoing data """
         return self.send_data

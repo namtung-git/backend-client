@@ -27,9 +27,7 @@ class Service(object):
         channel (grpc channel) : grpc channel
     """
 
-    def __init__(self,
-                 service_definition: dict,
-                 service_handler=None):
+    def __init__(self, service_definition: dict, service_handler=None):
         super(Service, self).__init__()
         self._service_definition = service_definition
         self._authority = None
@@ -40,10 +38,11 @@ class Service(object):
             self._service_handler = service_handler
         else:
             try:
-                self._service_handler = self._service_definition['client']
+                self._service_handler = self._service_definition["client"]
             except KeyError:
-                raise KeyError("Missing client key "
-                               "(service handler callback)")
+                raise KeyError(
+                    "Missing client key " "(service handler callback)"
+                )
 
     def __getattr__(self, name):
         return self.stub.name
@@ -54,27 +53,27 @@ class Service(object):
 
     @property
     def handler(self):
-        return self._service_definition['client']
+        return self._service_definition["client"]
 
     @property
     def address(self):
-        return self._service_definition['address']
+        return self._service_definition["address"]
 
     @property
     def ssl_root_certificate(self):
-        return self._service_definition['root.crt']
+        return self._service_definition["root.crt"]
 
     @property
     def ssl_client_key(self):
-        return self._service_definition['client.key']
+        return self._service_definition["client.key"]
 
     @property
     def ssl_client_certificate(self):
-        return self._service_definition['client.crt']
+        return self._service_definition["client.crt"]
 
     @property
     def ssl_host_cn_override(self):
-        return self._service_definition['override_cn']
+        return self._service_definition["override_cn"]
 
     def dial(self, secure=True, cb=None):
 
@@ -97,16 +96,18 @@ class Service(object):
     def _secure_connection(self, cb=None):
 
         self._authority = grpc.ssl_channel_credentials(
-            root_certificates=open(self.ssl_root_certificate, 'rb').read(),
-            private_key=open(self.ssl_client_key, 'rb').read(),
-            certificate_chain=open(self.ssl_client_certificate, 'rb').read())
+            root_certificates=open(self.ssl_root_certificate, "rb").read(),
+            private_key=open(self.ssl_client_key, "rb").read(),
+            certificate_chain=open(self.ssl_client_certificate, "rb").read(),
+        )
 
         self.channel = grpc.secure_channel(
             self.address,
             self._authority,
             options=(
-                ('grpc.ssl_target_name_override',
-                 self.ssl_host_cn_override,),))
+                ("grpc.ssl_target_name_override", self.ssl_host_cn_override),
+            ),
+        )
 
     def __str__(self):
         return str(self._service_definition)
