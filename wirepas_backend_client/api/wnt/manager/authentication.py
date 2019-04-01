@@ -8,8 +8,8 @@
 
 """
 
-
 import json
+import logging
 from wirepas_messaging.wnt import AuthenticationMessages
 
 from ..sock import WNTSocket

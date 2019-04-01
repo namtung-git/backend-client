@@ -9,6 +9,7 @@
 """
 
 import json
+import logging
 import wirepas_messaging.wnt as wnt_proto
 from wirepas_messaging.wnt import RealtimeSituationMessages
 

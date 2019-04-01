@@ -3,6 +3,6 @@
 set -e
 set -x
 
-black --check wirepas_backend_client/
+black --check .
 
-#flake8
+flake8

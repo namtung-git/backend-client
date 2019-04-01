@@ -8,6 +8,7 @@ import http.server
 import time
 import urllib
 import binascii
+import logging
 import socketserver
 
 from threading import Thread
@@ -24,9 +25,8 @@ import queue
 # Following globals are used for delivering data between
 # HTTPObserver class and HTTPServer class
 http_tw_queue = None
-gateways_and_sinks = (
-    {}
-)  # { 'gw_id': {'sink_id': {'started': True/False, 'app_config_seq': int, 'app_config_diag': int, 'app_config_data': bytes }}}
+gateways_and_sinks = {}
+# { 'gw_id': {'sink_id': {'started': True/False, 'app_config_seq': int, 'app_config_diag': int, 'app_config_data': bytes }}}
 mqtt_topics = Topics()
 
 
@@ -62,7 +62,8 @@ class SinkAndGatewayStatusObserver(Thread):
                             "ERROR: sink_id must be specified when setting started=True"
                         )
                     else:
-                        # Whole gateway is gone, mark all sinks of it as not started
+                        # Whole gateway is gone, mark all sinks of it as not
+                        # started
                         for sink in gateways_and_sinks[status_msg["gw_id"]]:
                             if "started" in sink:
                                 sink["started"] = False
@@ -91,7 +92,7 @@ class SinkAndGatewayStatusObserver(Thread):
 class HTTPSettings(Settings):
     """HTTP Settings"""
 
-    def __init__(self, settings: Settings) -> "HttpSettings":
+    def __init__(self, settings: Settings) -> "HTTPSettings":
 
         super(HTTPSettings, self).__init__(settings)
 
@@ -182,6 +183,7 @@ class HTTPServer(http.server.SimpleHTTPRequestHandler):
     all the GET requests and processes them into commands.
     """
 
+    # flake8: noqa
     def do_GET(self):
         """Process a single HTTP GET request.
         """
@@ -200,14 +202,16 @@ class HTTPServer(http.server.SimpleHTTPRequestHandler):
         # By default assume good from people and their code
         http_response = 200
 
-        # Go through all gateways and sinks that are currently known to be online.
+        # Go through all gateways and sinks that are currently known to be
+        # online.
         for gateway_id, sinks in gateways_and_sinks.items():
             for sink_id, sink in sinks.items():
 
                 if command == "datatx":
 
                     if not sink["started"]:
-                        # Do not attempt to send to sink that doesn't have stack started
+                        # Do not attempt to send to sink that doesn't have
+                        # stack started
                         continue
                     try:
                         dest_add = int(params["destination"])

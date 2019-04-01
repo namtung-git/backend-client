@@ -302,9 +302,9 @@ class Inventory(object):
 
     @property
     def node(self, node_address):
-        """ Retrives information about a single node"""
+        """ Retrieves information about a single node"""
         if node_address in self.nodes:
-            return self._index[address]
+            return self._index[node_address]
         else:
             return None
 
@@ -434,8 +434,6 @@ class AdvertiserMessage(GenericMessage):
 
         s_header = struct.Struct("<B B")
         s_advertisement = struct.Struct("<B B B B")
-
-        logger = logging.getLogger(__name__)
 
         if isinstance(self.data_payload, str):
             self.data_payload = bytes(self.data_payload, "utf8")

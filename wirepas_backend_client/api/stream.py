@@ -45,7 +45,7 @@ class StreamObserver(object):
     def send_data(self, message: dict):
         pass
 
-    def receive_data(self, *args, **kwargs):
+    def receive_data(self, message: dict, *args, **kwargs):
         if self.push_data.is_set() and message is not None:
             self.tx_queue.put(message)
 

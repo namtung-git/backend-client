@@ -41,13 +41,13 @@ class NetworkDiscovery(StreamObserver):
         """ MQTT Observer constructor """
 
         try:
-            tx_queue = kwargs["tx_queue"]
-        except Exception as e:
+            self.tx_queue = kwargs["tx_queue"]
+        except KeyError:
             kwargs["tx_queue"] = None
 
         try:
-            rx_queue = kwargs["rx_queue"]
-        except Exception as e:
+            self.rx_queue = kwargs["rx_queue"]
+        except KeyError:
             kwargs["rx_queue"] = None
 
         super(NetworkDiscovery, self).__init__(**kwargs)
@@ -225,7 +225,7 @@ class NetworkDiscovery(StreamObserver):
             )
 
         except queue.Empty:
-            data = None
+            pass
 
         except AttributeError:
             time.sleep(10)
@@ -384,13 +384,6 @@ class MeshDevice(object):
         self.role = role
         self.gateway_id = gateway_id
         self.network_id = network_id
-
-    def __str__(self):
-        defined_fields = dict()
-        for k, v in self.__dict__.items():
-            if v:
-                defined_fields[k] = v
-        return str(defined_fields)
 
     def update(self, configuration: dict):
         for k, v in configuration.items():
@@ -592,7 +585,6 @@ class Network(object):
 
     def update(self, gateway_id, sink_configuration: dict):
         """ updates the inner setting of the gateway device """
-        sink_id = sink_configuration["sink_id"]
         self._gateways[gateway_id].update([sink_configuration])
 
     def remove(self, device_id: str):
@@ -751,15 +743,11 @@ class MeshManagement(object):
         sink_id = None
         gateway_id = None
         network_id = None
-        source_endpoint = None
-        destination_endpoint = None
 
         try:
             gateway_id = topic[2]
             sink_id = topic[3]
             network_id = topic[4]
-            source_endpoint = topic[5]
-            destination_endpoint = topic[6]
         except IndexError:
             pass
 

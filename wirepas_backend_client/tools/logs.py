@@ -70,7 +70,7 @@ class LoggerHelper(object):
 
         try:
             self._logger.setLevel(eval("logging.{0}".format(self._level)))
-        except Exception as err:
+        except Exception:
             self._logger.setLevel(logging.DEBUG)
 
     @property
@@ -85,7 +85,7 @@ class LoggerHelper(object):
 
         try:
             self._logger.setLevel(eval("logging.{0}".format(self._level)))
-        except Exception as err:
+        except Exception:
             self._logger.setLevel(logging.DEBUG)
 
     def format(self, name):

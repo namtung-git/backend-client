@@ -8,6 +8,7 @@ import wirepas_backend_client
 import multiprocessing
 import time
 import queue
+import logging
 
 from wirepas_backend_client.api import MQTT
 from wirepas_backend_client.api import MQTTSettings
@@ -30,32 +31,34 @@ class MQTTViewer(wirepas_backend_client.management.NetworkDiscovery):
 
     """
 
-    def __init__(self,
-                 mqtt_settings,
-                 data_queue=None,
-                 event_queue=None,
-                 response_queue=None,
-                 network_parameters=None,
-                 ** kwargs):
+    def __init__(
+        self,
+        mqtt_settings,
+        data_queue=None,
+        event_queue=None,
+        response_queue=None,
+        network_parameters=None,
+        **kwargs
+    ):
         """ MQTT Observer constructor """
-        super(MQTTViewer, self).__init__(mqtt_settings=mqtt_settings,
-                                         data_queue=data_queue,
-                                         event_queue=event_queue,
-                                         shared_state=None,
-                                         **kwargs)
+        super(MQTTViewer, self).__init__(
+            mqtt_settings=mqtt_settings,
+            data_queue=data_queue,
+            event_queue=event_queue,
+            shared_state=None,
+            **kwargs
+        )
         self.data_queue = self.data_queue
         self.event_queue = self.event_queue
         self.response_queue = self.response_queue
 
         if "logger" in kwargs:
-            self.logger = kwargs["logger"] or logging.getLogger(__test_name__)
+            self.logger = kwargs["logger"] or logging.getLogger(__name__)
 
         if network_parameters is None:
-            self.network_parameters = dict(gw_id='+',
-                                           sink_id='+',
-                                           network_id='+',
-                                           src_ep='+',
-                                           dst_ep='+')
+            self.network_parameters = dict(
+                gw_id="+", sink_id="+", network_id="+", src_ep="+", dst_ep="+"
+            )
         else:
             self.network_parameters = network_parameters
 
@@ -66,24 +69,26 @@ class MQTTViewer(wirepas_backend_client.management.NetworkDiscovery):
 
         self.message_publish_handlers = {"from_message": self.send_data}
 
-        self.mqtt = MQTT(username=mqtt_settings.username,
-                         password=mqtt_settings.password,
-                         hostname=mqtt_settings.hostname,
-                         port=mqtt_settings.port,
-                         ca_certs=mqtt_settings.ca_certs,
-                         userdata=mqtt_settings.userdata,
-                         transport=mqtt_settings.transport,
-                         clean_session=mqtt_settings.clean_session,
-                         reconnect_min_delay=mqtt_settings.reconnect_min_delay,
-                         reconnect_max_delay=mqtt_settings.reconnect_max_delay,
-                         allow_untrusted=mqtt_settings.mqtt_allow_untrusted,
-                         force_unsecure=mqtt_settings.mqtt_force_unsecure,
-                         heartbeat=mqtt_settings.heartbeat,
-                         keep_alive=mqtt_settings.keep_alive,
-                         exit_signal=kwargs["exit_signal"],
-                         message_subscribe_handlers=self.message_subscribe_handlers,
-                         message_publish_handlers=self.message_publish_handlers,
-                         logger=self.logger)
+        self.mqtt = MQTT(
+            username=mqtt_settings.username,
+            password=mqtt_settings.password,
+            hostname=mqtt_settings.hostname,
+            port=mqtt_settings.port,
+            ca_certs=mqtt_settings.ca_certs,
+            userdata=mqtt_settings.userdata,
+            transport=mqtt_settings.transport,
+            clean_session=mqtt_settings.clean_session,
+            reconnect_min_delay=mqtt_settings.reconnect_min_delay,
+            reconnect_max_delay=mqtt_settings.reconnect_max_delay,
+            allow_untrusted=mqtt_settings.mqtt_allow_untrusted,
+            force_unsecure=mqtt_settings.mqtt_force_unsecure,
+            heartbeat=mqtt_settings.heartbeat,
+            keep_alive=mqtt_settings.keep_alive,
+            exit_signal=kwargs["exit_signal"],
+            message_subscribe_handlers=self.message_subscribe_handlers,
+            message_publish_handlers=self.message_publish_handlers,
+            logger=self.logger,
+        )
 
         self.device_manager = MeshManagement()
 
@@ -110,49 +115,55 @@ class MQTTViewer(wirepas_backend_client.management.NetworkDiscovery):
 
         # track gateway events
         event_status = self.mqtt_topics.event(
-            'status', self.network_parameters)
+            "status", self.network_parameters
+        )
         event_received_data = self.mqtt_topics.event(
-            'received_data', self.network_parameters)
+            "received_data", self.network_parameters
+        )
 
         response_get_configs = self.mqtt_topics.response(
-            "get_configs", self.network_parameters)
+            "get_configs", self.network_parameters
+        )
         response_set_config = self.mqtt_topics.response(
-            "set_config", self.network_parameters)
+            "set_config", self.network_parameters
+        )
         response_send_data = self.mqtt_topics.response(
-            "send_data", self.network_parameters)
+            "send_data", self.network_parameters
+        )
         response_otap_status = self.mqtt_topics.response(
-            "otap_status", self.network_parameters)
+            "otap_status", self.network_parameters
+        )
         response_otap_load_scratchpad = self.mqtt_topics.response(
-            "otap_load_scratchpad", self.network_parameters)
+            "otap_load_scratchpad", self.network_parameters
+        )
         response_otap_process_scratchpad = self.mqtt_topics.response(
-            "otap_process_scratchpad", self.network_parameters)
+            "otap_process_scratchpad", self.network_parameters
+        )
 
         # the MQTT object will use the cb (value) to handle each topic (key)
         message_subscribe_handlers = {
             event_status: self.generate_gateway_satus_event_cb(),
             event_received_data: self.generate_gateway_data_event_cb(),
-
             response_get_configs: self.generate_gateway_response_get_configs_cb(),
             response_set_config: self.generate_gateway_response_set_config_cb(),
-
             response_send_data: self.generate_gateway_data_response_cb(),
-
             response_otap_status: self.generate_gateway_otap_status_response_cb(),
             response_otap_load_scratchpad: self.generate_gateway_load_scratchpad_response_cb(),
-            response_otap_process_scratchpad: self.generate_gateway_process_scratchpad_response_cb()
+            response_otap_process_scratchpad: self.generate_gateway_process_scratchpad_response_cb(),
         }
 
         return message_subscribe_handlers
 
     # Subscribing methods
-    def generate_gateway_satus_event_cb(self)->callable:
+    def generate_gateway_satus_event_cb(self) -> callable:
         @topic_message
         def on_gateway_satus_event_cb(message, topic: list):
             """ Decodes an incoming gateway status event """
             try:
                 self.logger.debug("status event {}".format(message))
                 message = wirepas_messaging.gateway.api.StatusEvent.from_payload(
-                    message)
+                    message
+                )
 
                 # updates gateway details
                 gateway = self.device_manager.add(message.gw_id)
@@ -164,57 +175,61 @@ class MQTTViewer(wirepas_backend_client.management.NetworkDiscovery):
 
         return on_gateway_satus_event_cb
 
-    def generate_gateway_data_event_cb(self)->callable:
+    def generate_gateway_data_event_cb(self) -> callable:
         @decode_topic_message
         def on_gateway_data_event_cb(message, topic: list):
             """ Decodes an incoming data event callback """
 
-            #self.logger.debug("data event: {}".format(message))
+            # self.logger.debug("data event: {}".format(message))
             message.data_payload = None
             self.logger.info(message.serialize())
-            self.device_manager.add_from_mqtt_topic(topic,
-                                                    message.source_address)
+            self.device_manager.add_from_mqtt_topic(
+                topic, message.source_address
+            )
             self.notify(message=message, path="event")
 
         return on_gateway_data_event_cb
 
-    def generate_gateway_response_get_configs_cb(self)->callable:
+    def generate_gateway_response_get_configs_cb(self) -> callable:
         @topic_message
         def on_response_cb(message, topic: list):
             """ Decodes and incoming configuration response """
 
             self.logger.debug("configs response: {}".format(message))
-            message = self.mqtt_topics.constructor("response",
-                                                   "get_configs").from_payload(message)
+            message = self.mqtt_topics.constructor(
+                "response", "get_configs"
+            ).from_payload(message)
 
             self.device_manager.add_from_mqtt_topic(topic)
             self.notify(message, path="response")
 
         return on_response_cb
 
-    def generate_gateway_otap_status_response_cb(self)->callable:
+    def generate_gateway_otap_status_response_cb(self) -> callable:
         @topic_message
         def on_response_cb(message, topic: list):
             """ Decodes an otap status response """
             self.logger.debug("otap status response: {}".format(message))
-            message = self.mqtt_topics.constructor("response",
-                                                   "otap_status").from_payload(message)
-            self.notify(message,  path="response")
-
-        return on_response_cb
-
-    def generate_gateway_response_set_config_cb(self)->callable:
-        @topic_message
-        def on_response_cb(message, topic: list):
-            """ Decodes a set config response """
-            self.logger.debug("set config response: {}".format(message))
-            message = self.mqtt_topics.constructor("response",
-                                                   "set_config").from_payload(message)
+            message = self.mqtt_topics.constructor(
+                "response", "otap_status"
+            ).from_payload(message)
             self.notify(message, path="response")
 
         return on_response_cb
 
-    def generate_gateway_data_response_cb(self)->callable:
+    def generate_gateway_response_set_config_cb(self) -> callable:
+        @topic_message
+        def on_response_cb(message, topic: list):
+            """ Decodes a set config response """
+            self.logger.debug("set config response: {}".format(message))
+            message = self.mqtt_topics.constructor(
+                "response", "set_config"
+            ).from_payload(message)
+            self.notify(message, path="response")
+
+        return on_response_cb
+
+    def generate_gateway_data_response_cb(self) -> callable:
         @topic_message
         def on_response_cb(message, topic: list):
             """ Decodes a data response """
@@ -223,7 +238,7 @@ class MQTTViewer(wirepas_backend_client.management.NetworkDiscovery):
 
         return on_response_cb
 
-    def generate_gateway_load_scratchpad_response_cb(self)->callable:
+    def generate_gateway_load_scratchpad_response_cb(self) -> callable:
         @topic_message
         def on_response_cb(message, topic: list):
             """ Decodes a set load scratchpad response """
@@ -232,12 +247,13 @@ class MQTTViewer(wirepas_backend_client.management.NetworkDiscovery):
 
         return on_response_cb
 
-    def generate_gateway_process_scratchpad_response_cb(self)->callable:
+    def generate_gateway_process_scratchpad_response_cb(self) -> callable:
         @topic_message
         def on_response_cb(message, topic: list):
             """ Decodes a process scratchpad response """
             self.logger.debug(
-                "process scratchpad response: {}".format(message))
+                "process scratchpad response: {}".format(message)
+            )
             self.notify(message, path="response")
 
         return on_response_cb
@@ -283,25 +299,34 @@ def main(parser, logger):
     response_queue = daemon._manager.Queue()
 
     # create the process queues
-    discovery = daemon.build("discovery",
-                             MQTTViewer,
-                             dict(data_queue=data_queue,
-                                  event_queue=event_queue,
-                                  response_queue=response_queue,
-                                  mqtt_settings=parser.settings(MQTTSettings)))
+    daemon.build(
+        "discovery",
+        MQTTViewer,
+        dict(
+            data_queue=data_queue,
+            event_queue=event_queue,
+            response_queue=response_queue,
+            mqtt_settings=parser.settings(MQTTSettings),
+        ),
+    )
 
-    daemon.set_loop(loop, dict(data_queue=data_queue,
-                               event_queue=event_queue,
-                               response_queue=response_queue))
+    daemon.set_loop(
+        loop,
+        dict(
+            data_queue=data_queue,
+            event_queue=event_queue,
+            response_queue=response_queue,
+        ),
+    )
     daemon.start()
 
 
 if __name__ == "__main__":
 
     try:
-        debug_level = os.environ['DEBUG_LEVEL']
+        debug_level = os.environ["DEBUG_LEVEL"]
     except KeyError:
-        debug_level = 'debug'
+        debug_level = "debug"
 
     parser = ParserHelper(description="Default arguments")
 
@@ -313,9 +338,9 @@ if __name__ == "__main__":
 
     settings = parser.settings(skip_undefined=False)
 
-    log = LoggerHelper(module_name="MQTT viewer",
-                       args=settings,
-                       level=debug_level)
+    log = LoggerHelper(
+        module_name="MQTT viewer", args=settings, level=debug_level
+    )
     logger = log.setup()
 
     main(parser, logger)

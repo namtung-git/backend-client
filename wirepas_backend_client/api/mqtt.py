@@ -452,11 +452,10 @@ class MQTTObserver(StreamObserver):
             mqtt_publish(message.payload, topic)
 
         except queue.Empty:
-            data = None
             pass
+
         except AttributeError:
-            data = None
-            self.logger.error("Unable to fetch from unintilized queue")
+            self.logger.error("Unable to fetch from uninitialized queue")
 
     def run(
         self, message_subscribe_handlers=None, message_publish_handlers=None

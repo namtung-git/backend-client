@@ -15,7 +15,7 @@ import logging
 import datetime
 import influxdb
 import requests
-
+import google
 import google.protobuf.json_format as jformat
 
 import wirepas_messaging
@@ -25,8 +25,6 @@ import pandas
 from ..tools import Settings
 
 import binascii
-import datetime
-import logging
 import multiprocessing
 import queue
 
@@ -108,7 +106,6 @@ class InfluxObserver(StreamObserver):
         while not self.exit_signal.is_set():
             self.on_query_received()
             try:
-                sleep(5)
                 self.influx.close()
             except:
                 pass

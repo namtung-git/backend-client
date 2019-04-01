@@ -57,7 +57,6 @@ class PositioningMessage(GenericMessage):
         if isinstance(self.data_payload, str):
             self.data_payload = bytes(self.data_payload, "utf8")
 
-        apdu_len = len(self.data_payload)
         format_header = struct.Struct("<H B B")
         format_meas = struct.Struct("<B B B B")
 

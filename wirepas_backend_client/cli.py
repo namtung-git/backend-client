@@ -21,6 +21,7 @@ import subprocess
 import datetime
 import sys
 import select
+import logging
 
 from .api import MQTT, Topics, MQTTSettings
 from .api import topic_message
@@ -188,7 +189,7 @@ class BackendShell(cmd.Cmd):
 
             i, o, e = select.select([sys.stdin], [], [], timeout)
             if i:
-                _discard = sys.stdin.readline().strip()
+                sys.stdin.readline().strip()
                 return True
             else:
                 continue
@@ -304,7 +305,10 @@ class BackendShell(cmd.Cmd):
                 pass
 
         self._tracking_loop(
-            self.do_list, iterations=iterations, timeout=update_rate
+            self.do_list,
+            iterations=iterations,
+            silent=silent,
+            timeout=update_rate,
         )
 
     def do_track_data_packets(self, arg):
@@ -410,7 +414,7 @@ class BackendShell(cmd.Cmd):
         Sets the reply greeting
         """
 
-        if arg is "" or arg.lower() in "none":
+        if arg == "" or arg.lower() == "none":
             arg = None
 
         self._reply_greeting = arg
@@ -731,7 +735,7 @@ class BackendShell(cmd.Cmd):
             The scratchpad loaded on the target gateway:sink pair
         """
 
-        params = arg.split()
+        arg.split()
 
         if self.gateway and self.sink:
             gateway_id = self.gateway.device_id
@@ -762,7 +766,7 @@ class BackendShell(cmd.Cmd):
         Returns:
             The update status
         """
-        params = arg.split()
+        arg.split()
 
         if self.gateway and self.sink:
             gateway_id = self.gateway.device_id
@@ -1150,7 +1154,6 @@ def launch_cli(args, logger):
     event_queue = daemon._manager.Queue()
 
     # create the process queues
-    settings = Settings.from_args(args)
     mqtt_settings = MQTTSettings.from_args(args)
 
     discovery = daemon.build(
@@ -1181,7 +1184,7 @@ def launch_cli(args, logger):
 
 if __name__ == "__main__":
 
-    from .tools import Settings, ParserHelper, LoggerHelper
+    from .tools import ParserHelper, LoggerHelper
 
     args = ParserHelper.default_args("Gateway client arguments")
 

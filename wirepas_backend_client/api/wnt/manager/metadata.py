@@ -14,6 +14,7 @@ from wirepas_messaging.wnt import FloorPlanMessages
 from wirepas_messaging.wnt import BuildingMessages
 from wirepas_messaging.wnt import NetworkMessages
 from wirepas_messaging.wnt import NodeMessages
+import logging
 
 from ..sock import WNTSocket
 from .manager import Manager
