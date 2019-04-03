@@ -1,0 +1,13 @@
+.git*
+.ci*
+.travis*
+.flake*
+pip-wheel-metadata*
+*.egg-info*
+dist*
+build*
+docs*
+.pre-commit*
+*.private
+**/*.private
+
