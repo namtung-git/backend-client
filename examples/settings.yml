@@ -1,0 +1,4 @@
+mqtt_hostname: host_address
+mqtt_username: mqtt_user
+mqtt_password: mqtt_password
+mqtt_port: 1883
