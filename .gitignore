@@ -1,5 +1,8 @@
+*.hub
 Pipfile
-*.private
+*.private*
+**/.settings.yml
+.settings.yml
 settings.*
 *~
 examples/*crt

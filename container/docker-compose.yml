@@ -1,0 +1,12 @@
+# Wirepas Oy
+
+version: '2'
+services:
+  backend-client:
+    restart: always
+    image: wirepas/backend-client:latest
+    build: .
+    volumes:
+      - ./.settings.yml:/home/wirepas/vars/settings.yml
+
+    command: python examples/mqtt_viewer.py --settings /home/wirepas/vars/settings.yml

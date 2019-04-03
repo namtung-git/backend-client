@@ -10,7 +10,7 @@ RUN apt-get update;\
     && apt-get clean all \
     && rm -rf /var/lib/apt/lists/*
 
-ENV SETTINGS_PATH=${SETTINGS_PATH:-"/home/wirepas/vars/settings.yml"}
+ENV SETTINGS_PATH=${SETTINGS_PATH:-"/home/wirepas/vars"}
 WORKDIR /home/wirepas
 
 # For caching purposes
@@ -22,5 +22,5 @@ RUN pip install .
 
 CMD wm-gw-cli --settings ${SETTINGS_PATH}
 
-RUN mkdir -p ${SETTINGS_PATH} && cp examples/settings.yml ${SETTINGS_PATH}
+RUN mkdir -p ${SETTINGS_PATH} && cp examples/settings.yml ${SETTINGS_PATH}/settings.yml
 ENV PYTHONUNBUFFERED=true

@@ -1,5 +1,4 @@
 .git*
-.ci*
 .travis*
 .flake*
 pip-wheel-metadata*
@@ -10,4 +9,5 @@ docs*
 .pre-commit*
 *.private
 **/*.private
+.settings.yml
 

@@ -16,7 +16,7 @@ import glob
 
 from setuptools import setup, find_packages
 
-with open("README.rst") as f:
+with open("README.md") as f:
     long_description = f.read()
 
 with open("LICENSE") as f:
@@ -86,7 +86,7 @@ setup(
             "./wirepas_backend_client-extras/package",
             [
                 "LICENSE",
-                "README.rst",
+                "README.md",
                 "requirements.txt",
                 "wirepas_backend_client/example_settings.yml",
                 "wirepas_backend_client/certs/extwirepas.pem",
