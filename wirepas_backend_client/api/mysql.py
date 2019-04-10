@@ -328,6 +328,30 @@ class MySQL(object):
         )
         self.cursor.execute(query)
 
+        # See if we need to expand the old diagnostic_traffic table with
+        # the cluster_members and/or cluster_headnode_members column.
+        query = "SHOW COLUMNS FROM diagnostic_traffic;"
+        self.cursor.execute(query)
+        self.database.commit()
+        values = self.cursor.fetchall()
+        column_names = map(lambda x: x[0], values)
+        if "cluster_members" not in column_names:
+            # cluster_members was not in the table so add it.
+            query = (
+                "ALTER TABLE diagnostic_traffic\n"
+                "ADD COLUMN cluster_members SMALLINT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+        if "cluster_headnode_members" not in column_names:
+            # cluster_headnode_members was not in the table so add it.
+            query = (
+                "ALTER TABLE diagnostic_traffic\n"
+                "ADD COLUMN cluster_headnode_members SMALLINT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+
         query = (
             "CREATE TABLE IF NOT EXISTS diagnostic_neighbor ("
             "  received_packet BIGINT NOT NULL,"
@@ -374,6 +398,78 @@ class MySQL(object):
             ") ENGINE = MYISAM;"
         )
         self.cursor.execute(query)
+
+        # See if we need to expand the old diagnostic_node table with
+        # the new fields introduced in stack release 4.0:
+        query = "SHOW COLUMNS FROM diagnostic_node;"
+        self.cursor.execute(query)
+        self.database.commit()
+        values = self.cursor.fetchall()
+        column_names = map(lambda x: x[0], values)
+        if "lltx_msg_w_ack" not in column_names:
+            # lltx_msg_w_ack was not in the table so add it.
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN lltx_msg_w_ack INT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+        if "lltx_msg_unack" not in column_names:
+            # lltx_msg_unack not in the table so add it.
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN lltx_msg_unack INT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+        if "llrx_w_unack_ok" not in column_names:
+            # llrx_w_unack_ok not in the table so add it.
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN llrx_w_unack_ok INT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+        if "llrx_ack_not_received" not in column_names:
+            # llrx_ack_not_received not in the table so add it.
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN llrx_ack_not_received INT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+        if "lltx_cca_unack_fail" not in column_names:
+            # lltx_cca_unack_fail not in the table so add it.
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN lltx_cca_unack_fail INT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+        if "lltx_cca_w_ack_fail" not in column_names:
+            # lltx_cca_w_ack_fail not in the table so add it.
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN lltx_cca_w_ack_fail INT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+        if "llrx_ack_otherreasons" not in column_names:
+            # llrx_ack_otherreasons not in the table so add it.
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN llrx_ack_otherreasons INT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+        if "blacklistexceeded" not in column_names:
+            # blacklistexceeded not in the table so add it.
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN blacklistexceeded BIGINT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
 
         query = (
             "CREATE TABLE IF NOT EXISTS diagnostic_event ("
@@ -771,12 +867,16 @@ class MySQL(object):
 
         query = (
             "INSERT INTO diagnostic_traffic "
-            "(received_packet, access_cycles, cluster_channel, "
+            "(received_packet, access_cycles, "
+            "cluster_members, cluster_headnode_members, cluster_channel, "
             "channel_reliability, rx_count, tx_count, aloha_rxs, resv_rx_ok, "
             "data_rxs, dup_rxs, cca_ratio, bcast_ratio, tx_unicast_fail, "
             "resv_usage_max, resv_usage_avg, aloha_usage_max)"
-            "VALUES (LAST_INSERT_ID(),{},{},{},{},{},{},{},{},{},{},{},{},{},{},{});".format(
+            "VALUES (LAST_INSERT_ID(),{},{},{},{},{},{},{},{},{},{},{},{},{},"
+            "{},{},{},{});".format(
                 message.apdu["access_cycles"],
+                message.apdu["cluster_members"],
+                message.apdu["cluster_headnode_members"],
                 message.apdu["cluster_channel"],
                 message.apdu["channel_reliability"],
                 message.apdu["rx_amount"],
@@ -899,11 +999,21 @@ class MySQL(object):
             "downlink_delay_max_0, downlink_delay_samples_0, "
             "downlink_delay_avg_1, downlink_delay_min_1, "
             "downlink_delay_max_1, downlink_delay_samples_1, "
+            "lltx_msg_w_ack, "
+            "lltx_msg_unack, "
+            "llrx_w_unack_ok, "
+            "llrx_ack_not_received, "
+            "lltx_cca_unack_fail, "
+            "lltx_cca_w_ack_fail, "
+            "llrx_w_ack_ok, "
+            "llrx_ack_otherreasons, "
             "dropped_packets_0, dropped_packets_1, route_address, "
             "next_hop_address_0, cost_0, quality_0, "
-            "next_hop_address_1, cost_1, quality_1) "
+            "next_hop_address_1, cost_1, quality_1, "
+            "blacklistexceeded) "
             "VALUES (LAST_INSERT_ID(),{},{},{},{},{},{},{},{},{},{},{},{},{},"
-            "{},{},{},{},{},{},{},{},{},{},{},{},{});".format(
+            "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},"
+            "{});".format(
                 message.apdu["access_cycle"],
                 message.apdu["role"],
                 voltage,
@@ -921,6 +1031,14 @@ class MySQL(object):
                 message.apdu["dl_delay_min_1"],
                 message.apdu["dl_delay_max_1"],
                 message.apdu["dl_delay_samples_1"],
+                message.apdu["lltx_msg_w_ack"],
+                message.apdu["lltx_msg_unack"],
+                message.apdu["llrx_w_unack_ok"],
+                message.apdu["llrx_ack_not_received"],
+                message.apdu["lltx_cca_unack_fail"],
+                message.apdu["lltx_cca_w_ack_fail"],
+                message.apdu["llrx_w_ack_ok"],
+                message.apdu["llrx_ack_otherreasons"],
                 message.apdu["dropped_packets_0"],
                 message.apdu["dropped_packets_1"],
                 message.apdu["route_address"],
@@ -930,6 +1048,7 @@ class MySQL(object):
                 message.apdu["cost_info_next_hop_1"],
                 message.apdu["cost_info_cost_1"],
                 message.apdu["cost_info_link_quality_1"],
+                message.apdu["blacklistexceeded"],
             )
         )
 
