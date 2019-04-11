@@ -114,7 +114,7 @@ class MultiMessageMqttObserver(wirepas_backend_client.api.MQTTObserver):
                 else:
                     # Gateway is offline, inform to status_queue that
                     # gateway and gateway's all sinks are not running.
-                    gw_status_msg = {"gw_id": message.gw_id, "started": False}
+                    gw_status_msg = {"gw_id": message.gw_id, "configs": []}
                     self.logger.debug("gw_status_msg={}".format(gw_status_msg))
                     self.gw_status_queue.put(gw_status_msg)
             else:
@@ -137,33 +137,7 @@ class MultiMessageMqttObserver(wirepas_backend_client.api.MQTTObserver):
                 self.logger.debug(
                     "mqtt gw configuration received {}".format(message)
                 )
-                # Convert configuration message to status messages
-                # status message contains plain 'gw_id', 'sink_id', 'started' and
-                # 'app_config_*' one sink per message.
-                for sink in message.configs:
-                    # It is possible that the gw configuration is received without
-                    # mandatory fields. This may happen for example when sink
-                    # is busy with distribution of scratchpad. Ignore the received
-                    # gw configuration if mandatory fields are not present.
-                    if (
-                        "sink_id" in sink
-                        and "started" in sink
-                        and "app_config_seq" in sink
-                        and "app_config_diag" in sink
-                        and "app_config_data" in sink
-                    ):
-                        gw_status_msg = {
-                            "gw_id": message.gw_id,
-                            "sink_id": sink["sink_id"],
-                            "started": sink["started"],
-                            "app_config_seq": sink["app_config_seq"],
-                            "app_config_diag": sink["app_config_diag"],
-                            "app_config_data": sink["app_config_data"],
-                        }
-                        self.logger.debug(
-                            "gw_status_msg={}".format(gw_status_msg)
-                        )
-                        self.gw_status_queue.put(gw_status_msg)
+                self.gw_status_queue.put(message.__dict__)
             else:
                 self.logger.debug(
                     "waiting for start signal, received mqtt gw configuration ignored"

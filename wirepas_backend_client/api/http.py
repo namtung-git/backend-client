@@ -26,7 +26,19 @@ import queue
 # HTTPObserver class and HTTPServer class
 http_tw_queue = None
 gateways_and_sinks = {}
-# { 'gw_id': {'sink_id': {'started': True/False, 'app_config_seq': int, 'app_config_diag': int, 'app_config_data': bytes }}}
+# { 'gw_id':
+#     {'sink_id':
+#         {# Following fields from item of gw-response/get_configs->configs[]
+#          'started': True/False,
+#          'app_config_seq': int,
+#          'app_config_diag': int,
+#          'app_config_data': bytes,
+#          # Internal field for monitoring sink's presense
+#          'present': True/False
+#         }
+#     }
+# }
+
 mqtt_topics = Topics()
 
 
@@ -40,53 +52,82 @@ class SinkAndGatewayStatusObserver(Thread):
     def run(self):
         while not self.exit_signal.is_set():
             try:
-                status_msg = self.gw_status_queue.get(block=True, timeout=20)
+                status_msg = self.gw_status_queue.get(block=True, timeout=60)
                 self.logger.debug("HTTP status_msg={}".format(status_msg))
-                if "sink_id" in status_msg:
-                    sink = {
-                        status_msg["sink_id"]: {
-                            "started": status_msg["started"],
-                            "app_config_seq": status_msg["app_config_seq"],
-                            "app_config_diag": status_msg["app_config_diag"],
-                            "app_config_data": status_msg["app_config_data"],
-                        }
-                    }
-                    if status_msg["gw_id"] in gateways_and_sinks:
-                        gateways_and_sinks[status_msg["gw_id"]].update(sink)
-                    else:
-                        gateways_and_sinks[status_msg["gw_id"]] = sink
-                else:
-                    # No sink defined
-                    if status_msg["started"]:
-                        self.logger.error(
-                            "ERROR: sink_id must be specified when setting started=True"
-                        )
-                    else:
-                        # Whole gateway is gone, mark all sinks of it as not
-                        # started
-                        for sink in gateways_and_sinks[status_msg["gw_id"]]:
+                # New status of gateway received.
+                if status_msg["gw_id"] not in gateways_and_sinks:
+                    # New gateway detected
+                    gateways_and_sinks[status_msg["gw_id"]] = {}
+                # Initially mark all sinks of this gateway as not present
+                for sink_id, sink in gateways_and_sinks[
+                    status_msg["gw_id"]
+                ].items():
+                    sink["present"] = False
+
+                for config in status_msg["configs"]:
+                    # Check that mandatory field sink_id is present in message
+                    if "sink_id" in config:
+                        if (
+                            config["sink_id"]
+                            not in gateways_and_sinks[status_msg["gw_id"]]
+                        ):
+                            # New sink detected
+                            gateways_and_sinks[status_msg["gw_id"]][
+                                config["sink_id"]
+                            ] = {}
+                        sink = gateways_and_sinks[status_msg["gw_id"]][
+                            config["sink_id"]
+                        ]
+                        # Check that other mandatory fields are present
+                        if (
+                            "started" in config
+                            and "app_config_seq" in config
+                            and "app_config_diag" in config
+                            and "app_config_data" in config
+                        ):
+                            # All mandatory fields are present
+                            sink["started"] = config["started"]
+                            sink["app_config_seq"] = config["app_config_seq"]
+                            sink["app_config_diag"] = config["app_config_diag"]
+                            sink["app_config_data"] = config["app_config_data"]
+                            sink["present"] = True
+                        else:
+                            # There are missing fields.
+                            self.logger.warning(
+                                "Mandatory fields missing from "
+                                " gw-response/get_configs: {}".format(
+                                    status_msg
+                                )
+                            )
                             if "started" in sink:
-                                sink["started"] = False
-            except queue.Empty:
+                                # Sink has been present before, rely on old values
+                                # and keep this sink in the configuration.
+                                sink["present"] = True
+                # Remove those sinks that are not present in this gateway
+                # Cannot delete sink while iterating gateways_and_sinks dict,
+                # thus create separate list for sinks to be deleted.
+                delete = []
+                for sink_id, sink in gateways_and_sinks[
+                    status_msg["gw_id"]
+                ].items():
+                    if not sink["present"]:
+                        delete.append(sink_id)
+                        self.logger.warning(
+                            "sink {}/{} is removed".format(
+                                status_msg["gw_id"], sink_id
+                            )
+                        )
+                # And delete those sinks in separate loop.
+                for i in delete:
+                    del gateways_and_sinks[status_msg["gw_id"]][i]
                 self.logger.debug(
                     "HTTP Server gateways_and_sinks={}".format(
                         gateways_and_sinks
                     )
                 )
-                # mqtt client does not get notified if GW configuration changes,
-                # thus we have to poll GW to have its configuration. Fortunately
-                # the receiver part already exists, it is just matter of sending
-                # the request time to time. There is pending request to get
-                # GW event also in case the amount of sinks in GW changes, when
-                # implemented, this "polling time to time"-part can be removed.
-                global http_tx_queue
-                global mqtt_topics
-                for gateway_id, sinks in gateways_and_sinks.items():
-                    request = mqtt_topics.request_message(
-                        "get_configs", dict(gw_id=gateway_id)
-                    )
-                    # Insert the message(s) tx queue
-                    http_tx_queue.put(request)
+
+            except queue.Empty:
+                self.logger.debug("HTTP status_msg receiver running")
 
 
 class HTTPSettings(Settings):
