@@ -454,6 +454,14 @@ class MySQL(object):
             )
             self.cursor.execute(query)
             self.database.commit()
+        if "llrx_w_ack_ok" not in column_names:
+            # llrx_w_ack_ok not in the table so add it.
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN llrx_w_ack_ok INT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
         if "llrx_ack_otherreasons" not in column_names:
             # llrx_ack_otherreasons not in the table so add it.
             query = (
