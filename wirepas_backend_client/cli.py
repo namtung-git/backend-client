@@ -7,8 +7,8 @@
     launch as wm-gw-cli or python -m wirepas_gateway_client.cli
 
     .. Copyright:
-        Copyright 2018 Wirepas Ltd. All Rights Reserved.
-        See file LICENSE.txt for full license details.
+        Wirepas Oy licensed under Apache License, Version 2.0.
+        See file LICENSE for full license details.
 """
 
 import os
