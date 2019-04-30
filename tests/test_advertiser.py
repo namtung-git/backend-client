@@ -356,6 +356,7 @@ if __name__ == "__main__":
     parse.add_test()
     parse.add_database()
     parse.add_fluentd()
+    parse.add_file_settings()
 
     settings = parse.settings(skip_undefined=False)
 
