@@ -1,6 +1,6 @@
-# Copyright 2018 Wirepas Ltd. All Rights Reserved.
+# Wirepas Oy
 #
-# See file LICENSE.txt for full license details.
+# See file LICENSE for full license details.
 
 from .generic import *
 from .advertiser import *
