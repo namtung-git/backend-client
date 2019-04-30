@@ -84,8 +84,8 @@ class Daemon(object):
             try:
                 for process, register in self.process.items():
                     if not register["runtime"]["object"].is_alive():
-                        break
-                    time.sleep(self.heartbeat)
+                        return
+                time.sleep(self.heartbeat)
             except KeyError:
                 continue
             except TypeError:
