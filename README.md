@@ -1,9 +1,7 @@
 # Backend client
 
 
-[![Build Status](https://travis-ci.org/wirepas/backend-client.svg?branch=master)](https://travis-ci.org/wirepas/backend-client)
-
-[![PyPi](https://img.shields.io/pypi/v/wirepas-backend-client.svg)](https://pypi.org/project/wirepas-backend-client/)
+[![Build Status](https://travis-ci.org/wirepas/backend-client.svg?branch=master)](https://travis-ci.org/wirepas/backend-client) [![PyPi](https://img.shields.io/pypi/v/wirepas-backend-client.svg)](https://pypi.org/project/wirepas-backend-client/)
 
 
 Backend client is a tool to interface with Wirepas' WM-RM-128 API. The API
