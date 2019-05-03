@@ -222,7 +222,7 @@ where
 
 ### Logging & decoding MQTT traffic
 
-The [mqtt viewer](https://github.com/wirepas/backend-client/examples/mqtt_viewer.py) subscribes
+The [mqtt viewer](./examples/mqtt_viewer.py) subscribes
 and decodes incoming MQTT data on the fly.
 
 This example is ideal if you want to pass through WM data to [fluentd and kibana](https://github.com/wirepas/evk).
@@ -230,13 +230,13 @@ This example is ideal if you want to pass through WM data to [fluentd and kibana
 
 ### Find all nodes
 
-The [find all nodes](https://github.com/wirepas/backend-client/examples/find_all_nodes.py) prints the nodes
+The [find all nodes](./backend-client/examples/find_all_nodes.py) prints the nodes
 present in the network as it observes data packets from them.
 
 
 ### Influx viewer
 
-The [influx viewer](https://github.com/wirepas/backend-client/examples/influx_viewer.py) allows you to query the
+The [influx viewer](./examples/influx_viewer.py) allows you to query the
 WNT influx datastore and transform the coded column names to human readable
 names.
 
