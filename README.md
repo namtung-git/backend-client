@@ -230,7 +230,7 @@ This example is ideal if you want to pass through WM data to [fluentd and kibana
 
 ### Find all nodes
 
-The [find all nodes](./backend-client/examples/find_all_nodes.py) prints the nodes
+The [find all nodes](./examples/find_all_nodes.py) prints the nodes
 present in the network as it observes data packets from them.
 
 
