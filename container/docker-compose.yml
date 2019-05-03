@@ -5,7 +5,9 @@ services:
   backend-client:
     restart: always
     image: wirepas/backend-client:latest
-    build: .
+    build:
+      dockerfile: container/Dockerfile
+      context: ../
     volumes:
       - ./.settings.yml:/home/wirepas/vars/settings.yml
 
