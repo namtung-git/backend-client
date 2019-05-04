@@ -29,20 +29,17 @@ top of master and is built after each commit.
 ### Using the docker image
 
 You will need to mount or build and image with your MQTT and/or other
-WM services parameters.
-
+WM services parameters present in [*.settings.yml*](#parameters).
 
 The default image command will launch the gateway client with the settings
-present in /home/wirepas/vars/settings.yml.
+present in /home/wirepas/vars/settings.yml (container path).
 
 To run it with docker type:
 
 ```shell
-    docker run -v $(pwd)/settings.yml:/home/wirepas/vars/settings.yml \
+    docker run -v $(pwd)/.settings.yml:/home/wirepas/vars/settings.yml \
                 wirepas
 ```
-
-
 
 ### Building the image locally
 
