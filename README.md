@@ -54,7 +54,6 @@ To build the image locally in the root of the repo type:
 Alternatively you can also build using the docker-compose.yml present in
 the root of the directory:
 
-
 ```shell
     docker-compose -f container/docker-compose.yml  build
 ```
@@ -64,8 +63,8 @@ If you want to pull use:
 ```shell
     docker-compose -f container/docker-compose.yml  pull
 ```
-To run the backend client using docker compose, drop the setting in
-.settings.yml and start the service with:
+To run the backend client using docker compose, drop the settings file in
+container/.settings.yml and start the service with:
 
 ```shell
     docker-compose container/docker-compose.yml up
