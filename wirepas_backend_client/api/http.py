@@ -250,10 +250,6 @@ class HTTPServer(http.server.SimpleHTTPRequestHandler):
 
                 if command == "datatx":
 
-                    if not sink["started"]:
-                        # Do not attempt to send to sink that doesn't have
-                        # stack started
-                        continue
                     try:
                         dest_add = int(params["destination"])
                         src_ep = int(params["source_ep"])
