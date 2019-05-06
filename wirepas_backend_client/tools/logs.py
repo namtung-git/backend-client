@@ -61,6 +61,10 @@ class LoggerHelper(object):
             "%(asctime)s | [%(levelname)s] %(name)s: %(message)s"
         )
 
+        self._log_format["stderr"] = logging.Formatter(
+            "%(asctime)s | [%(levelname)s] %(name)s: %(message)s"
+        )
+
         self._log_format["fluentd"] = {
             "host": "%(hostname)s",
             "where": "%(module)s.%(funcName)s",
@@ -103,6 +107,28 @@ class LoggerHelper(object):
         self._handlers["stdout"] = logging.StreamHandler(stream=sys.stdout)
         self._handlers["stdout"].setFormatter(self.format("stdout"))
         self._logger.addHandler(self._handlers["stdout"])
+
+    def add_stderr(self, value="error"):
+        """ Adds a handler for stderr """
+        try:
+            if self._handlers["stderr"]:
+                self._handlers["stderr"].close()
+        except KeyError:
+            self._handlers["stderr"] = None
+
+        self._handlers["stderr"] = logging.StreamHandler(stream=sys.stderr)
+        self._handlers["stderr"].setFormatter(self.format("stderr"))
+        # By default stderr handler limits logging level to error.
+        # In case logger itself has higher value, e.g. critical,
+        # it will limit the input of this handler.
+        try:
+            level = "{0}".format(value.upper())
+            self._handlers["stderr"].setLevel(
+                eval("logging.{0}".format(level))
+            )
+        except Exception:
+            self._handlers["stderr"].setLevel(logging.ERROR)
+        self._logger.addHandler(self._handlers["stderr"])
 
     def add_fluentd(self):
         """ Adds a handler for fluentd if the hostname has been defined """

@@ -128,7 +128,7 @@ class MySQLObserver(StreamObserver):
             mysql.connect(table_creation=False)
             pid = os.getpid()
 
-            logger.warning("starting MySQL worker {}".format(pid))
+            logger.info("starting MySQL worker {}".format(pid))
             while not exit_signal.is_set():
                 try:
                     message = storage_q.get(block=True, timeout=2)

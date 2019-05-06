@@ -186,6 +186,7 @@ if __name__ == "__main__":
         module_name=__test_name__, args=parser.arguments, level=debug_level
     )
     logger = log.setup()
+    log.add_stderr("warning")
 
     daemon = wirepas_backend_client.management.Daemon(logger=logger)
 
