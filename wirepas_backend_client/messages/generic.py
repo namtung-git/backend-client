@@ -74,7 +74,12 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
         apdu = dict()
         j = 0
         for i in apdu_names:
-            apdu[i] = apdu_values[j]
+            try:
+                apdu[i] = apdu_values[j]
+            except IndexError:
+                # Detected more apdu_names than apdu_values.
+                # By ignoring this, accept optional fields at end of message.
+                break
             j += 1
         return apdu
 

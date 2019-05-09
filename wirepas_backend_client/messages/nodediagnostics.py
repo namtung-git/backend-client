@@ -68,6 +68,14 @@ class NodeDiagnosticsMessage(GenericMessage):
         event_14                      uint8
         duty_cycle                    uint16
         current_antenna               uint8
+        4.2: pending_ucast_cluster    uint8
+        4.2: pending_ucast_members    uint8
+        4.2: pending_bcast_le_members uint8
+        4.2: pending_bcast_ll_members uint8
+        4.2: pending_bcast_unack      uint8
+        4.2: pending_expire_queue     uint8
+        4.2: pending_bcast_next_hop   uint8
+        4.2: pending_reroute_packets  uint8
     """
 
     def __init__(self, *args, **kwargs) -> "NodeDiagnosticsMessage":
@@ -77,10 +85,18 @@ class NodeDiagnosticsMessage(GenericMessage):
         if isinstance(self.data_payload, str):
             self.data_payload = bytes(self.data_payload, "utf8")
 
-        apdu_values = struct.unpack(
-            "<HBBBBBBBBHHHHHHHHBBHBHBBBHBBBBBBBBBBBBBBBBBBHB",
-            self.data_payload,
-        )
+        if len(self.data_payload) > 59:
+            # Node Diagnostics with buffer statistics (4.2 and newer)
+            apdu_values = struct.unpack(
+                "<HBBBBBBBBHHHHHHHHBBHBHBBBHBBBBBBBBBBBBBBBBBBHBBBBBBBBB",
+                self.data_payload,
+            )
+        else:
+            # Node Diagnostics without buffer statistics (4.0 and older)
+            apdu_values = struct.unpack(
+                "<HBBBBBBBBHHHHHHHHBBHBHBBBHBBBBBBBBBBBBBBBBBBHB",
+                self.data_payload,
+            )
         apdu_names = (
             "access_cycle",
             "role",
@@ -128,6 +144,14 @@ class NodeDiagnosticsMessage(GenericMessage):
             "events_14",
             "duty_cycle",
             "current_antenna",
+            "pending_ucast_cluster",
+            "pending_ucast_members",
+            "pending_bcast_le_members",
+            "pending_bcast_ll_members",
+            "pending_bcast_unack",
+            "pending_expire_queue",
+            "pending_bcast_next_hop",
+            "pending_reroute_packets",
         )
         self.apdu = self.map_list_to_dict(apdu_names, apdu_values)
 

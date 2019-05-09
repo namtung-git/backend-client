@@ -998,6 +998,48 @@ class MySQL(object):
         last_received_packet = self.cursor.lastrowid
 
         voltage = float(message.apdu["voltage"]) / 100.0 + 2.0
+
+        # Optional buffer statistics
+        if "pending_ucast_cluster" in message.apdu:
+            pending_ucast_cluster = message.apdu["pending_ucast_cluster"]
+        else:
+            pending_ucast_cluster = "NULL"
+
+        if "pending_ucast_members" in message.apdu:
+            pending_ucast_members = message.apdu["pending_ucast_members"]
+        else:
+            pending_ucast_members = "NULL"
+
+        if "pending_bcast_le_members" in message.apdu:
+            pending_bcast_le_mbers = message.apdu["pending_bcast_le_members"]
+        else:
+            pending_bcast_le_mbers = "NULL"
+
+        if "pending_bcast_ll_members" in message.apdu:
+            pending_bcast_ll_mbers = message.apdu["pending_bcast_ll_members"]
+        else:
+            pending_bcast_ll_mbers = "NULL"
+
+        if "pending_bcast_unack" in message.apdu:
+            pending_bcast_unack = message.apdu["pending_bcast_unack"]
+        else:
+            pending_bcast_unack = "NULL"
+
+        if "pending_expire_queue" in message.apdu:
+            pending_expire_queue = message.apdu["pending_expire_queue"]
+        else:
+            pending_expire_queue = "NULL"
+
+        if "pending_bcast_next_hop" in message.apdu:
+            pending_bcast_next_hop = message.apdu["pending_bcast_next_hop"]
+        else:
+            pending_bcast_next_hop = "NULL"
+
+        if "pending_reroute_packets" in message.apdu:
+            pending_reroute_packets = message.apdu["pending_reroute_packets"]
+        else:
+            pending_reroute_packets = "NULL"
+
         query = (
             "INSERT INTO diagnostic_node "
             "(received_packet, access_cycle_ms, node_role, voltage, "
@@ -1018,10 +1060,18 @@ class MySQL(object):
             "dropped_packets_0, dropped_packets_1, route_address, "
             "next_hop_address_0, cost_0, quality_0, "
             "next_hop_address_1, cost_1, quality_1, "
-            "blacklistexceeded) "
+            "blacklistexceeded, "
+            "pending_ucast_cluster, "
+            "pending_ucast_members, "
+            "pending_bcast_le_members, "
+            "pending_bcast_ll_members, "
+            "pending_bcast_unack, "
+            "pending_expire_queue, "
+            "pending_bcast_next_hop, "
+            "pending_reroute_packets) "
             "VALUES (LAST_INSERT_ID(),{},{},{},{},{},{},{},{},{},{},{},{},{},"
             "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},"
-            "{});".format(
+            "{},{},{},{},{},{},{},{},{});".format(
                 message.apdu["access_cycle"],
                 message.apdu["role"],
                 voltage,
@@ -1057,6 +1107,14 @@ class MySQL(object):
                 message.apdu["cost_info_cost_1"],
                 message.apdu["cost_info_link_quality_1"],
                 message.apdu["blacklistexceeded"],
+                pending_ucast_cluster,
+                pending_ucast_members,
+                pending_bcast_le_mbers,
+                pending_bcast_ll_mbers,
+                pending_bcast_unack,
+                pending_expire_queue,
+                pending_bcast_next_hop,
+                pending_reroute_packets,
             )
         )
 
