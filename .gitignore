@@ -17,3 +17,10 @@ docs/wm-bcli/
 
 docs/source/modules.rst
 docs/source/wirepas_backend_client*.rst
+
+
+.pre-commit-config.yaml
+.flake8
+.clang*
+.ci/manifest/*
+dev-requirements.txt
