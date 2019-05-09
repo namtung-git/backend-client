@@ -399,85 +399,8 @@ class MySQL(object):
         )
         self.cursor.execute(query)
 
-        # See if we need to expand the old diagnostic_node table with
-        # the new fields introduced in stack release 4.0:
-        query = "SHOW COLUMNS FROM diagnostic_node;"
-        self.cursor.execute(query)
-        self.database.commit()
-        values = self.cursor.fetchall()
-        column_names = map(lambda x: x[0], values)
-        if "lltx_msg_w_ack" not in column_names:
-            # lltx_msg_w_ack was not in the table so add it.
-            query = (
-                "ALTER TABLE diagnostic_node\n"
-                "ADD COLUMN lltx_msg_w_ack INT UNSIGNED DEFAULT NULL;"
-            )
-            self.cursor.execute(query)
-            self.database.commit()
-        if "lltx_msg_unack" not in column_names:
-            # lltx_msg_unack not in the table so add it.
-            query = (
-                "ALTER TABLE diagnostic_node\n"
-                "ADD COLUMN lltx_msg_unack INT UNSIGNED DEFAULT NULL;"
-            )
-            self.cursor.execute(query)
-            self.database.commit()
-        if "llrx_w_unack_ok" not in column_names:
-            # llrx_w_unack_ok not in the table so add it.
-            query = (
-                "ALTER TABLE diagnostic_node\n"
-                "ADD COLUMN llrx_w_unack_ok INT UNSIGNED DEFAULT NULL;"
-            )
-            self.cursor.execute(query)
-            self.database.commit()
-        if "llrx_ack_not_received" not in column_names:
-            # llrx_ack_not_received not in the table so add it.
-            query = (
-                "ALTER TABLE diagnostic_node\n"
-                "ADD COLUMN llrx_ack_not_received INT UNSIGNED DEFAULT NULL;"
-            )
-            self.cursor.execute(query)
-            self.database.commit()
-        if "lltx_cca_unack_fail" not in column_names:
-            # lltx_cca_unack_fail not in the table so add it.
-            query = (
-                "ALTER TABLE diagnostic_node\n"
-                "ADD COLUMN lltx_cca_unack_fail INT UNSIGNED DEFAULT NULL;"
-            )
-            self.cursor.execute(query)
-            self.database.commit()
-        if "lltx_cca_w_ack_fail" not in column_names:
-            # lltx_cca_w_ack_fail not in the table so add it.
-            query = (
-                "ALTER TABLE diagnostic_node\n"
-                "ADD COLUMN lltx_cca_w_ack_fail INT UNSIGNED DEFAULT NULL;"
-            )
-            self.cursor.execute(query)
-            self.database.commit()
-        if "llrx_w_ack_ok" not in column_names:
-            # llrx_w_ack_ok not in the table so add it.
-            query = (
-                "ALTER TABLE diagnostic_node\n"
-                "ADD COLUMN llrx_w_ack_ok INT UNSIGNED DEFAULT NULL;"
-            )
-            self.cursor.execute(query)
-            self.database.commit()
-        if "llrx_ack_otherreasons" not in column_names:
-            # llrx_ack_otherreasons not in the table so add it.
-            query = (
-                "ALTER TABLE diagnostic_node\n"
-                "ADD COLUMN llrx_ack_otherreasons INT UNSIGNED DEFAULT NULL;"
-            )
-            self.cursor.execute(query)
-            self.database.commit()
-        if "blacklistexceeded" not in column_names:
-            # blacklistexceeded not in the table so add it.
-            query = (
-                "ALTER TABLE diagnostic_node\n"
-                "ADD COLUMN blacklistexceeded BIGINT UNSIGNED DEFAULT NULL;"
-            )
-            self.cursor.execute(query)
-            self.database.commit()
+        self.update_diagnostic_node_table_4_0()
+        self.update_diagnostic_node_table_4_2()
 
         query = (
             "CREATE TABLE IF NOT EXISTS diagnostic_event ("
@@ -790,6 +713,153 @@ class MySQL(object):
         self.cursor.execute(createtable)
 
         self.database.commit()
+
+    def update_diagnostic_node_table_4_0(self):
+        # See if we need to expand the old diagnostic_node table with
+        # the new fields introduced in stack release 4.0:
+        query = "SHOW COLUMNS FROM diagnostic_node;"
+        self.cursor.execute(query)
+        self.database.commit()
+        values = self.cursor.fetchall()
+        column_names = map(lambda x: x[0], values)
+        if "lltx_msg_w_ack" not in column_names:
+            # lltx_msg_w_ack was not in the table so add it.
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN lltx_msg_w_ack INT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+        if "lltx_msg_unack" not in column_names:
+            # lltx_msg_unack not in the table so add it.
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN lltx_msg_unack INT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+        if "llrx_w_unack_ok" not in column_names:
+            # llrx_w_unack_ok not in the table so add it.
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN llrx_w_unack_ok INT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+        if "llrx_ack_not_received" not in column_names:
+            # llrx_ack_not_received not in the table so add it.
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN llrx_ack_not_received INT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+        if "lltx_cca_unack_fail" not in column_names:
+            # lltx_cca_unack_fail not in the table so add it.
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN lltx_cca_unack_fail INT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+        if "lltx_cca_w_ack_fail" not in column_names:
+            # lltx_cca_w_ack_fail not in the table so add it.
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN lltx_cca_w_ack_fail INT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+        if "llrx_w_ack_ok" not in column_names:
+            # llrx_w_ack_ok not in the table so add it.
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN llrx_w_ack_ok INT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+        if "llrx_ack_otherreasons" not in column_names:
+            # llrx_ack_otherreasons not in the table so add it.
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN llrx_ack_otherreasons INT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+        if "blacklistexceeded" not in column_names:
+            # blacklistexceeded not in the table so add it.
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN blacklistexceeded BIGINT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+
+    def update_diagnostic_node_table_4_2(self):
+        # See if we need to expand the old diagnostic_node table with
+        # the new fields introduced in stack release 4.2:
+        query = "SHOW COLUMNS FROM diagnostic_node;"
+        self.cursor.execute(query)
+        self.database.commit()
+        values = self.cursor.fetchall()
+        column_names = map(lambda x: x[0], values)
+        # Optional buffer statistics
+        if "pending_ucast_cluster" not in column_names:
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN pending_ucast_cluster INT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+        if "pending_ucast_members" not in column_names:
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN pending_ucast_members INT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+        if "pending_bcast_le_members" not in column_names:
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN pending_bcast_le_members INT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+        if "pending_bcast_ll_members" not in column_names:
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN pending_bcast_ll_members INT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+        if "pending_bcast_unack" not in column_names:
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN pending_bcast_unack INT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+        if "pending_expire_queue" not in column_names:
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN pending_expire_queue INT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+        if "pending_bcast_next_hop" not in column_names:
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN pending_bcast_next_hop INT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+        if "pending_reroute_packets" not in column_names:
+            query = (
+                "ALTER TABLE diagnostic_node\n"
+                "ADD COLUMN pending_reroute_packets INT UNSIGNED DEFAULT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
 
     def put_advertiser(self, messages):
         """ Writes the advertiser message to the table """
