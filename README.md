@@ -25,8 +25,7 @@ corresponding tag which you can pull.
 The latest tag points to the last release whereas the edge points to the
 top of master and is built after each commit.
 
-
-### Using the docker image
+### Running with docker
 
 You will need to mount or build and image with your MQTT and/or other
 WM services parameters present in [*.settings.yml*](#parameters).
@@ -38,11 +37,20 @@ To run it with docker type:
 
 ```shell
     docker run -v $(pwd)/.settings.yml:/home/wirepas/vars/settings.yml \
-                wirepas
+                wirepas/backend-client
 ```
 
-### Building the image locally
+### Running with docker compose 
 
+To run the backend client using docker compose, drop or move the settings file in
+**container/.settings.yml** and start the service with:
+
+```shell
+    docker-compose container/docker-compose.yml up
+```
+The file .settings.yml is set as ignored for git and docker.
+
+### Building the image locally
 
 To build the image locally in the root of the repo type:
 ```shell
@@ -54,29 +62,13 @@ the root of the directory:
 ```shell
     docker-compose -f container/docker-compose.yml  build
 ```
-If you want to pull use:
-
-
-```shell
-    docker-compose -f container/docker-compose.yml  pull
-```
-To run the backend client using docker compose, drop the settings file in
-container/.settings.yml and start the service with:
-
-```shell
-    docker-compose container/docker-compose.yml up
-```
-The file .settings.yml is set as ignored for git and docker.
-
-
 
 ## Installation
-
 
 To install this package in development mode, please run
 
 ```shell
-    pip install -e .
+    pip install -e . [--no-use-pep517]
 ```
 To build the source distribution and wheel file, make sure you have the
 wheel package installed
@@ -107,7 +99,6 @@ To install from the public registry
 ```
 
 ## Parameters
-
 
 Parameters are given as input arguments or through a configuration file
 written in yaml.
