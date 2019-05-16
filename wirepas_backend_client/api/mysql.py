@@ -46,6 +46,7 @@ class MySQLSettings(Settings):
         self.hostname = self.db_hostname
         self.database = self.db_database
         self.port = self.db_port
+        self.connection_timeout = self.db_connection_timeout
 
 
 class MySQLObserver(StreamObserver):
@@ -75,6 +76,7 @@ class MySQLObserver(StreamObserver):
             hostname=mysql_settings.hostname,
             port=mysql_settings.port,
             database=mysql_settings.database,
+            connection_timeout=mysql_settings.connection_timeout,
             logger=self.logger,
         )
         self.settings = mysql_settings
@@ -114,7 +116,17 @@ class MySQLObserver(StreamObserver):
     def pool_on_data_received(self, n_workers=4):
         """ Monitor inbound queue for messages to be stored in MySQL """
 
-        def work(storage_q, exit_signal, settings, logger):
+        def work(
+            storage_q,
+            exit_signal,
+            settings,
+            logger,
+            logger_handlers,
+            logger_level,
+        ):
+
+            logger.handlers = logger_handlers
+            logger.level = logger_level
 
             mysql = MySQL(
                 username=settings.username,
@@ -122,6 +134,7 @@ class MySQLObserver(StreamObserver):
                 hostname=settings.hostname,
                 port=settings.port,
                 database=settings.database,
+                connection_timeout=settings.connection_timeout,
                 logger=logger,
             )
 
@@ -129,13 +142,48 @@ class MySQLObserver(StreamObserver):
             pid = os.getpid()
 
             logger.info("starting MySQL worker {}".format(pid))
+
             while not exit_signal.is_set():
                 try:
                     message = storage_q.get(block=True, timeout=2)
                 except queue.Empty:
                     continue
 
-                MySQLObserver._map_message(mysql, message)
+                try:
+                    mysql.database.ping(True)
+                except MySQLdb.OperationalError:
+                    logger.warning(
+                        "MySQL worker {}: restarting database connection.".format(
+                            pid
+                        )
+                    )
+                    mysql.close()
+                    while not exit_signal.is_set():
+                        try:
+                            mysql.connect(table_creation=False)
+                            logger.warning(
+                                "MySQL worker {}: connection restarted.".format(
+                                    pid
+                                )
+                            )
+                            break
+                        except MySQLdb.Error:
+                            logger.warning(
+                                "MySQL worker {}: connection restart failed.".format(
+                                    pid
+                                )
+                            )
+                            time.sleep(5)
+
+                if not exit_signal.is_set():
+                    try:
+                        MySQLObserver._map_message(mysql, message)
+                    except MySQLdb.Error:
+                        logger.warning(
+                            "MySQL worker {}: Database operation failed.".format(
+                                pid
+                            )
+                        )
 
             logger.warning("exiting MySQL worker {}".format(pid))
             return pid
@@ -149,6 +197,8 @@ class MySQLObserver(StreamObserver):
                 self.exit_signal,
                 self.settings,
                 self.logger,
+                self.logger.handlers,
+                self.logger.level,
             )
         self._wait_for_exit()
 
@@ -177,7 +227,7 @@ class MySQLObserver(StreamObserver):
 
     def _wait_for_exit(self):
         """ waits until the exit signal is set """
-        print("waiting for exit")
+        self.logger.debug("MySQL is running while waiting for exit")
         while not self.exit_signal.is_set():
             time.sleep(self.timeout * 10)
             self.logger.debug("MySQL is running")
@@ -195,6 +245,7 @@ class MySQL(object):
         hostname: str,
         database: str,
         port: int,
+        connection_timeout: int,
         logger: logging.Logger = None,
     ):
 
@@ -209,6 +260,7 @@ class MySQL(object):
         self.database = None
         self.port = port
         self.cursor = None
+        self.connection_timeout = connection_timeout
 
     def connect(self, table_creation=True) -> None:
         """ Establishes a connection and service loop. """
@@ -227,6 +279,7 @@ class MySQL(object):
             passwd=self.password,
             database=self.database_name,
             port=self.port,
+            connect_timeout=self.connection_timeout,
         )
 
         self.cursor = self.database.cursor()

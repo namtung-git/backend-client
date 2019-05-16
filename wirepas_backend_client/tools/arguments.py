@@ -403,6 +403,14 @@ class ParserHelper(object):
             help="Database password",
         )
 
+        self.database.add_argument(
+            "--db_connection_timeout",
+            default="60",
+            action="store",
+            type=int,
+            help="Database connection timeout",
+        )
+
     def add_fluentd(self):
         """ Commonly used fluentd arguments """
         self.fluentd.add_argument(
