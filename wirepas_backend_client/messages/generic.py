@@ -111,7 +111,7 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
         self.serialization = {
             "gw_id": self.gw_id,
             "sink_id": self.sink_id,
-            "event_id": self.event_id,
+            "event_id": str(self.event_id),
             "rx_time_ms_epoch": self.rx_time_ms_epoch,
             "source_address": self.source_address,
             "destination_address": self.destination_address,
