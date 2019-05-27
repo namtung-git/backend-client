@@ -211,14 +211,23 @@ class MySQLObserver(StreamObserver):
             pass
 
         try:
+            self.n_workers = kwargs["n_workers"]
+        except KeyError:
+            self.n_workers = 4
+            pass
+
+        try:
             self.mysql.connect()
         except Exception as err:
             self.logger.error("error connecting to database {}".format(err))
             pass
 
         if self.parallel:
-            self.logger.info("Starting // mysql work")
-            self.pool_on_data_received()
+            self.logger.info(
+                "Starting // mysql work. "
+                "Number of workers is {}".format(self.n_workers)
+            )
+            self.pool_on_data_received(n_workers=self.n_workers)
         else:
             self.logger.info("Starting single threaded mysql work")
             self.on_data_received()

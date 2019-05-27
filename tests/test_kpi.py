@@ -206,7 +206,9 @@ if __name__ == "__main__":
         ),
     )
     daemon.set_run(
-        storage_name, task_kwargs={"parallel": True}, task_as_daemon=False
+        storage_name,
+        task_kwargs={"parallel": True, "n_workers": 8},
+        task_as_daemon=False,
     )
 
     daemon.build(
