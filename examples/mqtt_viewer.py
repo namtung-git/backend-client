@@ -18,6 +18,7 @@ from wirepas_backend_client.tools import Settings, ParserHelper, LoggerHelper
 
 from wirepas_backend_client.management import NetworkDiscovery
 from wirepas_backend_client.management import MeshManagement
+from wirepas_backend_client.tools.utils import deferred_thread
 
 
 class MQTTViewer(wirepas_backend_client.management.NetworkDiscovery):
@@ -256,33 +257,28 @@ class MQTTViewer(wirepas_backend_client.management.NetworkDiscovery):
         return on_response_cb
 
 
-def loop(data_queue, event_queue, response_queue):
+def loop(exit_signal, data_queue, event_queue, response_queue, sleep_for=100):
     """
     Client loop
 
     This loop goes through each message queue and gathers the shared
     messages.
-
     """
-    while True:
 
+    @deferred_thread
+    def get_item(q, block=True, timeout=1):
         try:
-            data_message = data_queue.get(block=True, timeout=1)
-            print(data_message)
+            message = q.get(block=block, timeout=timeout)
+            print(message)
         except queue.Empty:
             pass
 
-        try:
-            event_message = event_queue.get(block=True, timeout=1)
-            print(event_message)
-        except queue.Empty:
-            pass
+    get_item(data_queue)
+    get_item(event_queue)
+    get_item(response_queue)
 
-        try:
-            response_message = response_queue.get(block=True, timeout=1)
-            print(response_message)
-        except queue.Empty:
-            pass
+    while not exit_signal.is_set():
+        time.sleep(sleep_for)
 
 
 def main(parser, logger):
@@ -310,6 +306,7 @@ def main(parser, logger):
     daemon.set_loop(
         loop,
         dict(
+            exit_signal=daemon.exit_signal,
             data_queue=data_queue,
             event_queue=event_queue,
             response_queue=response_queue,
@@ -321,9 +318,9 @@ def main(parser, logger):
 if __name__ == "__main__":
 
     try:
-        debug_level = os.environ["DEBUG_LEVEL"]
+        debug_level = os.environ["WM_DEBUG_LEVEL"]
     except KeyError:
-        debug_level = "debug"
+        debug_level = "info"
 
     parser = ParserHelper(description="Default arguments")
 

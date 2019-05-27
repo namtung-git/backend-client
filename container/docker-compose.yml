@@ -9,6 +9,11 @@ services:
       dockerfile: container/Dockerfile
       context: ../
     network_mode: host
+
+    environment:
+      - WM_DEBUG_LEVEL=info
+      - PYTHONUNBUFFERED=true
+
     volumes:
       - ./.settings.yml:/home/wirepas/vars/settings.yml
 

@@ -110,7 +110,7 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
     def _serialize_payload(self):
         try:
             return self.data_payload.hex()
-        except:
+        except AttributeError:
             return None
 
     def serialize(self):

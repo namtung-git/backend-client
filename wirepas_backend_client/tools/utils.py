@@ -16,8 +16,25 @@ import argparse
 import datetime
 import time
 import yaml
+import threading
 
 from fluent import handler as fluent_handler
+
+
+def deferred_thread(fn):
+    """
+    Decorator to handle a request on its own Thread
+    to avoid blocking the calling Thread on I/O.
+    It creates a new Thread but it shouldn't impact the performances
+    as requests are not supposed to be really frequent (few per seconds)
+    """
+
+    def wrapper(*args, **kwargs):
+        thread = threading.Thread(target=fn, args=args, kwargs=kwargs)
+        thread.start()
+        return thread
+
+    return wrapper
 
 
 class ExitSignal(object):
