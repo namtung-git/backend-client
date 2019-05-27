@@ -179,9 +179,6 @@ class MQTTViewer(wirepas_backend_client.management.NetworkDiscovery):
         @decode_topic_message
         def on_gateway_data_event_cb(message, topic: list):
             """ Decodes an incoming data event callback """
-
-            # self.logger.debug("data event: {}".format(message))
-            message.data_payload = None
             self.logger.info(message.serialize())
             self.device_manager.add_from_mqtt_topic(
                 topic, message.source_address

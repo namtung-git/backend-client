@@ -97,6 +97,7 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
         """
         return (seq[pos : pos + size] for pos in range(0, len(seq), size))
 
+    @staticmethod
     def decode_hex_str(hexstr):
         """
             Converts a hex string with spaces and 0x handles to bytes
@@ -105,6 +106,12 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
         hexstr = hexstr.replace(" ", "").strip(" ")
         payload = bytes.fromhex(hexstr)
         return payload
+
+    def _serialize_payload(self):
+        try:
+            return self.data_payload.hex()
+        except:
+            return None
 
     def serialize(self):
 
@@ -121,7 +128,7 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
             "sent_at": self.sent_at.isoformat("T"),
             "received_at": self.received_at.isoformat("T"),
             "qos": self.qos,
-            "data_payload": self.data_payload,
+            "data_payload": self._serialize_payload(),
             "data_size": self.data_size,
             "hop_count": self.hop_count,
         }
@@ -130,4 +137,4 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
 
     def __str__(self):
         """ returns the inner dict when printed """
-        return str(self.__dict__)
+        return str(self.serialize())
