@@ -1,5 +1,6 @@
 # Wirepas Oy 2018
 wirepas_messaging==1.1.0
+cbor2==4.1.2
 
 # grpc & protobuf related
 grpcio==1.14.1

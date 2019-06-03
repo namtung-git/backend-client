@@ -337,4 +337,8 @@ if __name__ == "__main__":
     )
     logger = log.setup()
 
+    LoggerHelper(
+        module_name="message_decoding", args=settings, level=debug_level
+    ).setup()
+
     main(parser, logger)

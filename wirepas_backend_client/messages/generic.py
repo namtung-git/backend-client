@@ -9,11 +9,6 @@
         See file LICENSE for full license details.
 """
 
-import sys
-import json
-import enum
-import struct
-import binascii
 import datetime
 import logging
 
@@ -34,9 +29,11 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
         super(GenericMessage, self).__init__(*args, **kwargs)
         self.type = ApplicationTypes.GenericMessage
 
+        self.logger = logging.getLogger("message_decoding")
+
         self.sent_at = datetime.datetime.utcfromtimestamp(
             self.rx_time_ms_epoch / 1e3
-        )
+        ) - datetime.timedelta(seconds=self.travel_time_ms / 1e3)
 
         self.received_at = datetime.datetime.utcnow()
         self.serialization = None

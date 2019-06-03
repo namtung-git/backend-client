@@ -69,7 +69,6 @@ setup(
     author_email="techsupport@wirepas.com",
     url="https://github.com/wirepas/backend-client",
     license="Apache-2",
-    license_file=license,
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
@@ -90,6 +89,7 @@ setup(
                 "requirements.txt",
                 "wirepas_backend_client/example_settings.yml",
                 "wirepas_backend_client/certs/extwirepas.pem",
+                "wirepas_backend_client/messages/diag_cbor_id.json",
                 "setup.py",
             ],
         )

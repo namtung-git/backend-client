@@ -8,6 +8,7 @@ from .testnw import TestNWMessage
 from .trafficdiagnostics import TrafficDiagnosticsMessage
 from .ruuvi import RuuviMessage
 from .positioning import PositioningMessage
+from .diagnostics import Diagnostics
 
 
 class MessageManager(object):
@@ -27,6 +28,7 @@ class MessageManager(object):
     _endpoint[100] = {100: TestNWMessage}
     _endpoint[200] = {200: AdvertiserMessage}
     _endpoint[238] = {238: PositioningMessage}
+    _endpoint[247] = {247: Diagnostics}
     _endpoint[251] = {255: TrafficDiagnosticsMessage}
     _endpoint[252] = {255: NeighborDiagnosticsMessage}
     _endpoint[253] = {255: NodeDiagnosticsMessage}
