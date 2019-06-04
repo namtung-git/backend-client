@@ -36,6 +36,9 @@ class NetworkDiscovery(StreamObserver):
         network_id: str = "+",
         source_endpoint: str = "+",
         destination_endpoint: str = "+",
+        message_subscribe_handlers=None,
+        message_publish_handlers=None,
+        network_parameters=None,
         **kwargs
     ):
         """ MQTT Observer constructor """
@@ -68,20 +71,29 @@ class NetworkDiscovery(StreamObserver):
         self.data_queue = data_queue
         self.event_queue = event_queue
 
-        self.network_parameters = dict(
-            gw_id=str(gateway_id),
-            sink_id=str(sink_id),
-            network_id=str(network_id),
-            src_ep=str(source_endpoint),
-            dst_ep=str(destination_endpoint),
-        )
+        if network_parameters:
+            self.network_parameters = network_parameters
+        else:
+            self.network_parameters = dict(
+                gw_id=str(gateway_id),
+                sink_id=str(sink_id),
+                network_id=str(network_id),
+                src_ep=str(source_endpoint),
+                dst_ep=str(destination_endpoint),
+            )
 
         self.mqtt_settings = mqtt_settings
         self.mqtt_topics = Topics()
 
-        self.message_subscribe_handlers = self.build_subscription()
+        if message_subscribe_handlers:
+            self.message_subscribe_handlers = message_subscribe_handlers
+        else:
+            self.message_subscribe_handlers = self.build_subscription()
 
-        self.message_publish_handlers = {"from_message": self.send_data}
+        if message_publish_handlers:
+            self.message_publish_handlers = message_publish_handlers
+        else:
+            self.message_publish_handlers = {"from_message": self.send_data}
 
         self.logger.debug("setting up MQTT to: {}")
         self.mqtt = MQTT(
@@ -253,7 +265,7 @@ class NetworkDiscovery(StreamObserver):
                 gateway = self.device_manager.add(message.gw_id)
                 gateway.state = message.state
 
-                self.notify(message=message, path="data")
+                self.notify(message=message, path="event")
             except:
                 pass
 

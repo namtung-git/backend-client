@@ -41,18 +41,6 @@ class MQTTViewer(wirepas_backend_client.management.NetworkDiscovery):
         network_parameters=None,
         **kwargs
     ):
-        """ MQTT Observer constructor """
-        super(MQTTViewer, self).__init__(
-            mqtt_settings=mqtt_settings,
-            data_queue=data_queue,
-            event_queue=event_queue,
-            shared_state=None,
-            **kwargs
-        )
-        self.data_queue = self.data_queue
-        self.event_queue = self.event_queue
-        self.response_queue = self.response_queue
-
         if "logger" in kwargs:
             self.logger = kwargs["logger"] or logging.getLogger(__name__)
 
@@ -63,201 +51,19 @@ class MQTTViewer(wirepas_backend_client.management.NetworkDiscovery):
         else:
             self.network_parameters = network_parameters
 
-        self.mqtt_settings = mqtt_settings
-        self.mqtt_topics = Topics()
-
-        self.message_subscribe_handlers = self.build_subscription()
-
-        self.message_publish_handlers = {"from_message": self.send_data}
-
-        self.mqtt = MQTT(
-            username=mqtt_settings.username,
-            password=mqtt_settings.password,
-            hostname=mqtt_settings.hostname,
-            port=mqtt_settings.port,
-            ca_certs=mqtt_settings.ca_certs,
-            userdata=mqtt_settings.userdata,
-            transport=mqtt_settings.transport,
-            clean_session=mqtt_settings.clean_session,
-            reconnect_min_delay=mqtt_settings.reconnect_min_delay,
-            reconnect_max_delay=mqtt_settings.reconnect_max_delay,
-            allow_untrusted=mqtt_settings.mqtt_allow_untrusted,
-            force_unsecure=mqtt_settings.mqtt_force_unsecure,
-            heartbeat=mqtt_settings.heartbeat,
-            keep_alive=mqtt_settings.keep_alive,
-            exit_signal=kwargs["exit_signal"],
-            message_subscribe_handlers=self.message_subscribe_handlers,
-            message_publish_handlers=self.message_publish_handlers,
-            logger=self.logger,
+        """ MQTT Observer constructor """
+        super(MQTTViewer, self).__init__(
+            mqtt_settings=mqtt_settings,
+            data_queue=data_queue,
+            event_queue=event_queue,
+            shared_state=None,
+            **kwargs
         )
 
-        self.device_manager = MeshManagement()
 
-    def notify(self, message, path="response"):
-        """
-        Routes the received message to the correct queue based on the path
-        parameter.
-        """
-        if message:
-            if "response" in path:
-                self.response_queue.put(message)
-
-            elif "data" in path and self.data_queue:
-                self.data_queue.put(message)
-
-            elif "event" in path and self.event_queue:
-                self.event_queue.put(message)
-
-    def build_subscription(self):
-        """
-        Build subscription sets up the MQTT object with the callbacks to
-        handle each topic of intertest
-        """
-
-        # track gateway events
-        event_status = self.mqtt_topics.event(
-            "status", self.network_parameters
-        )
-        event_received_data = self.mqtt_topics.event(
-            "received_data", self.network_parameters
-        )
-
-        response_get_configs = self.mqtt_topics.response(
-            "get_configs", self.network_parameters
-        )
-        response_set_config = self.mqtt_topics.response(
-            "set_config", self.network_parameters
-        )
-        response_send_data = self.mqtt_topics.response(
-            "send_data", self.network_parameters
-        )
-        response_otap_status = self.mqtt_topics.response(
-            "otap_status", self.network_parameters
-        )
-        response_otap_load_scratchpad = self.mqtt_topics.response(
-            "otap_load_scratchpad", self.network_parameters
-        )
-        response_otap_process_scratchpad = self.mqtt_topics.response(
-            "otap_process_scratchpad", self.network_parameters
-        )
-
-        # the MQTT object will use the cb (value) to handle each topic (key)
-        message_subscribe_handlers = {
-            event_status: self.generate_gateway_satus_event_cb(),
-            event_received_data: self.generate_gateway_data_event_cb(),
-            response_get_configs: self.generate_gateway_response_get_configs_cb(),
-            response_set_config: self.generate_gateway_response_set_config_cb(),
-            response_send_data: self.generate_gateway_data_response_cb(),
-            response_otap_status: self.generate_gateway_otap_status_response_cb(),
-            response_otap_load_scratchpad: self.generate_gateway_load_scratchpad_response_cb(),
-            response_otap_process_scratchpad: self.generate_gateway_process_scratchpad_response_cb(),
-        }
-
-        return message_subscribe_handlers
-
-    # Subscribing methods
-    def generate_gateway_satus_event_cb(self) -> callable:
-        @topic_message
-        def on_gateway_satus_event_cb(message, topic: list):
-            """ Decodes an incoming gateway status event """
-            try:
-                self.logger.debug("status event {}".format(message))
-                message = wirepas_messaging.gateway.api.StatusEvent.from_payload(
-                    message
-                )
-
-                # updates gateway details
-                gateway = self.device_manager.add(message.gw_id)
-                gateway.state = message.state
-
-                self.notify(message=message, path="event")
-            except RuntimeError:
-                self.logger.exception("Failed decoding from {}".format(topic))
-
-        return on_gateway_satus_event_cb
-
-    def generate_gateway_data_event_cb(self) -> callable:
-        @decode_topic_message
-        def on_gateway_data_event_cb(message, topic: list):
-            """ Decodes an incoming data event callback """
-            self.logger.info(message.serialize())
-            self.device_manager.add_from_mqtt_topic(
-                topic, message.source_address
-            )
-            self.notify(message=message, path="event")
-
-        return on_gateway_data_event_cb
-
-    def generate_gateway_response_get_configs_cb(self) -> callable:
-        @topic_message
-        def on_response_cb(message, topic: list):
-            """ Decodes and incoming configuration response """
-
-            self.logger.debug("configs response: {}".format(message))
-            message = self.mqtt_topics.constructor(
-                "response", "get_configs"
-            ).from_payload(message)
-
-            self.device_manager.add_from_mqtt_topic(topic)
-            self.notify(message, path="response")
-
-        return on_response_cb
-
-    def generate_gateway_otap_status_response_cb(self) -> callable:
-        @topic_message
-        def on_response_cb(message, topic: list):
-            """ Decodes an otap status response """
-            self.logger.debug("otap status response: {}".format(message))
-            message = self.mqtt_topics.constructor(
-                "response", "otap_status"
-            ).from_payload(message)
-            self.notify(message, path="response")
-
-        return on_response_cb
-
-    def generate_gateway_response_set_config_cb(self) -> callable:
-        @topic_message
-        def on_response_cb(message, topic: list):
-            """ Decodes a set config response """
-            self.logger.debug("set config response: {}".format(message))
-            message = self.mqtt_topics.constructor(
-                "response", "set_config"
-            ).from_payload(message)
-            self.notify(message, path="response")
-
-        return on_response_cb
-
-    def generate_gateway_data_response_cb(self) -> callable:
-        @topic_message
-        def on_response_cb(message, topic: list):
-            """ Decodes a data response """
-            self.logger.debug("set data response: {}".format(message))
-            self.notify(message, path="response")
-
-        return on_response_cb
-
-    def generate_gateway_load_scratchpad_response_cb(self) -> callable:
-        @topic_message
-        def on_response_cb(message, topic: list):
-            """ Decodes a set load scratchpad response """
-            self.logger.debug("load scratchpad response: {}".format(message))
-            self.notify(message, path="response")
-
-        return on_response_cb
-
-    def generate_gateway_process_scratchpad_response_cb(self) -> callable:
-        @topic_message
-        def on_response_cb(message, topic: list):
-            """ Decodes a process scratchpad response """
-            self.logger.debug(
-                "process scratchpad response: {}".format(message)
-            )
-            self.notify(message, path="response")
-
-        return on_response_cb
-
-
-def loop(exit_signal, data_queue, event_queue, response_queue, sleep_for=100):
+def loop(
+    exit_signal, logger, data_queue, event_queue, response_queue, sleep_for=100
+):
     """
     Client loop
 
@@ -266,18 +72,30 @@ def loop(exit_signal, data_queue, event_queue, response_queue, sleep_for=100):
     """
 
     @deferred_thread
-    def get_item(exit_signal, q, block=True, timeout=60):
+    def get_data(exit_signal, q, block=True, timeout=60):
+
+        while not exit_signal.is_set():
+            try:
+                message = q.get(block=block, timeout=timeout)
+            except queue.Empty:
+                continue
+            try:
+                logger.info(message.serialize())
+            except AttributeError:
+                continue
+
+    @deferred_thread
+    def consume_queue(exit_signal, q, block=True, timeout=60):
 
         while not exit_signal.is_set():
             try:
                 q.get(block=block, timeout=timeout)
             except queue.Empty:
                 continue
-            # do something with the queue message
 
-    get_item(exit_signal, data_queue)
-    get_item(exit_signal, event_queue)
-    get_item(exit_signal, response_queue)
+    get_data(exit_signal, data_queue)
+    consume_queue(exit_signal, event_queue)
+    consume_queue(exit_signal, response_queue)
 
     while not exit_signal.is_set():
         time.sleep(sleep_for)
@@ -309,6 +127,7 @@ def main(parser, logger):
         loop,
         dict(
             exit_signal=daemon.exit_signal,
+            logger=logger,
             data_queue=data_queue,
             event_queue=event_queue,
             response_queue=response_queue,
