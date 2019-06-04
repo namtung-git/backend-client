@@ -535,7 +535,17 @@ class MQTT(object):
         if mqtt_protocol is None:
             self.mqtt_protocol = mqtt.MQTTv311
 
-        self.ca_certs = ca_certs
+        if ca_certs:
+            if os.path.exists(ca_certs):
+                self.ca_certs = ca_certs
+            else:
+                self.logger.error(
+                    "Certificate path ({}) does not exist -> attempting host load".format(
+                        ca_certs
+                    )
+                )
+                self.ca_certs = None
+
         self.certfile = certfile
         self.keyfile = keyfile
         self.ciphers = ciphers
@@ -630,11 +640,9 @@ class MQTT(object):
         )
 
         if self.force_unsecure is False:
-
             if self.allow_untrusted:
                 self.client.tls_insecure_set(self.allow_untrusted)
-
-            elif self.ca_certs:
+            else:
                 self.client.tls_set(
                     ca_certs=self.ca_certs,
                     certfile=self.certfile,
