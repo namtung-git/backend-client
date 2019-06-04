@@ -58,16 +58,16 @@ class LoggerHelper(object):
 
         self._log_format = dict()
         self._log_format["stdout"] = logging.Formatter(
-            "%(asctime)s | [%(levelname)s] %(name)s: %(message)s"
+            "%(asctime)s | [%(levelname)s] %(name)s.%(funcName)s@%(filename)s:%(lineno)d: %(message)s"
         )
 
         self._log_format["stderr"] = logging.Formatter(
-            "%(asctime)s | [%(levelname)s] %(name)s: %(message)s"
+            "%(asctime)s | [%(levelname)s] %(name)s.%(funcName)s@%(filename)s:%(lineno)d: %(message)s"
         )
 
         self._log_format["fluentd"] = {
             "host": "%(hostname)s",
-            "where": "%(module)s.%(funcName)s",
+            "where": "%(module)s.%(funcName)s.%(filename)s:%(lineno)d",
             "type": "%(levelname)s",
             "stack_trace": "%(exc_text)s",
         }

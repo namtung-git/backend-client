@@ -28,19 +28,30 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
     def __init__(self, *args, **kwargs):
         super(GenericMessage, self).__init__(*args, **kwargs)
         self.type = ApplicationTypes.GenericMessage
-
         self.logger = logging.getLogger("message_decoding")
 
-        self.sent_at = datetime.datetime.utcfromtimestamp(
+        # rx_time is the arrival time of the packet at the sink
+        self.rx_time = datetime.datetime.utcfromtimestamp(
             self.rx_time_ms_epoch / 1e3
         ) - datetime.timedelta(seconds=self.travel_time_ms / 1e3)
 
+        # tx_time is the departure time of the message from the node
+        self.tx_time = self.rx_time - datetime.timedelta(
+            seconds=self.travel_time_ms / 1e3
+        )
         self.received_at = datetime.datetime.utcnow()
-        self.serialization = None
+
+        # localize to UTC
+        self.rx_time = self.rx_time.replace(tzinfo=datetime.timezone.utc)
+        self.tx_time = self.tx_time.replace(tzinfo=datetime.timezone.utc)
+        self.received_at = self.received_at.replace(
+            tzinfo=datetime.timezone.utc
+        )
 
         self.transport_delay = (
-            self.received_at - self.sent_at
+            self.received_at - self.tx_time
         ).total_seconds()
+        self.serialization = None
 
     @classmethod
     def from_bus(cls, d):
@@ -116,13 +127,13 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
             "gw_id": self.gw_id,
             "sink_id": self.sink_id,
             "event_id": str(self.event_id),
-            "rx_time_ms_epoch": self.rx_time_ms_epoch,
+            "rx_time": self.rx_time.isoformat("T"),
+            "tx_time": self.tx_time.isoformat("T"),
             "source_address": self.source_address,
             "destination_address": self.destination_address,
             "source_endpoint": self.source_endpoint,
             "destination_endpoint": self.destination_endpoint,
             "travel_time_ms": self.travel_time_ms,
-            "sent_at": self.sent_at.isoformat("T"),
             "received_at": self.received_at.isoformat("T"),
             "qos": self.qos,
             "data_payload": self._serialize_payload(),
