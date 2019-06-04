@@ -266,16 +266,18 @@ def loop(exit_signal, data_queue, event_queue, response_queue, sleep_for=100):
     """
 
     @deferred_thread
-    def get_item(q, block=True, timeout=1):
-        try:
-            message = q.get(block=block, timeout=timeout)
-            print(message)
-        except queue.Empty:
-            pass
+    def get_item(exit_signal, q, block=True, timeout=60):
 
-    get_item(data_queue)
-    get_item(event_queue)
-    get_item(response_queue)
+        while not exit_signal.is_set():
+            try:
+                q.get(block=block, timeout=timeout)
+            except queue.Empty:
+                continue
+            # do something with the queue message
+
+    get_item(exit_signal, data_queue)
+    get_item(exit_signal, event_queue)
+    get_item(exit_signal, response_queue)
 
     while not exit_signal.is_set():
         time.sleep(sleep_for)
