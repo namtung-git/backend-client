@@ -287,6 +287,56 @@ class ParserHelper(object):
             help=("When true the client will skip " "the TLS check"),
         )
 
+        self.mqtt.add_argument(
+            "--mqtt_subscribe_network_id",
+            default="+",
+            action="store",
+            type=str,
+            help=(
+                "Specifies the WM sink id to use in the gateway topic subscription"
+            ),
+        )
+
+        self.mqtt.add_argument(
+            "--mqtt_subscribe_sink_id",
+            default="+",
+            action="store",
+            type=str,
+            help=(
+                "Specifies the WM sink id to use in the gateway topic subscription"
+            ),
+        )
+
+        self.mqtt.add_argument(
+            "--mqtt_subscribe_gateway_id",
+            default="+",
+            action="store",
+            type=str,
+            help=(
+                "Specifies the WM gateway id to use in the gateway topic subscription"
+            ),
+        )
+
+        self.mqtt.add_argument(
+            "--mqtt_subscribe_source_endpoint",
+            default="+",
+            action="store",
+            type=str,
+            help=(
+                "Specifies the WM source endpoint to use in the gateway topic subscription"
+            ),
+        )
+
+        self.mqtt.add_argument(
+            "--mqtt_subscribe_destination_endpoint",
+            default="+",
+            action="store",
+            type=str,
+            help=(
+                "Specifies the WM destination endpoint to use in the gateway topic subscription"
+            ),
+        )
+
     def add_test(self):
         """ Commonly used arguments for test execution """
         self.test.add_argument(

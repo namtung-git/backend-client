@@ -53,15 +53,42 @@ class MultiMessageMqttObserver(wirepas_backend_client.api.MQTTObserver):
     """ MultiMessageMqttObserver """
 
     def __init__(self, **kwargs):
+        self.logger = kwargs["logger"]
         self.gw_status_queue = kwargs.pop("gw_status_queue", None)
         self.storage_queue = kwargs.pop("storage_queue", None)
         super(MultiMessageMqttObserver, self).__init__(**kwargs)
-        self.logger = kwargs["logger"]
+
+        self.network_id = kwargs["mqtt_settings"].network_id
+        self.sink_id = kwargs["mqtt_settings"].sink_id
+        self.gateway_id = kwargs["mqtt_settings"].gateway_id
+        self.source_endpoint = kwargs["mqtt_settings"].source_endpoint
+        self.destination_endpoint = kwargs[
+            "mqtt_settings"
+        ].destination_endpoint
+
+        self.logger.debug(
+            "subscription filters: {}/{}/{}/{}/{}".format(
+                self.gateway_id,
+                self.sink_id,
+                self.network_id,
+                self.source_endpoint,
+                self.destination_endpoint,
+            )
+        )
+
         self.message_publish_handlers = {"useless-key": self.send_data}
         self.message_subscribe_handlers = {
-            "gw-event/received_data/#": self.generate_data_received_cb(),
-            "gw-event/status/+": self.generate_gw_status_cb(),
-            "gw-response/get_configs/+": self.generate_got_gw_configs_cb(),
+            "gw-event/received_data/{gw_id}/{sink_id}/{network_id}/#".format(
+                gw_id=self.gateway_id,
+                sink_id=self.sink_id,
+                network_id=self.network_id,
+            ): self.generate_data_received_cb(),
+            "gw-event/status/{gw_id}/#".format(
+                gw_id=self.gateway_id
+            ): self.generate_gw_status_cb(),
+            "gw-response/get_configs/{gw_id}/#".format(
+                gw_id=self.gateway_id
+            ): self.generate_got_gw_configs_cb(),
         }
         self.mqtt_topics = wirepas_backend_client.api.Topics()
 
