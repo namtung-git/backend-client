@@ -28,7 +28,6 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
     def __init__(self, *args, **kwargs):
         super(GenericMessage, self).__init__(*args, **kwargs)
         self.type = ApplicationTypes.GenericMessage
-        self.logger = logging.getLogger("message_decoding")
 
         # rx_time is the arrival time of the packet at the sink
         self.rx_time = datetime.datetime.utcfromtimestamp(
@@ -52,6 +51,10 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
             self.received_at - self.tx_time
         ).total_seconds()
         self.serialization = None
+
+    @property
+    def logger(self):
+        return logging.getLogger("message_decoding")
 
     @classmethod
     def from_bus(cls, d):
