@@ -53,7 +53,7 @@ class SinkAndGatewayStatusObserver(Thread):
         while not self.exit_signal.is_set():
             try:
                 status_msg = self.gw_status_queue.get(block=True, timeout=60)
-                self.logger.debug("HTTP status_msg={}".format(status_msg))
+                self.logger.info("HTTP status_msg={}".format(status_msg))
                 # New status of gateway received.
                 if status_msg["gw_id"] not in gateways_and_sinks:
                     # New gateway detected
@@ -120,14 +120,14 @@ class SinkAndGatewayStatusObserver(Thread):
                 # And delete those sinks in separate loop.
                 for i in delete:
                     del gateways_and_sinks[status_msg["gw_id"]][i]
-                self.logger.debug(
+                self.logger.info(
                     "HTTP Server gateways_and_sinks={}".format(
                         gateways_and_sinks
                     )
                 )
 
             except queue.Empty:
-                self.logger.debug("HTTP status_msg receiver running")
+                self.logger.info("HTTP status_msg receiver running")
 
 
 class HTTPSettings(Settings):
@@ -139,6 +139,36 @@ class HTTPSettings(Settings):
 
         self.hostname = self.http_host
         self.port = self.http_port
+
+
+class ConnectionServer(http.server.ThreadingHTTPServer):
+
+    close_connection = False
+    request_queue_size = 10
+    allow_reuse_address = True
+    timeout = 10
+    protocol_version = "HTTP/1.0"
+
+    def __init__(
+        self, server_address, RequestHandlerClass, bind_and_activate=True
+    ):
+
+        super(ConnectionServer, self).__init__(
+            server_address, RequestHandlerClass, bind_and_activate
+        )
+
+    def get_request(self):
+        """Get the request and client address from the socket.
+
+        May be overridden.
+
+        """
+        try:
+            value = self.socket.accept()
+        except Exception as err:
+            print("socket accept exception: {}".format(err))
+            value = None
+        return value
 
 
 class HTTPObserver(StreamObserver):
@@ -157,6 +187,10 @@ class HTTPObserver(StreamObserver):
         tx_queue: multiprocessing.Queue,
         rx_queue: multiprocessing.Queue,
         gw_status_queue: multiprocessing.Queue,
+        request_wait_timeout: int = 10,
+        close_connection: bool = False,
+        request_queue_size: int = 100,
+        allow_reuse_address: bool = True,
         logger=None,
     ) -> "HTTPObserver":
         super(HTTPObserver, self).__init__(
@@ -174,14 +208,15 @@ class HTTPObserver(StreamObserver):
         global http_tx_queue
         http_tx_queue = tx_queue
 
-        Handler = HTTPServer
         while not self.exit_signal.is_set():
             try:
                 # Crate the HTTP server.
-                self.httpd = socketserver.TCPServer(
-                    (self.hostname, self.port), Handler
+                self.httpd = ConnectionServer(
+                    (self.hostname, self.port),
+                    HTTPServer,
+                    bind_and_activate=True,
                 )
-                self.logger.debug(
+                self.logger.info(
                     "HTTP Server is serving at port: {}".format(self.port)
                 )
                 break
@@ -202,11 +237,16 @@ class HTTPObserver(StreamObserver):
         self.status_observer.start()
 
         # Run until killed.
-        while not self.exit_signal.is_set():
-            # Handle a http request.
-            self.httpd.handle_request()
+        try:
+            while not self.exit_signal.is_set():
+                # Handle a http request.
+                self.logger.info("Waiting for next request")
+                self.httpd.handle_request()
+        except Exception as err:
+            print(err)
 
-        self.logger.debug("HTTP Control server killed")
+        self.httpd.server_close()
+        self.logger.info("HTTP Control server killed")
         self.status_observer.join()
 
     def kill(self):
@@ -218,6 +258,7 @@ class HTTPObserver(StreamObserver):
 
 
 class HTTPServer(http.server.SimpleHTTPRequestHandler):
+
     """A simple HTTP server class.
 
     Only overrides the do_GET from the HTTP server so it catches
@@ -231,137 +272,138 @@ class HTTPServer(http.server.SimpleHTTPRequestHandler):
 
         print("GET request: {}".format(self.path))
 
-        # Parse into commands and parameters
-        splitted = urllib.parse.urlsplit(self.path)
-        command = splitted.path.split("/")[1]
+        try:
+            # Parse into commands and parameters
+            splitted = urllib.parse.urlsplit(self.path)
+            command = splitted.path.split("/")[1]
 
-        # Convert the parameter list into a dictionary.
-        params = dict(
-            urllib.parse.parse_qsl(urllib.parse.urlsplit(self.path).query)
-        )
+            # Convert the parameter list into a dictionary.
+            params = dict(
+                urllib.parse.parse_qsl(urllib.parse.urlsplit(self.path).query)
+            )
 
-        # By default assume good from people and their code
-        http_response = 200
+            # By default assume good from people and their code
+            http_response = 200
 
-        # Go through all gateways and sinks that are currently known to be
-        # online.
-        for gateway_id, sinks in gateways_and_sinks.items():
-            for sink_id, sink in sinks.items():
+            # Go through all gateways and sinks that are currently known to be
+            # online.
+            for gateway_id, sinks in gateways_and_sinks.items():
+                for sink_id, sink in sinks.items():
 
-                if command == "datatx":
+                    if command == "datatx":
 
-                    try:
-                        dest_add = int(params["destination"])
-                        src_ep = int(params["source_ep"])
-                        dst_ep = int(params["dest_ep"])
-                        qos = int(params["qos"])
-                        payload = binascii.unhexlify(params["payload"])
                         try:
-                            is_unack_csma_ca = params["fast"] in [
-                                "true",
-                                "1",
-                                "yes",
-                                "y",
-                            ]
-                        except KeyError:
-                            is_unack_csma_ca = False
+                            dest_add = int(params["destination"])
+                            src_ep = int(params["source_ep"])
+                            dst_ep = int(params["dest_ep"])
+                            qos = int(params["qos"])
+                            payload = binascii.unhexlify(params["payload"])
+                            try:
+                                is_unack_csma_ca = params["fast"] in [
+                                    "true",
+                                    "1",
+                                    "yes",
+                                    "y",
+                                ]
+                            except KeyError:
+                                is_unack_csma_ca = False
+                            try:
+                                hop_limit = int(params["hoplimit"])
+                            except KeyError:
+                                hop_limit = 0
+                            try:
+                                count = int(params["count"])
+                            except KeyError:
+                                count = 1
+
+                            while count:
+                                count -= 1
+
+                                # Create sendable message.
+                                global http_tx_queue
+                                message = mqtt_topics.request_message(
+                                    "send_data",
+                                    dict(
+                                        sink_id=sink_id,
+                                        gw_id=gateway_id,
+                                        dest_add=dest_add,
+                                        src_ep=src_ep,
+                                        dst_ep=dst_ep,
+                                        qos=qos,
+                                        payload=payload,
+                                        is_unack_csma_ca=is_unack_csma_ca,
+                                        hop_limit=hop_limit,
+                                    ),
+                                )
+                                # Insert the message(s) tx queue
+                                http_tx_queue.put(message)
+
+                        except Exception as err:
+                            print("Malformed data tx request {}".format(err))
+                            http_response = 500
+
+                    elif command == "start":
+
+                        new_config = {"started": True}
+                        message = mqtt_topics.request_message(
+                            "set_config",
+                            dict(
+                                sink_id=sink_id,
+                                gw_id=gateway_id,
+                                new_config=new_config,
+                            ),
+                        )
+                        http_tx_queue.put(message)
+
+                    elif command == "stop":
+
+                        new_config = {"started": False}
+                        message = mqtt_topics.request_message(
+                            "set_config",
+                            dict(
+                                sink_id=sink_id,
+                                gw_id=gateway_id,
+                                new_config=new_config,
+                            ),
+                        )
+                        http_tx_queue.put(message)
+
+                    elif command == "setconfig":
+
                         try:
-                            hop_limit = int(params["hoplimit"])
+                            seq = int(params["seq"])
                         except KeyError:
-                            hop_limit = 0
+                            if sink["app_config_seq"] == 254:
+                                seq = 1
+                            else:
+                                seq = sink["app_config_seq"] + 1
                         try:
-                            count = int(params["count"])
+                            diag = int(params["diag"])
                         except KeyError:
-                            count = 1
-
-                        while count:
-                            count -= 1
-
-                            # Create sendable message.
-                            global http_tx_queue
-                            message = mqtt_topics.request_message(
-                                "send_data",
-                                dict(
-                                    sink_id=sink_id,
-                                    gw_id=gateway_id,
-                                    dest_add=dest_add,
-                                    src_ep=src_ep,
-                                    dst_ep=dst_ep,
-                                    qos=qos,
-                                    payload=payload,
-                                    is_unack_csma_ca=is_unack_csma_ca,
-                                    hop_limit=hop_limit,
-                                ),
-                            )
-                            # Insert the message(s) tx queue
-                            http_tx_queue.put(message)
-
-                    except:
+                            diag = sink["app_config_diag"]
+                        try:
+                            data = bytes.fromhex(params["data"])
+                        except KeyError:
+                            data = sink["app_config_data"]
+                        new_config = {
+                            "app_config_diag": diag,
+                            "app_config_data": data,
+                            "app_config_seq": seq,
+                        }
+                        message = mqtt_topics.request_message(
+                            "set_config",
+                            dict(
+                                sink_id=sink_id,
+                                gw_id=gateway_id,
+                                new_config=new_config,
+                            ),
+                        )
+                        http_tx_queue.put(message)
+                    else:
                         http_response = 500
+        except Exception as err:
+            print(err)
 
-                elif command == "start":
-
-                    new_config = {"started": True}
-                    message = mqtt_topics.request_message(
-                        "set_config",
-                        dict(
-                            sink_id=sink_id,
-                            gw_id=gateway_id,
-                            new_config=new_config,
-                        ),
-                    )
-                    http_tx_queue.put(message)
-
-                elif command == "stop":
-
-                    new_config = {"started": False}
-                    message = mqtt_topics.request_message(
-                        "set_config",
-                        dict(
-                            sink_id=sink_id,
-                            gw_id=gateway_id,
-                            new_config=new_config,
-                        ),
-                    )
-                    http_tx_queue.put(message)
-
-                elif command == "setconfig":
-
-                    try:
-                        seq = int(params["seq"])
-                    except KeyError:
-                        if sink["app_config_seq"] == 254:
-                            seq = 1
-                        else:
-                            seq = sink["app_config_seq"] + 1
-                    try:
-                        diag = int(params["diag"])
-                    except KeyError:
-                        diag = sink["app_config_diag"]
-                    try:
-                        data = bytes.fromhex(params["data"])
-                    except KeyError:
-                        data = sink["app_config_data"]
-                    new_config = {
-                        "app_config_diag": diag,
-                        "app_config_data": data,
-                        "app_config_seq": seq,
-                    }
-                    message = mqtt_topics.request_message(
-                        "set_config",
-                        dict(
-                            sink_id=sink_id,
-                            gw_id=gateway_id,
-                            new_config=new_config,
-                        ),
-                    )
-                    http_tx_queue.put(message)
-                else:
-                    http_response = 500
         # Respond to front-end
         self.send_response(http_response)
-        self.send_header("Content-type", "text/html")
         self.end_headers()
-        self.wfile.write(bytes("Wirepas Python Gateway", "utf-8"))
-        self.wfile.write(bytes(" ... Command: {}".format(command), "utf-8"))
-        self.wfile.write(bytes(" ... Parameters: {}".format(params), "utf-8"))
