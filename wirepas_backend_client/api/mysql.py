@@ -9,7 +9,6 @@
         See file LICENSE for full license details.
 """
 import os
-from loky import get_reusable_executor
 
 try:
     import MySQLdb
@@ -116,17 +115,7 @@ class MySQLObserver(StreamObserver):
     def pool_on_data_received(self, n_workers=4):
         """ Monitor inbound queue for messages to be stored in MySQL """
 
-        def work(
-            storage_q,
-            exit_signal,
-            settings,
-            logger,
-            logger_handlers,
-            logger_level,
-        ):
-
-            logger.handlers = logger_handlers
-            logger.level = logger_level
+        def work(storage_q, exit_signal, settings, logger):
 
             mysql = MySQL(
                 username=settings.username,
@@ -188,19 +177,19 @@ class MySQLObserver(StreamObserver):
             logger.warning("exiting MySQL worker {}".format(pid))
             return pid
 
-        executor = get_reusable_executor(max_workers=n_workers, timeout=10)
+        workers = dict()
+        for pseq in range(1, n_workers):
+            workers[pseq] = multiprocessing.Process(
+                target=work,
+                args=(
+                    self.rx_queue,
+                    self.exit_signal,
+                    self.settings,
+                    self.logger,
+                ),
+            ).start()
 
-        for n in range(0, n_workers):
-            executor.submit(
-                work,
-                self.rx_queue,
-                self.exit_signal,
-                self.settings,
-                self.logger,
-                self.logger.handlers,
-                self.logger.level,
-            )
-        self._wait_for_exit()
+        self._wait_for_exit(workers=workers)
 
     def run(self, **kwargs):
         """ Runs until asked to exit """
@@ -234,12 +223,18 @@ class MySQLObserver(StreamObserver):
 
         self.mysql.close()
 
-    def _wait_for_exit(self):
+    def _wait_for_exit(self, workers: dict = None):
         """ waits until the exit signal is set """
-        self.logger.debug("MySQL is running while waiting for exit")
         while not self.exit_signal.is_set():
-            time.sleep(self.timeout * 10)
             self.logger.debug("MySQL is running")
+            time.sleep(self.timeout * 10)
+            if workers:
+                for seq, worker in workers.items():
+                    if worker.is_alive():
+                        continue
+                    self.logger.error("Worker {} is dead. Exiting".format(seq))
+                    self.exit_signal.set()
+                    break
 
 
 class MySQL(object):

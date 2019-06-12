@@ -16,9 +16,6 @@ influxdb==5.2.2
 # data viz
 pandas==0.24.2
 
-# mutliprocess
-loky==2.4.2
-
 # websocket
 websocket-client==0.48.0
 
