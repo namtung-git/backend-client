@@ -2,10 +2,6 @@
 wirepas_messaging==1.1.0
 cbor2==4.1.2
 
-# grpc & protobuf related
-grpcio==1.14.1
-grpcio-tools==1.14.1
-
 # mqtt
 paho-mqtt==1.4.0
 
@@ -22,6 +18,3 @@ websocket-client==0.48.0
 # tools
 PyYAML==5.1
 fluent-logger==0.9.3
-
-Sphinx>=1.7.0; platform_machine == "x86_64"
-sphinxcontrib-napoleon>=0.6.1; platform_machine == "x86_64"
