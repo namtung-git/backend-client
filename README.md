@@ -1,7 +1,7 @@
 # Backend client
 
 
-[![Build Status](https://travis-ci.org/wirepas/backend-client.svg?branch=master)](https://travis-ci.org/wirepas/backend-client) [![PyPi](https://img.shields.io/pypi/v/wirepas-backend-client.svg)](https://pypi.org/project/wirepas-backend-client/)
+[![Build Status](https://travis-ci.com/wirepas/backend-apis.svg?branch=master)](https://travis-ci.com/wirepas/backend-apis) [![PyPi](https://img.shields.io/pypi/v/wirepas-backend-client.svg)](https://pypi.org/project/wirepas-backend-client/)
 
 
 Backend client is a tool to interface with Wirepas' WM-RM-128 API. The API
@@ -36,7 +36,7 @@ present in /home/wirepas/vars/settings.yml (container path).
 To run it with docker type:
 
 ```shell
-    docker run -v $(pwd)/.settings.yml:/home/wirepas/vars/settings.yml \
+    docker run -it -v $(pwd)/.settings.yml:/home/wirepas/vars/settings.yml \
                 wirepas/backend-client
 ```
 
