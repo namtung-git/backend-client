@@ -1,8 +1,8 @@
 ---
-name: Feature request
-about: Provide a brief of your proposal's goal.
+name: Feature and task definition
+about: Use this issue to raise a feature request or define a task
 title: ''
-labels: enhancement, for consideration, feature
+labels: enhancement, feature, for consideration
 assignees: PFigs
 
 ---
