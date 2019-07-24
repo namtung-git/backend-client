@@ -24,3 +24,8 @@ docs/source/wirepas_backend_client*.rst
 .clang*
 .ci/manifest/*
 dev-requirements.txt
+
+*.csv
+kpi_data/*
+.idea/*
+examples/test_fluent.py

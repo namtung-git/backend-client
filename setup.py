@@ -16,35 +16,18 @@ import glob
 
 from setuptools import setup, find_packages
 
-with open("README.md") as f:
+here = os.path.abspath(os.path.dirname(__file__))
+readme_file = "README.md"
+license_file = "LICENSE"
+requirements_file = "requirements.txt"
+
+with open(readme_file) as f:
     long_description = f.read()
-
-with open("LICENSE") as f:
-    license = f.read()
-
-
-def filter(flist, rules=["private", ".out"]):
-    for f in flist:
-        for rule in rules:
-            if rule in f:
-                flist.pop(flist.index(f))
-    return flist
-
-
-def get_list_files(root, flist=None):
-    if flist is None:
-        flist = list()
-
-    for path, subdirs, files in os.walk(root):
-        for name in files:
-            flist.append(os.path.join(path, name))
-    return flist
 
 
 def get_absolute_path(*args):
     """ Transform relative pathnames into absolute pathnames """
-    directory = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(directory, *args)
+    return os.path.join(here, *args)
 
 
 def get_requirements(*args):
@@ -60,25 +43,24 @@ def get_requirements(*args):
     return sorted(requirements)
 
 
+about = {}
+with open(get_absolute_path("./wirepas_backend_client/__about__.py")) as f:
+    exec(f.read(), about)
+
 setup(
-    name="wirepas_backend_client",
-    version="1.1.0",
-    description="Wirepas backend client",
+    name=about["__pkg_name__"],
+    version=about["__version__"],
+    description=about["__description__"],
     long_description=long_description,
-    author="Wirepas Oy",
-    author_email="techsupport@wirepas.com",
-    url="https://github.com/wirepas/backend-client",
-    license="Apache-2",
-    classifiers=[
-        "Development Status :: 4 - Beta",
-        "Intended Audience :: Developers",
-        "License :: OSI Approved :: Apache Software License",
-        "Topic :: Software Development :: Libraries",
-        "Programming Language :: Python :: 3",
-    ],
-    keywords="wirepas connectivity iot mesh",
+    long_description_content_type="text/markdown",
+    author=about["__author__"],
+    author_email=about["__author_email__"],
+    url=about["__url__"],
+    license=about["__license__"],
+    classifiers=about["__classifiers__"],
+    keywords=about["__keywords__"],
     packages=find_packages(exclude=["contrib", "docs", "tests", "examples"]),
-    install_requires=get_requirements("requirements.txt"),
+    install_requires=get_requirements(requirements_file),
     include_package_data=True,
     data_files=[
         (
