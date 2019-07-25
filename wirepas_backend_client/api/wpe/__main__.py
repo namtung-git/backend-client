@@ -22,63 +22,82 @@ import datetime
 import json
 
 import wirepas_messaging.wpe as messaging
-from ...tools import ParserHelper
-from . import Service
+from ...tools import ParserHelper, LoggerHelper, JsonSerializer
+from . import Service, WPESettings
 
 
 def main():
-    parse = ParserHelper(description="WPE backend client arguments")
+    """ Main entrypoint to connect and talk to a WPE instance """
+
+    parse = ParserHelper(description="WPE client arguments")
 
     parse.add_file_settings()
+    parse.add_fluentd()
     parse.add_wpe()
 
-    args = parse.arguments
+    settings = parse.settings(settings_class=WPESettings)
 
-    if args.wpe_service_definition:
+    logger = LoggerHelper(
+        module_name="wm-wpe-viewer", args=settings, level=settings.debug_level
+    ).setup()
+
+    if settings.sanity():
+
+        # loads connection details from a json file
         service_definition = json.loads(
-            open(args.wpe_service_definition).read()
+            open(settings.wpe_service_definition).read()
         )
+        service = Service(
+            service_definition["flow"],
+            service_handler=messaging.flow_managerStub,
+        )
+        service.dial(secure=settings.wpe_unsecure)
+
+        # checks if the remote server is connected
+        try:
+            response = service.stub.status(messaging.Query())
+            logger.debug("{status}".format(status=response))
+
+        except Exception as err:
+            logger.exception("failed to query status - {}".format(err))
+
+        # subscribe to the flow if a network id is provided
+        if settings.wpe_network is not None:
+            subscription = messaging.Query(network=settings.wpe_network)
+            status = service.stub.subscribe(subscription)
+            logger.debug("subscription status: {status}".format(status=status))
+
+            if status.code == status.CODE.Value("SUCCESS"):
+
+                subscription.subscriber_id = status.subscriber_id
+                logger.info(
+                    "observation starting for: {0}".format(subscription)
+                )
+
+                try:
+                    for message in service.stub.observe(subscription):
+                        logger.info(
+                            "{utc} | {message}".format(
+                                utc=datetime.datetime.utcnow().isoformat("T"),
+                                message=JsonSerializer.serialize(message),
+                            )
+                        )
+
+                except KeyboardInterrupt:
+                    pass
+
+                subscription = service.stub.unsubscribe(subscription)
+
+                logger.info(
+                    "subscription termination:{0}".format(subscription)
+                )
+
+            else:
+                logger.error("insufficient parameters")
+
     else:
+        logger.error("Please provide a valid service definition.")
         raise ValueError("Please provide a valid service definition.")
-
-    service = Service(
-        service_definition["flow"], service_handler=messaging.flow_managerStub
-    )
-    service.dial(secure=args.wpe_unsecure)
-
-    try:
-        response = service.stub.status(messaging.Query())
-        print("{status}".format(status=response))
-
-    except Exception as error:
-        print("failed to query status - {error}".format(error=error))
-
-    # subscribe to the flow if a network id is provided
-    if args.wpe_network is not None:
-        subscription = messaging.Query(network=args.wpe_network)
-        status = service.stub.subscribe(subscription)
-        print("subscription status: {status}".format(status=status))
-
-        if status.code == status.CODE.Value("SUCCESS"):
-
-            subscription.subscriber_id = status.subscriber_id
-            print("observation starting for: {0}".format(subscription))
-
-            try:
-                for message in service.stub.observe(subscription):
-                    print("<< {}".format(datetime.datetime.now()))
-                    print("{0}".format(message))
-                    print("===")
-
-            except KeyboardInterrupt:
-                pass
-
-            subscription = service.stub.unsubscribe(subscription)
-
-            print("subscription termination:{0}".format(subscription))
-
-        else:
-            print("unsuficient parameters")
 
 
 if __name__ == "__main__":

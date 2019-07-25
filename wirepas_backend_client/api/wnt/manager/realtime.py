@@ -18,7 +18,16 @@ from .manager import Manager
 
 
 class RealtimeManager(Manager):
-    """docstring for RealtimeManager"""
+    """
+    RealtimeManager
+
+    This class handles the connection and messages on the realtime
+    websocket.
+
+    The realtime websocket offers realtime data about the status of the
+    mesh and devices.
+
+    """
 
     def __init__(
         self,
@@ -47,7 +56,8 @@ class RealtimeManager(Manager):
         )
 
     def on_open(self, websocket) -> None:
-        """Websocket callback when the authentication websocket has been opened
+        """
+        Websocket callback when the authentication websocket has been opened
 
         Args:
             websocket (Websocket): communication socket

@@ -7,32 +7,23 @@
         See file LICENSE for full license details.
 
 """
-import re
-import sys
-import json
-import numpy
+
 import logging
-import datetime
 import influxdb
 import requests
 import google
-import google.protobuf.json_format as jformat
-
 import wirepas_messaging
-
 import argparse
 import pandas
-from ..tools import Settings
-
-import binascii
 import multiprocessing
 import queue
 
 from .stream import StreamObserver
+from ..tools import Settings
 
 
 class InfluxSettings(Settings):
-    """MySQL Settings"""
+    """Influx Settings"""
 
     def __init__(self, settings: Settings) -> "InfluxSettings":
 

@@ -9,32 +9,13 @@
         See file LICENSE for full license details.
 """
 
+import os
 import sys
-import json
 import argparse
-import datetime
-import binascii
 import yaml
 import ssl
-
-
-def serialize(obj) -> str:
-    """ Serializes an object into json """
-    return json.dumps(obj, default=json_serial, sort_keys=True, indent=4)
-
-
-def json_serial(obj) -> str:
-    """JSON serializer for objects not serializable by default json code"""
-
-    if isinstance(obj, (datetime.datetime, datetime.date)):
-        return obj.isoformat()
-
-    if isinstance(obj, (bytearray, bytes)):
-        return binascii.hexlify(obj)
-    if isinstance(obj, set):
-        return str(obj)
-
-    raise TypeError("Type %s not serializable" % type(obj))
+from ..__about__ import __version__
+from .utils import JsonSerializer
 
 
 class Settings(object):
@@ -81,8 +62,10 @@ class ParserHelper(object):
 
         self._unknown_arguments = None
         self._arguments = None
-
         self._groups = dict()
+        self._version = __version__
+
+        self.add_framework_settings()
 
     @property
     def parser(self):
@@ -168,6 +151,27 @@ class ParserHelper(object):
             self._groups[name] = self._parser.add_argument_group(name)
 
         return self._groups[name]
+
+    def add_framework_settings(self):
+        self.framework.add_argument(
+            "--version", action="version", version=self._version
+        )
+
+        self.framework.add_argument(
+            "--debug_level",
+            action="store",
+            default=os.environ.get("WM_DEBUG_LEVEL", None),
+            type=str,
+            help="Logger debug level",
+        )
+
+        self.framework.add_argument(
+            "--heartbeat",
+            action="store",
+            default=os.environ.get("WM_HEARTBEAT", 10),
+            type=int,
+            help="Amount of seconds to check if processes are alive",
+        )
 
     def add_file_settings(self):
         """ For file setting handling"""
@@ -643,4 +647,4 @@ class ParserHelper(object):
     def dump(self, path):
         """ dumps the arguments into a file """
         with open(path, "w") as f:
-            f.write(serialize(vars(self._arguments)))
+            f.write(JsonSerializer.serialize(vars(self._arguments)))

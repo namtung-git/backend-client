@@ -9,6 +9,19 @@
 """
 
 import grpc
+from ...tools import Settings
+
+
+class WPESettings(Settings):
+    """WPE Settings"""
+
+    def __init__(self, settings: Settings) -> "WPESettings":
+        super(WPESettings, self).__init__(settings)
+
+    def sanity(self) -> bool:
+        """ Checks if connection parameters are valid """
+        is_valid = self.wpe_service_definition is not None
+        return is_valid
 
 
 class Service(object):
@@ -76,25 +89,33 @@ class Service(object):
         return self._service_definition["override_cn"]
 
     def dial(self, secure=True, cb=None):
+        """ dial establishes a grpc channel
+
+        Args:
+            secure (bool): when false uses insecure connections
+            cb (fct): a function callback to handle the channel status
+
+        """
 
         if secure:
             try:
                 self._secure_connection(cb)
             except KeyError:
-                self._unsecure_connection(cb)
+                self._insecure_connection(cb)
         else:
-            self._unsecure_connection(cb)
+            self._insecure_connection(cb)
 
         if cb is not None:
             self.channel.subscribe(cb)
 
         self.stub = self._service_handler(self.channel)
 
-    def _unsecure_connection(self, cb=None):
+    def _insecure_connection(self, cb=None):
+        """ Constructs an insecure channel """
         self.channel = grpc.insecure_channel(self.address)
 
     def _secure_connection(self, cb=None):
-
+        """ Constructs an insecure channel """
         self._authority = grpc.ssl_channel_credentials(
             root_certificates=open(self.ssl_root_certificate, "rb").read(),
             private_key=open(self.ssl_client_key, "rb").read(),

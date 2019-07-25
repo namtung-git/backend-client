@@ -29,3 +29,7 @@ dev-requirements.txt
 kpi_data/*
 .idea/*
 examples/test_fluent.py
+
+
+run_informatio*
+**/*report.json

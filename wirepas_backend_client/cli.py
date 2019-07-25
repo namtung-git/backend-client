@@ -12,10 +12,7 @@
 """
 
 import os
-import time
 import cmd
-import multiprocessing
-import queue
 import readline
 import subprocess
 import datetime
@@ -23,10 +20,9 @@ import sys
 import select
 import logging
 
-from .api import MQTT, Topics
-from .api import topic_message
+from .api import Topics
 from .management import NetworkDiscovery, Daemon
-from .tools import Settings
+
 
 from wirepas_messaging.gateway.api import GatewayState
 
@@ -1180,7 +1176,7 @@ def launch_cli(settings, logger):
     daemon.start()
 
 
-if __name__ == "__main__":
+def main():
 
     from .tools import ParserHelper, LoggerHelper
     from .api import MQTTSettings
@@ -1191,18 +1187,19 @@ if __name__ == "__main__":
     parser.add_fluentd()
     settings = parser.settings(settings_class=MQTTSettings)
 
-    debug_level = "warning"
-    try:
-        debug_level = os.environ["WM_DEBUG_LEVEL"]
-    except KeyError:
-        pass
+    if settings.debug_level is None:
+        settings.debug_level = "warning"
 
-    my_log = LoggerHelper(
-        module_name="gw-cli", args=settings, level=debug_level
-    )
-    logger = my_log.setup()
+    logger = LoggerHelper(
+        module_name="gw-cli", args=settings, level=settings.debug_level
+    ).setup()
 
     if settings.sanity():
         launch_cli(settings, logger)
     else:
         print("Please review your connection settings")
+
+
+if __name__ == "__main__":
+
+    main()

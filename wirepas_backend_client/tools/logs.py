@@ -44,12 +44,15 @@ class ContextFilter(logging.Filter):
 class LoggerHelper(object):
     """LoggerHelper"""
 
-    def __init__(self, module_name, args, level: str = "debug", **kwargs):
+    def __init__(self, module_name, args, level: str = None, **kwargs):
         super(LoggerHelper, self).__init__()
 
         for key, value in args.__dict__.items():
             if value is not None or "fluent" in key:
                 self.__dict__[key] = value
+
+        if level is None:
+            level = "debug"
 
         self._logger = logging.getLogger(module_name)
         self._name = module_name
@@ -58,16 +61,16 @@ class LoggerHelper(object):
 
         self._log_format = dict()
         self._log_format["stdout"] = logging.Formatter(
-            "%(asctime)s | [%(levelname)s] %(name)s.%(funcName)s@%(filename)s:%(lineno)d: %(message)s"
+            "%(asctime)s | [%(levelname)s] %(name)s@%(filename)s:%(lineno)d: %(message)s"
         )
 
         self._log_format["stderr"] = logging.Formatter(
-            "%(asctime)s | [%(levelname)s] %(name)s.%(funcName)s@%(filename)s:%(lineno)d: %(message)s"
+            "%(asctime)s | [%(levelname)s] %(name)s@%(filename)s:%(lineno)d: %(message)s"
         )
 
         self._log_format["fluentd"] = {
             "host": "%(hostname)s",
-            "where": "%(module)s.%(funcName)s.%(filename)s:%(lineno)d",
+            "where": "%(module)s%(filename)s:%(lineno)d",
             "type": "%(levelname)s",
             "stack_trace": "%(exc_text)s",
         }
@@ -218,5 +221,9 @@ class LoggerHelper(object):
         for name, handler in self._handlers.items():
             try:
                 handler.close()
-            except:
-                pass
+            except Exception as err:
+                self._logger.error(
+                    "Could not close logging handler {} due to {}".format(
+                        name, err
+                    )
+                )

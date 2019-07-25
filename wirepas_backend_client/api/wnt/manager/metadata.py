@@ -21,17 +21,12 @@ from .manager import Manager
 
 
 class MetadataManager(Manager):
-    """MetadataManager
+    """
+    MetadataManager
 
     This class handles the metadata connection and defines the runtime
     behaviour associated with the metadata.
 
-    Attributes:
-        hostname
-        protocol_version
-        port
-        name
-        messages
     """
 
     def __init__(

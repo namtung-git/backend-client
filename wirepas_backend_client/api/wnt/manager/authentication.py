@@ -17,7 +17,13 @@ from .manager import Manager
 
 
 class AuthenticationManager(Manager):
-    """docstring for AuthenticationManager"""
+    """
+    AuthenticationManager
+
+    This class handles operations done over the authentication
+    websocket.
+
+    """
 
     def __init__(
         self,
@@ -46,10 +52,11 @@ class AuthenticationManager(Manager):
         self.messages = AuthenticationMessages(self.logger, protocol_version)
 
     def on_open(self, websocket) -> None:
-        """Websocket callback when the authentication websocket has been opened
+        """
+        Websocket callback when the authentication websocket has been opened
 
         Args:
-            websocket (Websocket): communication socket
+            websocket (websocket): communication socket
         """
         super().on_open(websocket)
         self.socket.send(
@@ -59,14 +66,14 @@ class AuthenticationManager(Manager):
         )
 
     def on_message(self, websocket, message) -> None:
-        """Websocket callback when a new authentication message arrives
+        """
+        Websocket callback when a new authentication message arrives
 
         Args:
-            websocket (Websocket): communication socket
+            websocket (websocket): communication socket
             message (str): received message
         """
         super().on_message(websocket, message)
         self.messages.parse_login(json.loads(message))
         self.session_id = self.messages.session_id
-        # self.send(dict(session_id=self.session_id))
         self.write(dict(session_id=self.session_id))

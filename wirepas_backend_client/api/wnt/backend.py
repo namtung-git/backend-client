@@ -12,18 +12,43 @@ import queue
 import logging
 import datetime
 
-from ...tools import Settings, ParserHelper
+from ...tools import Settings, JsonSerializer
 from .manager import AuthenticationManager, RealtimeManager, MetadataManager
+
+
+class WNTSettings(Settings):
+    """WNT Settings"""
+
+    def __init__(self, settings: Settings) -> "WNTSettings":
+
+        super(WNTSettings, self).__init__(settings)
+
+    def sanity(self) -> bool:
+        """ Checks if connection parameters are valid """
+        is_valid = (
+            self.wnt_username is not None
+            and self.wnt_password is not None
+            and self.wnt_hostname is not None
+        )
+
+        return is_valid
 
 
 class Backend(object):
     def __init__(
         self, settings, callback_queue=None, logger=None, **kwargs
     ) -> None:
-        """Initialization"""
+        """
+        Backend
+
+        The Backend class aims to support a connection to a given WNT
+        instance. It assumes default ports for the client websockets.
+
+        """
 
         self.logger = logger or logging.getLogger(__name__)
         self.settings = settings
+        self.session_id = None
 
         self.authentication = AuthenticationManager(
             hostname=self.settings.wnt_hostname,
@@ -46,6 +71,12 @@ class Backend(object):
         )
 
     def login(self) -> None:
+        """ login retrieves a session id from the authentication ws.
+
+        If the acquisition is successful, the token is stored under
+        the objects's session_id attribute.
+
+        """
 
         self.authentication.start()
         message = self.authentication.tx_queue.get(block=True)
@@ -59,14 +90,15 @@ class Backend(object):
         self.metadata.rx_queue.put(dict(session_id=self.session_id))
 
     def send_request(self) -> None:
-        """Send request"""
+        """Send request """
         pass
 
     def connect_all(self, exit_signal: bool) -> None:
-        """Run method which starts and waits the communication thread(s)
+        """
+        connect_all logins with the server instance and starts the
+        realtime and metadata websockets.
 
-        Returns:
-            int: Process return code
+        It then prints all the messages sent by WNT.
         """
         self.login()
 
@@ -77,35 +109,28 @@ class Backend(object):
             try:
                 message = self.realtime.tx_queue.get(block=True, timeout=10)
                 if message:
-                    print(
-                        "<< new message @ {local} ({utc})".format(
-                            local=datetime.datetime.now().isoformat(),
-                            utc=datetime.datetime.utcnow().isoformat(),
+                    self.logger.info(
+                        "{utc} | {message}".format(
+                            utc=datetime.datetime.utcnow().isoformat("T"),
+                            message=JsonSerializer.serialize(message),
                         )
                     )
-                    print(message)
-                    print("== EOM")
             except queue.Empty:
                 pass
 
         self.close()
 
     def close(self):
+        """ Terminates the websocket connections """
         self.metadata.stop()
         self.realtime.stop()
         self.authentication.stop()
 
     def run(self, exit_signal: bool) -> None:
+        """ Defines the object's main loop """
         self.connect_all(exit_signal)
 
 
 if __name__ == "__main__":
 
-    parse = ParserHelper(description="WNT backend client arguments")
-
-    parse.add_file_settings()
-    parse.add_wnt()
-
-    settings = Settings(parse.arguments)
-    print(settings)
-    Backend(settings).run(False)
+    print("Please use the package's entrypoint.")

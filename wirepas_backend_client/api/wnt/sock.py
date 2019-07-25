@@ -58,10 +58,12 @@ class WNTSocket(object):
 
     @property
     def socket(self):
+        """ Returns the socket object """
         return self._socket
 
-    # socket establishment
     def connect(self, url, with_trace=True) -> websocket.WebSocketApp:
+        """ Connect establishes the websocket connection"""
+
         websocket.enableTrace(with_trace)
         self._socket = websocket.WebSocketApp(
             url,
@@ -73,7 +75,16 @@ class WNTSocket(object):
         self._socket.keep_running = True
 
     def start(self, daemon=True, sslopt=None, **kwargs):
-        """Starts the authentication connection"""
+        """
+        Start launches a thread for the websocket connection.
+
+        Tracing for the websocket connection must be set during the
+        objects initialization.
+
+        Args:
+            daemon (bool): should the thread be tied to its parent
+            sslopt (dict): dictionary with TLS options
+        """
 
         self.connect(url=self.url, with_trace=self.tracing)
 
@@ -88,13 +99,20 @@ class WNTSocket(object):
         self._thread.start()
 
     def send(self, message: str) -> None:
+        """
+        Sends a message over the websocket
+
+        Args:
+            message (str): a serialized message
+        """
         self._socket.send(message)
 
     def stop(self):
+        """Requests the websocket thread to stop"""
         self._socket.keep_running = False
 
     def run(self, sslopt=None):
-        """Starts the websocket loop"""
+        """Starts the websocket's thread loop"""
         self._socket.run_forever(sslopt=sslopt)
 
 

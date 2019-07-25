@@ -149,6 +149,10 @@ class MySQLObserver(StreamObserver):
                     message = storage_q.get(block=True, timeout=2)
                 except queue.Empty:
                     continue
+                except EOFError:
+                    break
+                except KeyboardInterrupt:
+                    break
 
                 try:
                     mysql.database.ping(True)

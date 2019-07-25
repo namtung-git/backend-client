@@ -9,16 +9,12 @@
         Wirepas Oy licensed under Apache License, Version 2.0.
         See file LICENSE for full license details.
 """
-import sys
-import json
-import logging
-import argparse
-import datetime
-import time
-import yaml
-import threading
 
-from fluent import handler as fluent_handler
+import json
+import datetime
+import threading
+import google
+import binascii
 
 
 def deferred_thread(fn):
@@ -35,6 +31,55 @@ def deferred_thread(fn):
         return thread
 
     return wrapper
+
+
+class JsonSerializer(json.JSONEncoder):
+
+    proto_as_json = False
+    sort_keys = True
+    indent = 4
+
+    def __init__(self, proto_as_json: bool = False, **kwargs):
+        super(JsonSerializer, self).__init__(**kwargs)
+        self.proto_as_json = proto_as_json
+
+    def default(self, obj) -> str:
+        """Lookup table for serializing objects
+
+        Pylint complains about the method signature, but this is the
+        recommended way of implementing a custom JSON serialization as
+        seen in:
+
+        https://docs.python.org/3/library/json.html#json.JSONEncoder
+
+        """
+
+        if isinstance(obj, (datetime.datetime, datetime.date)):
+            return obj.isoformat()
+
+        if isinstance(obj, (bytearray, bytes)):
+            return binascii.hexlify(obj)
+        if isinstance(obj, set):
+            return str(obj)
+
+        if hasattr(obj, "DESCRIPTOR"):
+            if self.proto_as_json is True:
+                pstr = google.protobuf.json_format.MessageToJson(
+                    obj, including_default_value_fields=True
+                )
+            else:
+                pstr = google.protobuf.json_format.MessageToDict(
+                    obj, including_default_value_fields=True
+                )
+            return pstr
+
+        raise json.JSONEncoder.default(self, obj)
+
+    @classmethod
+    def serialize(cls, obj):
+        return json.dumps(
+            obj, cls=cls, sort_keys=cls.sort_keys, indent=cls.indent
+        )
 
 
 class ExitSignal(object):
