@@ -11,58 +11,67 @@
 
 import os
 import json
-import argparse
 import datetime
-import grpc
 import wirepas_messaging
 
-from wirepas_backend_client.api.wpe import Service
-from wirepas_backend_client.tools import Settings, ParserHelper, LoggerHelper
-from wirepas_backend_client.api.wnt import Backend
-from wirepas_backend_client.cli import launch_cli
+from .cli import launch_cli
+from .api.wnt import Backend
+from .api.wpe import Service
+from .api import MQTTSettings
+from .tools import ParserHelper, LoggerHelper
 
 
 def wnt_client():
     """ launches the wnt client """
 
-    parse = ParserHelper(description="WNT backend client arguments")
+    parser = ParserHelper(description="WNT backend client arguments")
 
-    parse.add_file_settings()
-    parse.add_wnt()
-    settings = parse.settings()
+    parser.add_file_settings()
+    parser.add_wnt()
+    settings = parser.settings()
 
     try:
         Backend(settings).run(False)
     except AttributeError:
         print("There is something wrong with your wnt arguments.")
-        print("Here's the configuration interpreted:\n {}".format(settings))
 
 
 def gw_cli():
     """ launches the gateway client """
 
-    parser = ParserHelper.default_args("Gateway client arguments")
-    args = parser.arguments
+    parser = ParserHelper("Gateway client arguments")
 
-    try:
-        debug_level = os.environ["WM_DEBUG_LEVEL"]
-    except KeyError:
-        debug_level = "warning"
+    parser.add_file_settings()
+    parser.add_mqtt()
+    parser.add_fluentd()
 
-    my_log = LoggerHelper(module_name="gw-cli", args=args, level=debug_level)
-    logger = my_log.setup()
-    launch_cli(args, logger)
+    settings = parser.settings(settings_class=MQTTSettings)
+
+    if settings.sanity():
+        try:
+            debug_level = os.environ["WM_DEBUG_LEVEL"]
+        except KeyError:
+            debug_level = "warning"
+
+        my_log = LoggerHelper(
+            module_name="gw-cli", args=settings, level=debug_level
+        )
+        logger = my_log.setup()
+
+        launch_cli(settings, logger)
+    else:
+        print("Please review your connection settings")
 
 
 def wpe_client():
     """ launches the wpe client """
 
-    parse = ParserHelper(description="WPE backend client arguments")
+    parser = ParserHelper(description="WPE backend client arguments")
 
-    parse.add_file_settings()
-    parse.add_wpe()
+    parser.add_file_settings()
+    parser.add_wpe()
 
-    settings = parse.settings()
+    settings = parser.settings()
 
     if settings.wpe_service_definition:
         service_definition = json.loads(
@@ -111,7 +120,7 @@ def wpe_client():
             print("subscription termination:{0}".format(subscription))
 
         else:
-            print("unsuficient parameters")
+            print("insufficient parameters")
 
 
 if __name__ == "__main__":

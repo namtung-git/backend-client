@@ -106,6 +106,6 @@ if __name__ == "__main__":
     parse.add_file_settings()
     parse.add_wnt()
 
-    settings = Settings.from_args(parse.arguments)
+    settings = Settings(parse.arguments)
     print(settings)
     Backend(settings).run(False)

@@ -4,9 +4,8 @@
 
 import os
 import requests
-import wirepas_backend_client
-from wirepas_backend_client.api import Influx
 
+from wirepas_backend_client.api import Influx
 from wirepas_backend_client.api import InfluxSettings
 from wirepas_backend_client.tools import ParserHelper, LoggerHelper
 
@@ -28,10 +27,16 @@ def main(settings, logger):
 
     try:
         influx.connect()
-        result = influx.location_measurements(60)
-        print("Location measurement {}".format(result))
-        result = influx.location_updates()
-        print("Location update {}".format(result))
+
+        r = influx.location_measurements(60)
+        if r:
+            results.append(r)
+            logger.info("Location measurement {}".format(r))
+
+        r = influx.location_updates()
+        if r:
+            results.append(r)
+            logger.info("Location update {}".format(r))
 
     except requests.exceptions.ConnectionError:
         results = "Could not find host"
@@ -46,12 +51,18 @@ if __name__ == "__main__":
     except KeyError:
         debug_level = "debug"
 
-    parser = ParserHelper.default_args("Gateway client arguments")
+    parser = ParserHelper("Gateway client arguments")
+    parser.add_file_settings()
+    parser.add_influx()
+    parser.add_fluentd()
     settings = parser.settings(settings_class=InfluxSettings)
 
-    log = LoggerHelper(
-        module_name="Influx viewer", args=parser.arguments, level=debug_level
-    )
-    logger = log.setup()
+    if settings.sanity():
+        log = LoggerHelper(
+            module_name="Influx viewer", args=settings, level=debug_level
+        )
+        logger = log.setup()
 
-    results = main(settings, logger)
+        results = main(settings, logger)
+    else:
+        print("Please check your connection settings")

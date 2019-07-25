@@ -401,7 +401,6 @@ class AdvertiserMessage(GenericMessage):
         super(AdvertiserMessage, self).__init__(*args, **kwargs)
 
         self.timestamp = self.rx_time_ms_epoch
-
         self.type = ApplicationTypes.AdvertiserMessage
 
         self.advertisers = dict()

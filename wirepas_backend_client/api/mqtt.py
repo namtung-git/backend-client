@@ -303,6 +303,18 @@ class MQTTSettings(Settings):
 
         self.topic = self.mqtt_topic
 
+    def sanity(self) -> bool:
+        """ Checks if connection parameters are valid """
+
+        is_valid = (
+            self.username is not None
+            and self.password is not None
+            and self.hostname is not None
+            and self.port is not None
+        )
+
+        return is_valid
+
     def set_defaults(self) -> None:
         """ Sets common settings for the MQTT client connection """
 
@@ -540,6 +552,7 @@ class MQTT(object):
         if mqtt_protocol is None:
             self.mqtt_protocol = mqtt.MQTTv311
 
+        self.ca_certs = None
         if ca_certs:
             if os.path.exists(ca_certs):
                 self.ca_certs = ca_certs
@@ -549,7 +562,6 @@ class MQTT(object):
                         ca_certs
                     )
                 )
-                self.ca_certs = None
 
         self.certfile = certfile
         self.keyfile = keyfile
@@ -585,14 +597,12 @@ class MQTT(object):
         self.allow_untrusted = allow_untrusted
         self.force_unsecure = force_unsecure
 
-        if message_publish_handlers is None:
-            message_publish_handlers = dict()
-        else:
+        self.message_publish_handlers = dict()
+        if message_publish_handlers is not None:
             self.message_publish_handlers = message_publish_handlers
 
-        if message_subscribe_handlers is None:
-            message_subscribe_handlers = dict()
-        else:
+        self.message_subscribe_handlers = dict()
+        if message_subscribe_handlers is not None:
             self.message_subscribe_handlers = message_subscribe_handlers
 
         self.subscription = set()
@@ -608,9 +618,11 @@ class MQTT(object):
         self.running = True
         try:
             self.connect()
-        except:
+        except Exception as err:
+            self.logger.exception("Could not connect due to: {}".format(err))
             self.exit_signal.set()
             raise
+
         self.subscribe_messages(self.message_subscribe_handlers)
         self.client.loop_start()
 

@@ -83,7 +83,7 @@ class TestManager(object):
         """ Resets the start signal """
         try:
             self.start_signal.clear()
-        except:
+        except Exception:
             pass
 
     def run(self) -> None:
@@ -96,6 +96,8 @@ class TestManager(object):
                 self.jitter()
                 task(task_counter)
                 self.reset()
-        except:
-            print("something went wrong")
+        except Exception as err:
+            self.logger.exception(
+                "Could not start task due to: {}".format(err)
+            )
             self.exit_signal.set()

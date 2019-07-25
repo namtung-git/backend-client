@@ -3,18 +3,18 @@
 # See file LICENSE for full license details.
 
 import os
-import time
 import queue
 import random
 import pandas
-import logging
 import datetime
 import multiprocessing
 
-
-import wirepas_backend_client as wm_gwcli
-from wirepas_backend_client.tools import Settings, ParserHelper, LoggerHelper
-from wirepas_backend_client.messages import AdvertiserMessage
+from wirepas_backend_client.messages import Inventory, AdvertiserMessage
+from wirepas_backend_client.tools import ParserHelper, LoggerHelper
+from wirepas_backend_client.api import MySQLSettings, MySQLObserver
+from wirepas_backend_client.api import MQTTObserver, MQTTSettings
+from wirepas_backend_client.management import Daemon
+from wirepas_backend_client.test import TestManager
 
 try:
     import MySQLdb
@@ -29,7 +29,7 @@ except ImportError:
 __test_name__ = "test_advertiser"
 
 
-class AdvertiserManager(wm_gwcli.test.TestManager):
+class AdvertiserManager(TestManager):
     """
     Test Manager for the Advertiser use case
 
@@ -52,7 +52,7 @@ class AdvertiserManager(wm_gwcli.test.TestManager):
         start_signal: multiprocessing.Event,
         exit_signal: multiprocessing.Event,
         storage_queue: multiprocessing.Queue = None,
-        inventory_target_nodes: set = set(),
+        inventory_target_nodes: set = None,
         inventory_target_otap: int = None,
         inventory_target_frequency: int = None,
         delay: int = 5,
@@ -72,7 +72,7 @@ class AdvertiserManager(wm_gwcli.test.TestManager):
         self.delay = delay
         self.duration = duration
 
-        self.inventory = wm_gwcli.messages.Inventory(
+        self.inventory = Inventory(
             target_nodes=inventory_target_nodes,
             target_otap_sequence=inventory_target_otap,
             target_frequency=inventory_target_frequency,
@@ -84,19 +84,6 @@ class AdvertiserManager(wm_gwcli.test.TestManager):
         self._test_sequence_number = 0
         self._timeout = 1
         self._tasks = list()
-
-    def inventory_init(self) -> None:
-        """
-        Calculates the event times for:
-
-        * inventory startup
-        * inventory start
-        * inventory deadline
-
-        and sleeps until it is time to start.
-
-        """
-        pass
 
     def test_inventory(self, test_sequence_number=0) -> None:
         """
@@ -146,7 +133,7 @@ class AdvertiserManager(wm_gwcli.test.TestManager):
             self.logger.info(
                 "#{} sent@{} received@{} diff: {} ms".format(
                     message.index,
-                    message.sent_at.isoformat(),
+                    message.tx_time.isoformat(),
                     message.received_at.isoformat(),
                     round(message.transport_delay * 1e3, 2),
                 )
@@ -190,9 +177,6 @@ class AdvertiserManager(wm_gwcli.test.TestManager):
                 )
                 break
 
-            # self.logger.info(str(self.inventory),
-            #                 dict(sequence=self._test_sequence_number))
-
         self.inventory.finish()
         report = self.report()
         self.tx_queue.put(report)
@@ -210,10 +194,6 @@ class AdvertiserManager(wm_gwcli.test.TestManager):
             elapsed=report["elapsed"],
         )
         record["@timestamp"] = record["inventory_start"]
-
-        # if record['total_nodes'] < 100:
-        #    for k, v in report['node_frequency'].items():
-        #        record[str(k)] = str(v)
 
         self.logger.info(record, dict(sequence=self._test_sequence_number))
 
@@ -269,14 +249,15 @@ def main(args, logger):
     """ Main loop """
 
     # process management
-    daemon = wm_gwcli.management.Daemon(logger=logger)
+    daemon = Daemon(logger=logger)
 
-    if args.db_hostname:
+    mysql_settings = MySQLSettings(args)
+    mqtt_settings = MQTTSettings(args)
+
+    if mysql_settings.sanity():
         mysql_enabled = True
         daemon.build(
-            storage_name,
-            wm_gwcli.api.MySQLObserver,
-            dict(mysql_settings=wm_gwcli.api.MySQLSettings(args)),
+            storage_name, MySQLObserver, dict(mysql_settings=mysql_settings)
         )
 
         daemon.set_run(
@@ -287,70 +268,72 @@ def main(args, logger):
         mysql_enabled = False
         logger.info("Skipping Storage module")
 
-    mqtt_process = daemon.build(
-        "mqtt",
-        wm_gwcli.api.MQTTObserver,
-        dict(
-            mqtt_settings=wm_gwcli.api.MQTTSettings(args),
-            message_publish_handlers=dict(),
-            logger=logger,
-            allowed_endpoints=set(
-                [wm_gwcli.messages.AdvertiserMessage.ADVERTISER_SRC_EP]
+    if mqtt_settings.sanity():
+
+        mqtt_process = daemon.build(
+            "mqtt",
+            MQTTObserver,
+            dict(
+                mqtt_settings=mqtt_settings,
+                message_publish_handlers=dict(),
+                logger=logger,
+                allowed_endpoints=set([AdvertiserMessage.ADVERTISER_SRC_EP]),
             ),
-        ),
-    )
+        )
 
-    daemon.set_run(
-        "mqtt",
-        task=mqtt_process.run,
-        task_kwargs=dict(
-            message_subscribe_handlers={
-                "gw-event/received_data/#": mqtt_process.generate_data_received_cb()
-            }
-        ),
-    )
+        daemon.set_run(
+            "mqtt",
+            task=mqtt_process.run,
+            task_kwargs=dict(
+                message_subscribe_handlers={
+                    "gw-event/received_data/#": mqtt_process.generate_data_received_cb()
+                }
+            ),
+        )
 
-    # build each process and set the communication
-    adv_manager = daemon.build(
-        "adv_manager",
-        AdvertiserManager,
-        dict(
-            inventory_target_nodes=args.target_nodes,
-            inventory_target_otap=args.target_otap,
-            inventory_target_frequency=args.target_frequency,
-            logger=logger,
-            delay=args.delay,
-            duration=args.duration,
-        ),
-        receive_from="mqtt",
-        storage=mysql_enabled,
-        storage_name=storage_name,
-    )
+        # build each process and set the communication
+        adv_manager = daemon.build(
+            "adv_manager",
+            AdvertiserManager,
+            dict(
+                inventory_target_nodes=args.target_nodes,
+                inventory_target_otap=args.target_otap,
+                inventory_target_frequency=args.target_frequency,
+                logger=logger,
+                delay=args.delay,
+                duration=args.duration,
+            ),
+            receive_from="mqtt",
+            storage=mysql_enabled,
+            storage_name=storage_name,
+        )
 
-    adv_manager.execution_jitter(
-        min=args.jitter_minimum, max=args.jitter_maximum
-    )
-    adv_manager.register_task(
-        adv_manager.test_inventory, number_of_runs=args.number_of_runs
-    )
+        adv_manager.execution_jitter(
+            min=args.jitter_minimum, max=args.jitter_maximum
+        )
+        adv_manager.register_task(
+            adv_manager.test_inventory, number_of_runs=args.number_of_runs
+        )
 
-    daemon.set_loop(
-        fetch_report,
-        dict(
-            args=args,
-            rx_queue=adv_manager.tx_queue,
-            timeout=args.delay + args.duration + 60,
-            report_output=args.output,
-            number_of_runs=args.number_of_runs,
-            exit_signal=daemon.exit_signal,
-        ),
-    )
-    daemon.start()
+        daemon.set_loop(
+            fetch_report,
+            dict(
+                args=args,
+                rx_queue=adv_manager.tx_queue,
+                timeout=args.delay + args.duration + 60,
+                report_output=args.output,
+                number_of_runs=args.number_of_runs,
+                exit_signal=daemon.exit_signal,
+            ),
+        )
+        daemon.start()
+    else:
+        print("Please check you MQTT settings")
 
 
 if __name__ == "__main__":
 
-    parse = wm_gwcli.tools.ParserHelper(description="Default arguments")
+    parse = ParserHelper(description="Default arguments")
 
     parse.add_mqtt()
     parse.add_test()
@@ -358,17 +341,18 @@ if __name__ == "__main__":
     parse.add_fluentd()
     parse.add_file_settings()
 
-    settings = parse.settings(skip_undefined=False)
+    settings = parse.settings()
 
+    debug_level = "debug"
     try:
-        debug_level = os.environ["DEBUG_LEVEL"]
+        debug_level = os.environ["WM_DEBUG_LEVEL"]
     except KeyError:
-        debug_level = "debug"
+        pass
 
-    my_log = wm_gwcli.tools.LoggerHelper(
+    my_log = LoggerHelper(
         module_name=__test_name__, args=settings, level=debug_level
     )
-    logger = my_log.setup(level=debug_level)
+    logger = my_log.setup()
 
     try:
         inventory_target_otap = settings.target_otap
@@ -389,7 +373,10 @@ if __name__ == "__main__":
         settings.target_nodes = set(
             [int(line) for line in open(settings.nodes, "r")]
         )
-    else:
+    except TypeError:
+        settings.target_nodes = set()
+    except Exception as err:
+        logger.warning("Could not interpret nodes parameter {}".format(err))
         settings.target_nodes = set()
 
     if settings.jitter_minimum > settings.jitter_maximum:
@@ -401,12 +388,8 @@ if __name__ == "__main__":
             "run_arguments": str(settings),
         }
     )
-    main(settings, logger)
 
+    main(settings, logger)
     parse.dump(
         "run_information_{}.txt".format(datetime.datetime.now().isoformat())
     )
-
-
-# import atexit
-# @atexit.register

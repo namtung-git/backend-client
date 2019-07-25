@@ -13,7 +13,24 @@ from wirepas_backend_client.tools import ParserHelper, LoggerHelper, Settings
 
 
 class NodeObserver(wirepas_backend_client.api.MQTTObserver):
-    """docstring for NodeObserver"""
+    """
+    NodeObserver
+
+    This class is an example on how to reuse the MQTTObserver interface
+    to setup a MQTT consumer without having to deal with the connection
+    parameters and callback assignment.
+
+    The class defines a set of nodes where it tracks the nodes seen over
+    the network.
+
+    The class also contains a list of topics and callbacks which define
+    the behavior when a message is received in such callback.
+
+    In this example, the message_subscirbe_handlers associates the
+    function returned by generate_data_receive_cb to any message
+    arriving on the topic "gw-event/received_data/#".
+
+    """
 
     def __init__(self, **kwargs):
         super(NodeObserver, self).__init__(**kwargs)
@@ -45,12 +62,13 @@ class NodeObserver(wirepas_backend_client.api.MQTTObserver):
         return on_data_send
 
     def print_nodes(self):
+        """ How nodes are shown in the terminal window """
         print("Found nodes (total: {})".format(len(self.nodes)))
         for node in sorted(self.nodes):
             print(node)
 
 
-def main(args, logger):
+def main(settings, logger):
     """ Main loop """
 
     # process management
@@ -61,7 +79,7 @@ def main(args, logger):
         "search",
         NodeObserver,
         dict(
-            mqtt_settings=MQTTSettings.from_args(args),
+            mqtt_settings=MQTTSettings(settings),
             message_publish_handlers=dict(),
             logger=logger,
             start_signal=None,
@@ -73,17 +91,24 @@ def main(args, logger):
 
 if __name__ == "__main__":
 
+    debug_level = "debug"
     try:
-        debug_level = os.environ["DEBUG_LEVEL"]
+        debug_level = os.environ["WM_DEBUG_LEVEL"]
     except KeyError:
-        debug_level = "debug"
+        pass
 
-    parser = ParserHelper.default_args("Gateway client arguments")
-    args = parser.arguments
+    parser = ParserHelper("Find all nodes arguments")
+    parser.add_file_settings()
+    parser.add_mqtt()
+    parser.add_fluentd()
+    settings = parser.settings(settings_class=MQTTSettings)
 
-    log = LoggerHelper(
-        module_name="Influx viewer", args=args, level=debug_level
-    )
-    logger = log.setup()
+    if settings.sanity():
+        log = LoggerHelper(
+            module_name="find all nodes", args=settings, level=debug_level
+        )
+        logger = log.setup()
 
-    main(args, logger)
+        main(settings, logger)
+    else:
+        print("Please review your MQTT connection settings")

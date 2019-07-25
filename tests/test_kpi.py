@@ -202,67 +202,75 @@ class HttpControl(wirepas_backend_client.api.HTTPObserver):
 
 if __name__ == "__main__":
 
-    parser = ParserHelper.default_args("KPi test arguments")
+    parser = ParserHelper("KPi test arguments")
+    parser.add_file_settings()
+    parser.add_mqtt()
+    parser.add_test()
+    parser.add_database()
+    parser.add_fluentd()
+    parser.add_http()
 
+    settings = parser.settings()
+
+    debug_level = "debug"
     try:
-        debug_level = os.environ["DEBUG_LEVEL"]
+        debug_level = os.environ["WM_DEBUG_LEVEL"]
     except KeyError:
-        debug_level = "debug"
+        pass
 
     log = LoggerHelper(
-        module_name=__test_name__, args=parser.arguments, level=debug_level
+        module_name=__test_name__, args=settings, level=debug_level
     )
-    logger = log.setup()
     log.add_stderr("warning")
+    logger = log.setup()
 
-    daemon = wirepas_backend_client.management.Daemon(logger=logger)
+    mqtt_setings = MQTTSettings(settings)
+    http_settings = HTTPSettings(settings)
 
-    gw_status_from_mqtt_broker = daemon._manager.Queue()
+    if mqtt_setings.sanity() and http_settings.sanity():
 
-    mqtt_name = "mqtt"
-    storage_name = "mysql"
-    control_name = "http"
+        daemon = wirepas_backend_client.management.Daemon(logger=logger)
 
-    daemon.build(
-        storage_name,
-        MySqlStorage,
-        dict(
-            mysql_settings=parser.settings(
-                settings_class=MySQLSettings, skip_undefined=False
-            )
-        ),
-    )
-    daemon.set_run(
-        storage_name,
-        task_kwargs={"parallel": True, "n_workers": 8},
-        task_as_daemon=False,
-    )
+        gw_status_from_mqtt_broker = daemon._manager.Queue()
 
-    daemon.build(
-        mqtt_name,
-        MultiMessageMqttObserver,
-        dict(
-            gw_status_queue=gw_status_from_mqtt_broker,
-            mqtt_settings=parser.settings(
-                settings_class=MQTTSettings, skip_undefined=False
+        mqtt_name = "mqtt"
+        storage_name = "mysql"
+        control_name = "http"
+
+        daemon.build(
+            storage_name,
+            MySqlStorage,
+            dict(mysql_settings=MySQLSettings(settings)),
+        )
+        daemon.set_run(
+            storage_name,
+            task_kwargs={"parallel": True, "n_workers": 8},
+            task_as_daemon=False,
+        )
+
+        daemon.build(
+            mqtt_name,
+            MultiMessageMqttObserver,
+            dict(
+                gw_status_queue=gw_status_from_mqtt_broker,
+                mqtt_settings=MQTTSettings(settings),
             ),
-        ),
-        storage=True,
-        storage_name=storage_name,
-    )
+            storage=True,
+            storage_name=storage_name,
+        )
 
-    daemon.build(
-        control_name,
-        HttpControl,
-        dict(
-            gw_status_queue=gw_status_from_mqtt_broker,
-            http_settings=parser.settings(
-                settings_class=HTTPSettings, skip_undefined=False
+        daemon.build(
+            control_name,
+            HttpControl,
+            dict(
+                gw_status_queue=gw_status_from_mqtt_broker,
+                http_settings=HTTPSettings(settings),
             ),
-        ),
-        send_to=mqtt_name,
-    )
+            send_to=mqtt_name,
+        )
 
-    daemon.start(set_start_signal=True)
+        daemon.start(set_start_signal=True)
+    else:
+        logger.error("Please check your MQTT and MySQL settings")
 
     logger.debug("test_kpi exit!")

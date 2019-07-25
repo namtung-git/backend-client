@@ -9,18 +9,13 @@
         See file LICENSE for full license details.
 """
 
-
+import sys
 import json
-import logging
 import argparse
 import datetime
 import binascii
-import time
 import yaml
 import ssl
-import pkg_resources
-
-from fluent import handler as fluent_handler
 
 
 def serialize(obj) -> str:
@@ -54,27 +49,15 @@ class Settings(object):
         return self.__dict__.items()
 
     @classmethod
-    def from_args(cls, args, skip_undefined=True):
-        settings = dict()
+    def validity(self) -> bool:
+        """ Validity serves as a mean to check if the settings are valid.
+        For example, for database settings it should ensure that the
+        hostname, username and password are at least not None.
 
-        try:
-            if args.settings:
-                with open(args.settings, "r") as f:
-                    settings = yaml.load(f)
-        except:
-            pass
-
-        for key, value in args.__dict__.items():
-            if value is not None or skip_undefined is False:
-                if key in settings and settings[key] is None:
-                    settings[key] = value
-                if key not in settings:
-                    settings[key] = value
-
-        return cls(settings)
-
-    def __str__(self):
-        return str(self.__dict__)
+        By default, it assumes all settings are valid.
+        """
+        print("Always true")
+        return True
 
 
 class ParserHelper(object):
@@ -82,8 +65,9 @@ class ParserHelper(object):
     ParserHelper
 
     Handles the creation and decoding of arguments
-
     """
+
+    _short_options = list()
 
     def __init__(
         self,
@@ -95,6 +79,9 @@ class ParserHelper(object):
             description=description, formatter_class=formatter_class
         )
 
+        self._unknown_arguments = None
+        self._arguments = None
+
         self._groups = dict()
 
     @property
@@ -105,7 +92,6 @@ class ParserHelper(object):
     @property
     def arguments(self):
         """ Returns arguments that it can parse and throwing an error otherwise """
-        self._arguments = self.parser.parse_args()
         return self._arguments
 
     @property
@@ -121,13 +107,59 @@ class ParserHelper(object):
         """ returns the unknown arguments it could not parse """
         return self._unknown_arguments
 
-    def settings(self, settings_class=None, skip_undefined=True) -> "Settings":
+    def settings(self, settings_class=None):
+        """ Reads an yaml settings file and puts it through argparse """
+
+        # Parse args from cmd line to see if a custom setting file is specified
         self._arguments = self.parser.parse_args()
+
+        if self._arguments.settings is not None:
+            try:
+                with open(self._arguments.settings, "r") as f:
+                    settings = yaml.load(f, Loader=yaml.FullLoader)
+                    arglist = list()
+
+                    # Add the file parameters
+                    for key, value in settings.items():
+                        if key in self._short_options:
+                            key = "-{}".format(key)
+                        else:
+                            key = "--{}".format(key)
+
+                        # We assume that booleans are always handled with
+                        # store_true. This logic will fail otherwise.
+                        if value is False:
+                            continue
+
+                        arglist.append(key)
+
+                        # do not append True as the key is enough
+                        if value is True:
+                            continue
+                        arglist.append(str(value))
+
+                    arguments = sys.argv
+                    argument_index = 1  # wm-gw
+                    if "python" in arguments[0]:  # pythonX transport (...)
+                        if "-m" in arguments[1]:  # pythonX -m transport (...)
+                            argument_index += 1
+                        argument_index = +1
+                    # Add the cmd line parameters. They will override
+                    # parameters from file if set in both places.
+                    for arg in arguments[argument_index:]:
+                        arglist.append(arg)
+
+                # Override self._arguments as there are parameters from file
+                self._arguments, self._unknown_arguments = self.parser.parse_known_args(
+                    arglist
+                )
+            except FileNotFoundError:
+                pass
 
         if settings_class is None:
             settings_class = Settings
 
-        settings = settings_class.from_args(self._arguments, skip_undefined)
+        settings = settings_class(self._arguments.__dict__)
 
         return settings
 
@@ -143,7 +175,7 @@ class ParserHelper(object):
             "--settings",
             type=str,
             required=False,
-            default="settings.yml",
+            default=None,
             help="settings file.",
         )
 
@@ -152,10 +184,34 @@ class ParserHelper(object):
 
         self.mqtt.add_argument(
             "--mqtt_hostname",
-            default="localhost",
+            default=None,
             action="store",
             type=str,
             help="MQTT broker hostname ",
+        )
+
+        self.mqtt.add_argument(
+            "--mqtt_username",
+            default=None,
+            action="store",
+            type=str,
+            help="MQTT broker username ",
+        )
+
+        self.mqtt.add_argument(
+            "--mqtt_password",
+            default=None,
+            action="store",
+            type=str,
+            help="MQTT broker password",
+        )
+
+        self.mqtt.add_argument(
+            "--mqtt_port",
+            default=8883,
+            action="store",
+            type=int,
+            help="MQTT broker port",
         )
 
         self.mqtt.add_argument(
@@ -167,36 +223,8 @@ class ParserHelper(object):
         )
 
         self.mqtt.add_argument(
-            "--mqtt_username",
-            default="user",
-            action="store",
-            type=str,
-            help="MQTT broker username ",
-        )
-
-        self.mqtt.add_argument(
-            "--mqtt_password",
-            default="uoaiduaosjfdpkajf0+po0i318",
-            action="store",
-            type=str,
-            help="MQTT broker password",
-        )
-
-        self.mqtt.add_argument(
-            "--mqtt_port",
-            default=1883,
-            action="store",
-            type=int,
-            help="MQTT broker port",
-        )
-
-        self.mqtt.add_argument(
             "--mqtt_ca_certs",
-            default=str(
-                pkg_resources.resource_filename(
-                    "wirepas_backend_client", "certs/extwirepas.pem"
-                )
-            ),
+            default=None,
             action="store",
             type=str,
             help=(
@@ -212,7 +240,7 @@ class ParserHelper(object):
             default=None,
             action="store",
             type=str,
-            help=("Strings pointing to the PEM encoded " "client certificate"),
+            help=("Strings pointing to the PEM encoded client certificate"),
         )
 
         self.mqtt.add_argument(
@@ -245,8 +273,7 @@ class ParserHelper(object):
             action="store",
             type=str,
             help=(
-                "Specifies the version of the "
-                " SSL / TLS protocol to be used"
+                "Specifies the version of the  SSL / TLS protocol to be used"
             ),
         )
 
@@ -264,7 +291,7 @@ class ParserHelper(object):
 
         self.mqtt.add_argument(
             "--mqtt_persist_session",
-            default=True,
+            default=False,
             action="store_true",
             help=(
                 "When False the broker will buffer"
@@ -277,14 +304,14 @@ class ParserHelper(object):
             "--mqtt_force_unsecure",
             default=False,
             action="store_true",
-            help=("When True the broker will skip " "the TLS handshake"),
+            help=("When True the broker will skip the TLS handshake"),
         )
 
         self.mqtt.add_argument(
             "--mqtt_allow_untrusted",
             default=False,
             action="store_true",
-            help=("When true the client will skip " "the TLS check"),
+            help=("When true the client will skip the TLS check"),
         )
 
         self.mqtt.add_argument(
@@ -388,7 +415,7 @@ class ParserHelper(object):
         self.test.add_argument(
             "--output_time",
             action="store_true",
-            help=("appends datetime information to " "the output filename"),
+            help=("appends datetime information to the output filename"),
         )
 
         self.test.add_argument(
@@ -399,9 +426,7 @@ class ParserHelper(object):
             "--target_frequency",
             default=None,
             type=int,
-            help=(
-                "Number of messages that should " "be observed for each node"
-            ),
+            help=("Number of messages that should be observed for each node"),
         )
 
         self.test.add_argument(
@@ -431,7 +456,7 @@ class ParserHelper(object):
 
         self.database.add_argument(
             "--db_database",
-            default="dbname",
+            default=None,
             action="store",
             type=str,
             help="Database schema to use",
@@ -439,7 +464,7 @@ class ParserHelper(object):
 
         self.database.add_argument(
             "--db_username",
-            default="dbuser",
+            default=None,
             action="store",
             type=str,
             help="Database user",
@@ -447,7 +472,7 @@ class ParserHelper(object):
 
         self.database.add_argument(
             "--db_password",
-            default="dbpasswordpassword",
+            default=None,
             action="store",
             type=str,
             help="Database password",
@@ -502,7 +527,7 @@ class ParserHelper(object):
             default="0.0.0.0",
             action="store",
             type=str,
-            help=("Hostname or ip-address that " "HTTP server is bind to "),
+            help=("Hostname or ip-address that HTTP server is bind to."),
         )
 
         self.http.add_argument(
@@ -555,7 +580,7 @@ class ParserHelper(object):
             "--wpe_unsecure",
             required=False,
             action="store_false",
-            help="forces the creation of unsecure channels.",
+            help="forces the creation of insecure channels.",
         )
 
         self.wpe.add_argument(
@@ -572,7 +597,7 @@ class ParserHelper(object):
             "--influx_hostname",
             type=str,
             required=False,
-            default="localhost",
+            default=None,
             help="hostname of InfluxDB http API",
         )
 
@@ -588,7 +613,7 @@ class ParserHelper(object):
             "--influx_username",
             type=str,
             required=False,
-            default="influx",
+            default=None,
             help="user of InfluxDB http API",
         )
 
@@ -596,7 +621,7 @@ class ParserHelper(object):
             "--influx_password",
             type=str,
             required=False,
-            default="influxpwd",
+            default=None,
             help="password of InfluxDB http API",
         )
 
@@ -619,16 +644,3 @@ class ParserHelper(object):
         """ dumps the arguments into a file """
         with open(path, "w") as f:
             f.write(serialize(vars(self._arguments)))
-
-    @classmethod
-    def default_args(cls, text="Default arguments") -> "ParserHelper":
-        parse = cls(description=text)
-
-        parse.add_file_settings()
-        parse.add_mqtt()
-        parse.add_test()
-        parse.add_database()
-        parse.add_fluentd()
-        parse.add_http()
-
-        return parse

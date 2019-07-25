@@ -46,6 +46,18 @@ class InfluxSettings(Settings):
         self.ssl = True
         self.verify_ssl = True
 
+    def sanity(self) -> bool:
+        """ Checks if connection parameters are valid """
+        is_valid = (
+            self.username is not None
+            and self.password is not None
+            and self.hostname is not None
+            and self.port is not None
+            and self.database is not None
+        )
+
+        return is_valid
+
 
 class InfluxObserver(StreamObserver):
     """ InfluxObserver monitors the internal queues and dumps events to the database """
@@ -107,7 +119,10 @@ class InfluxObserver(StreamObserver):
             self.on_query_received()
             try:
                 self.influx.close()
-            except:
+            except Exception as err:
+                self.logger.exception(
+                    "Could not close connection {}".format(err)
+                )
                 pass
 
 
@@ -146,16 +161,11 @@ class Influx(object):
         self.database = database
         self.ssl = ssl
         self.verify_ssl = verify_ssl
-
-        print(hostname, port, user, password, database, ssl, verify_ssl)
-
         self._message_field_map = dict()
         self._message_number_map = dict()
-
         self._message_fields = list(
             wirepas_messaging.wnt.Message.DESCRIPTOR.fields
         )
-
         self._field_init()
 
     @property
@@ -278,15 +288,19 @@ class Influx(object):
         query = ("SELECT * FROM {} " "WHERE time > now() - {}s").format(
             __table, last_n_seconds
         )
-        df = self.query(query)[__measurement]
 
-        df["positioning_mesh_data.payload"] = df[
-            "positioning_mesh_data.payload"
-        ].map(lambda x: self._map_array_fields(x))
+        try:
+            df = self.query(query)[__measurement]
 
-        df["positioning_mesh_data.payload"] = df[
-            "positioning_mesh_data.payload"
-        ].map(lambda x: self._decode_array(x, __elements))
+            df["positioning_mesh_data.payload"] = df[
+                "positioning_mesh_data.payload"
+            ].map(lambda x: self._map_array_fields(x))
+
+            df["positioning_mesh_data.payload"] = df[
+                "positioning_mesh_data.payload"
+            ].map(lambda x: self._decode_array(x, __elements))
+        except KeyError:
+            df = None
 
         return df
 
@@ -298,10 +312,11 @@ class Influx(object):
         query = ("SELECT * FROM {} " "WHERE time > now() - {}s").format(
             __table, last_n_seconds
         )
-        df = self.query(query)[__measurement]
 
-        print(query)
-        print(df)
+        try:
+            df = self.query(query)[__measurement]
+        except KeyError:
+            df = None
 
         return df
 

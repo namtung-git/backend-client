@@ -1,5 +1,5 @@
 # Wirepas Oy 2018
-wirepas_messaging==1.1.0
+wirepas_messaging==1.2.0rc3
 cbor2==4.1.2
 
 # mqtt

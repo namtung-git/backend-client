@@ -20,9 +20,6 @@
 """
 import datetime
 import json
-import argparse
-
-import grpc
 
 import wirepas_messaging.wpe as messaging
 from ...tools import ParserHelper

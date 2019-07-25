@@ -42,7 +42,7 @@ class ContextFilter(logging.Filter):
 
 
 class LoggerHelper(object):
-    """docstring for LoggerHelper"""
+    """LoggerHelper"""
 
     def __init__(self, module_name, args, level: str = "debug", **kwargs):
         super(LoggerHelper, self).__init__()
@@ -76,6 +76,10 @@ class LoggerHelper(object):
             self._logger.setLevel(eval("logging.{0}".format(self._level)))
         except Exception:
             self._logger.setLevel(logging.DEBUG)
+
+    @property
+    def logger(self):
+        return self._logger
 
     @property
     def level(self):
@@ -132,37 +136,42 @@ class LoggerHelper(object):
 
     def add_fluentd(self):
         """ Adds a handler for fluentd if the hostname has been defined """
-        if self.fluentd_hostname:
+        try:
+            if self.fluentd_hostname:
 
-            try:
-                if self._handlers["fluentd"]:
-                    self._handlers["fluentd"].close()
-            except KeyError:
-                self._handlers["fluentd"] = None
+                try:
+                    if self._handlers["fluentd"]:
+                        self._handlers["fluentd"].close()
+                except KeyError:
+                    self._handlers["fluentd"] = None
 
-            print(
-                "sending logs to fluentd at: {}".format(
-                    (
-                        self.fluentd_tag,
-                        self.fluentd_record,
-                        self.fluentd_hostname,
-                        self.fluentd_port,
+                print(
+                    "sending logs to fluentd at: {}".format(
+                        (
+                            self.fluentd_tag,
+                            self.fluentd_record,
+                            self.fluentd_hostname,
+                            self.fluentd_port,
+                        )
                     )
                 )
-            )
 
-            self._handlers["fluentd"] = fluent_handler.FluentHandler(
-                "{}.{}".format(self.fluentd_tag, self.fluentd_record),
-                host=self.fluentd_hostname,
-                port=self.fluentd_port,
-            )
-            fluentd_formatter = fluent_handler.FluentRecordFormatter(
-                self.format("fluentd")
-            )
+                self._handlers["fluentd"] = fluent_handler.FluentHandler(
+                    "{}.{}".format(self.fluentd_tag, self.fluentd_record),
+                    host=self.fluentd_hostname,
+                    port=self.fluentd_port,
+                )
+                fluentd_formatter = fluent_handler.FluentRecordFormatter(
+                    self.format("fluentd")
+                )
 
-            self._handlers["fluentd"].setFormatter(fluentd_formatter)
-            self._logger.addHandler(self._handlers["fluentd"])
-            self._logger.addFilter(ContextFilter())
+                self._handlers["fluentd"].setFormatter(fluentd_formatter)
+                self._logger.addHandler(self._handlers["fluentd"])
+                self._logger.addFilter(ContextFilter())
+        except AttributeError:
+            self._logger.warning(
+                "Fluentd hostname not defined in settings. Skipping!"
+            )
 
     def setup(self, level: str = None):
         """

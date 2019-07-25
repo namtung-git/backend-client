@@ -9,6 +9,8 @@
         See file LICENSE for full license details.
 """
 
+# flake8: noqa
+
 from .authentication import AuthenticationManager
 from .realtime import RealtimeManager
 from .metadata import MetadataManager

@@ -23,7 +23,7 @@ import sys
 import select
 import logging
 
-from .api import MQTT, Topics, MQTTSettings
+from .api import MQTT, Topics
 from .api import topic_message
 from .management import NetworkDiscovery, Daemon
 from .tools import Settings
@@ -46,7 +46,8 @@ class BackendShell(cmd.Cmd):
 
     intro = (
         "Welcome to the Wirepas Gateway Client cli!\n"
-        "Connecting to {mqtt_username}@{mqtt_hostname}:{mqtt_port} (secure: {mqtt_force_unsecure})\n\n"
+        "Connecting to {mqtt_username}@{mqtt_hostname}:{mqtt_port}"
+        "(secure: {mqtt_force_unsecure})\n\n"
         "Type help or ? to list commands\n\n"
         "Type ! to escape shell commands\n"
         "Use Arrow Up/Down to navigate your command history\n"
@@ -1143,7 +1144,7 @@ class BackendShell(cmd.Cmd):
             self._file = None
 
 
-def launch_cli(args, logger):
+def launch_cli(settings, logger):
     """ Main loop """
 
     # process management
@@ -1153,9 +1154,6 @@ def launch_cli(args, logger):
     data_queue = daemon._manager.Queue()
     event_queue = daemon._manager.Queue()
 
-    # create the process queues
-    mqtt_settings = MQTTSettings.from_args(args)
-
     discovery = daemon.build(
         "discovery",
         NetworkDiscovery,
@@ -1163,7 +1161,7 @@ def launch_cli(args, logger):
             shared_state=shared_state,
             data_queue=data_queue,
             event_queue=event_queue,
-            mqtt_settings=mqtt_settings,
+            mqtt_settings=settings,
             logger=logger,
         ),
     )
@@ -1174,7 +1172,7 @@ def launch_cli(args, logger):
         event_queue=event_queue,
         rx_queue=discovery.tx_queue,
         tx_queue=discovery.rx_queue,
-        settings=mqtt_settings,
+        settings=settings,
         exit_signal=daemon.exit_signal,
         logger=logger,
     )
@@ -1185,15 +1183,26 @@ def launch_cli(args, logger):
 if __name__ == "__main__":
 
     from .tools import ParserHelper, LoggerHelper
+    from .api import MQTTSettings
 
-    args = ParserHelper.default_args("Gateway client arguments")
+    parser = ParserHelper("Gateway client arguments")
+    parser.add_file_settings()
+    parser.add_mqtt()
+    parser.add_fluentd()
+    settings = parser.settings(settings_class=MQTTSettings)
 
+    debug_level = "warning"
     try:
         debug_level = os.environ["WM_DEBUG_LEVEL"]
     except KeyError:
-        debug_level = "warning"
+        pass
 
-    my_log = LoggerHelper(module_name="gw-cli", args=args, level=debug_level)
+    my_log = LoggerHelper(
+        module_name="gw-cli", args=settings, level=debug_level
+    )
     logger = my_log.setup()
 
-    launch_cli(args, logger)
+    if settings.sanity():
+        launch_cli(settings, logger)
+    else:
+        print("Please review your connection settings")

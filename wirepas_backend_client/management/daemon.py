@@ -151,7 +151,7 @@ class Daemon(object):
         self.process[name]["object_kwargs"] = kwargs
         try:
             self.process[name]["runtime"]["task"] = obj.run
-        except:
+        except Exception:
             self.logger.warning(
                 "Object does not have a run method. Runtime task undefined!"
             )
@@ -207,8 +207,10 @@ class Daemon(object):
             self.loop_cb(**self.loop_kwargs)
         except KeyboardInterrupt:
             self.exit_signal.set()
-        except:
-            self.logger.exception("main excution loop exited with error")
+        except Exception as err:
+            self.logger.exception(
+                "main execution loop exited with error {}".format(err)
+            )
             if not self.exit_signal.is_set():
                 self.exit_signal.set()
 
@@ -223,8 +225,8 @@ class Daemon(object):
                         timeout=self.join_timeout
                     )
 
-            except:
-                self.logger.exception("error killing {}".format(name))
+            except Exception as err:
+                self.logger.exception("error killing {}: {}".format(name, err))
                 continue
 
         self.logger.debug("daemon has left")

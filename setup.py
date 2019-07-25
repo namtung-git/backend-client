@@ -9,11 +9,9 @@
         See file LICENSE for full license details.
 
 """
-import codecs
+
 import os
 import re
-import glob
-
 from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))

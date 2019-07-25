@@ -47,6 +47,18 @@ class MySQLSettings(Settings):
         self.port = self.db_port
         self.connection_timeout = self.db_connection_timeout
 
+    def sanity(self) -> bool:
+        """ Checks if connection parameters are valid """
+
+        is_valid = (
+            self.username is not None
+            and self.password is not None
+            and self.hostname is not None
+            and self.port is not None
+        )
+
+        return is_valid
+
 
 class MySQLObserver(StreamObserver):
     """ MySQLObserver monitors the internal queues and dumps events to the database """
@@ -141,7 +153,7 @@ class MySQLObserver(StreamObserver):
                 try:
                     mysql.database.ping(True)
                 except MySQLdb.OperationalError:
-                    logger.warning(
+                    logger.exception(
                         "MySQL worker {}: restarting database connection.".format(
                             pid
                         )
@@ -150,14 +162,14 @@ class MySQLObserver(StreamObserver):
                     while not exit_signal.is_set():
                         try:
                             mysql.connect(table_creation=False)
-                            logger.warning(
+                            logger.exception(
                                 "MySQL worker {}: connection restarted.".format(
                                     pid
                                 )
                             )
                             break
                         except MySQLdb.Error:
-                            logger.warning(
+                            logger.exception(
                                 "MySQL worker {}: connection restart failed.".format(
                                     pid
                                 )
@@ -168,7 +180,7 @@ class MySQLObserver(StreamObserver):
                     try:
                         MySQLObserver._map_message(mysql, message)
                     except MySQLdb.Error:
-                        logger.warning(
+                        logger.exception(
                             "MySQL worker {}: Database operation failed.".format(
                                 pid
                             )
@@ -197,19 +209,18 @@ class MySQLObserver(StreamObserver):
             self.parallel = kwargs["parallel"]
         except KeyError:
             self.parallel = False
-            pass
 
         try:
             self.n_workers = kwargs["n_workers"]
         except KeyError:
             self.n_workers = 4
-            pass
 
         try:
             self.mysql.connect()
         except Exception as err:
             self.logger.error("error connecting to database {}".format(err))
-            pass
+            self.exit_signal.set()
+            raise
 
         if self.parallel:
             self.logger.info(
@@ -227,7 +238,7 @@ class MySQLObserver(StreamObserver):
         """ waits until the exit signal is set """
         while not self.exit_signal.is_set():
             self.logger.debug("MySQL is running")
-            time.sleep(self.timeout * 10)
+            time.sleep(self.timeout)
             if workers:
                 for seq, worker in workers.items():
                     if worker.is_alive():

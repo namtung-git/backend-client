@@ -3,21 +3,13 @@
 # See file LICENSE for full license details.
 
 import os
-import wirepas_messaging
 import wirepas_backend_client
-import multiprocessing
 import time
 import queue
 import logging
 
-from wirepas_backend_client.api import MQTT
 from wirepas_backend_client.api import MQTTSettings
-from wirepas_backend_client.api import Topics
-from wirepas_backend_client.api import topic_message, decode_topic_message
-from wirepas_backend_client.tools import Settings, ParserHelper, LoggerHelper
-
-from wirepas_backend_client.management import NetworkDiscovery
-from wirepas_backend_client.management import MeshManagement
+from wirepas_backend_client.tools import ParserHelper, LoggerHelper
 from wirepas_backend_client.tools.utils import deferred_thread
 
 
@@ -101,7 +93,7 @@ def loop(
         time.sleep(sleep_for)
 
 
-def main(parser, logger):
+def main(settings, logger):
     """ Main loop """
 
     # process management
@@ -119,7 +111,7 @@ def main(parser, logger):
             data_queue=data_queue,
             event_queue=event_queue,
             response_queue=response_queue,
-            mqtt_settings=parser.settings(MQTTSettings),
+            mqtt_settings=settings,
         ),
     )
 
@@ -151,15 +143,19 @@ if __name__ == "__main__":
     parser.add_database()
     parser.add_fluentd()
 
-    settings = parser.settings(skip_undefined=False)
+    settings = parser.settings(settings_class=MQTTSettings)
 
-    log = LoggerHelper(
-        module_name="MQTT viewer", args=settings, level=debug_level
-    )
-    logger = log.setup()
+    if settings.sanity():
+        logger = LoggerHelper(
+            module_name="MQTT viewer", args=settings, level=debug_level
+        ).setup()
 
-    LoggerHelper(
-        module_name="message_decoding", args=settings, level=debug_level
-    ).setup()
+        # sets up the message_decoding which is picked up by the
+        # message decoders
+        LoggerHelper(
+            module_name="message_decoding", args=settings, level=debug_level
+        ).setup()
 
-    main(parser, logger)
+        main(settings, logger)
+    else:
+        print("Please check your connection settings")
