@@ -644,6 +644,15 @@ class ParserHelper(object):
             help="use https when talking to the API",
         )
 
+        self.influx.add_argument(
+            "--query_statement",
+            action="store",
+            type=str,
+            default=None,
+            required=False,
+            help="A generic query to run against InfluxDB",
+        )
+
     def dump(self, path):
         """ dumps the arguments into a file """
         with open(path, "w") as f:

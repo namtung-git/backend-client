@@ -61,7 +61,7 @@ class InfluxObserver(StreamObserver):
         tx_queue: multiprocessing.Queue,
         rx_queue: multiprocessing.Queue,
         logger=None,
-    ) -> "InfluxObserver":
+    ):
         super(InfluxObserver, self).__init__(
             start_signal=start_signal,
             exit_signal=exit_signal,
@@ -107,14 +107,10 @@ class InfluxObserver(StreamObserver):
             pass
 
         while not self.exit_signal.is_set():
-            self.on_query_received()
             try:
-                self.influx.close()
-            except Exception as err:
-                self.logger.exception(
-                    "Could not close connection {}".format(err)
-                )
-                pass
+                self.on_query_received()
+            except EOFError:
+                break
 
 
 class Influx(object):
@@ -157,6 +153,17 @@ class Influx(object):
         self._message_fields = list(
             wirepas_messaging.wnt.Message.DESCRIPTOR.fields
         )
+        self._influxdb = None
+
+        # query settings
+        self.epoch = None
+        self.expected_response_code = 200
+        self.raise_errors = True
+        self.chunked = False
+        self.chunk_size = 0
+        self.method = "GET"
+        self.dropna = True
+
         self._field_init()
 
     @property
@@ -166,8 +173,14 @@ class Influx(object):
 
     def _map_array_fields(self, payload: str) -> str:
         """ Replaces the coded fields in array elements """
-        for k, v in self.fields.items():
-            payload = payload.replace("{}=".format(k), "{}:".format(v))
+        if isinstance(payload, str):
+            for k, v in self.fields.items():
+                payload = (
+                    payload.replace("{}=".format(k), "'{}':".format(v))
+                    .replace("[", "{")
+                    .replace("]", "}")
+                )
+
         return payload
 
     def _decode_array(self, payload: str, elements: dict) -> list:
@@ -191,9 +204,11 @@ class Influx(object):
         for entry in payload:
             values = entry.split(":")
 
-            for k, v in elements.items():
-                if k in values[0]:
-                    target[k] = elements[k]["base"](values[1])
+            for _type, _convertion in elements.items():
+                if _type in values[0]:
+                    target[_type] = _convertion["base"](
+                        "".join(filter(lambda c: c not in "{}'", values[1]))
+                    )
                     break
 
             if len(target.keys()) == len(elements.keys()):
@@ -229,7 +244,7 @@ class Influx(object):
             for nested_field in nested_fields:
 
                 pseudo_name = parent_pseudo_name.format(nested_field.number)
-                name = "{}.{}".format(parent_name, nested_field.name)
+                name = "{}/{}".format(parent_name, nested_field.name)
 
                 self._message_field_map[pseudo_name] = name
                 self._map_nested_field(
@@ -258,7 +273,7 @@ class Influx(object):
 
     def connect(self):
         """ Setup an Influx client connection """
-        self.client = influxdb.DataFrameClient(
+        self._influxdb = influxdb.DataFrameClient(
             host=self.hostname,
             port=self.port,
             username=self.user,
@@ -268,58 +283,96 @@ class Influx(object):
             verify_ssl=self.verify_ssl,
         )
 
+    def query(self, statement: str, params=None, named_fields=True) -> dict():
+        """ Sends the query to the database object """
+
+        result = self._influxdb.query(
+            statement,
+            params=params,
+            database=self.database,
+            epoch=self.epoch,
+            expected_response_code=self.expected_response_code,
+            raise_errors=self.raise_errors,
+            chunked=self.chunked,
+            chunk_size=self.chunk_size,
+            method=self.method,
+            dropna=self.dropna,
+        )
+
+        if not result:
+            result = pandas.DataFrame()
+        else:
+            if named_fields:
+                for key in result.keys():
+                    result[key].rename(columns=self.fields, inplace=True)
+                    result[key] = result[key].applymap(self._map_array_fields)
+
+        return result
+
+    def _query_last_n_seconds(self, __measurement, last_n_seconds):
+
+        __table = "{}".format(__measurement)
+        __query = "SELECT * FROM {table} WHERE time > now() - {seconds}s".format(
+            table=__table, seconds=last_n_seconds
+        )
+
+        try:
+            df = self.query(__query)[__measurement]
+        except KeyError:
+            df = pandas.DataFrame()
+
+        return df
+
     def location_measurements(self, last_n_seconds=60):
         """ Retrieves location measurements from the server """
         __measurement = "location_measurement"
-        __table = '"wirepas"."autogen"."{}"'.format(__measurement)
         __elements = dict(
             type={"base": int}, value={"base": float}, target={"base": int}
         )
 
-        query = ("SELECT * FROM {} " "WHERE time > now() - {}s").format(
-            __table, last_n_seconds
-        )
+        df = self._query_last_n_seconds(__measurement, last_n_seconds)
 
-        try:
-            df = self.query(query)[__measurement]
-
-            df["positioning_mesh_data.payload"] = df[
-                "positioning_mesh_data.payload"
-            ].map(lambda x: self._map_array_fields(x))
-
-            df["positioning_mesh_data.payload"] = df[
-                "positioning_mesh_data.payload"
-            ].map(lambda x: self._decode_array(x, __elements))
-        except KeyError:
-            df = None
+        if not df.empty:
+            df["positioning_mesh_data/payload"] = df[
+                "positioning_mesh_data/payload"
+            ].apply(lambda x: self._decode_array(x, __elements))
 
         return df
 
     def location_updates(self, last_n_seconds=120):
         """ Retrieves location measurements from the server """
         __measurement = "location_update"
-        __table = '"wirepas"."autogen"."{}"'.format(__measurement)
-
-        query = ("SELECT * FROM {} " "WHERE time > now() - {}s").format(
-            __table, last_n_seconds
-        )
-
-        try:
-            df = self.query(query)[__measurement]
-        except KeyError:
-            df = None
+        df = self._query_last_n_seconds(__measurement, last_n_seconds)
 
         return df
 
-    def query(self, statement: str, named_fields=True) -> pandas.DataFrame:
-        """ Sends the query to the database object """
+    def traffic_diagnostics(self, last_n_seconds=1000):
+        """ """
+        __measurement = "endpoint_251"
+        df = self._query_last_n_seconds(__measurement, last_n_seconds)
 
-        result = self.client.query(statement)
-        if named_fields:
-            for key in result.keys():
-                result[key].rename(columns=self.fields, inplace=True)
+        return df
 
-        return result
+    def neighbor_diagnostics(self, last_n_seconds=1000):
+        """ """
+        __measurement = "endpoint_252"
+        df = self._query_last_n_seconds(__measurement, last_n_seconds)
+
+        return df
+
+    def node_diagnostics(self, last_n_seconds=1000):
+        """ """
+        __measurement = "endpoint_253"
+        df = self._query_last_n_seconds(__measurement, last_n_seconds)
+
+        return df
+
+    def boot_diagnostics(self, last_n_seconds=1000):
+        """ """
+        __measurement = "endpoint_254"
+        df = self._query_last_n_seconds(__measurement, last_n_seconds)
+
+        return df
 
 
 if __name__ == "__main__":

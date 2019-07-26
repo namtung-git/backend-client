@@ -33,3 +33,6 @@ examples/test_fluent.py
 
 run_informatio*
 **/*report.json
+
+*.csv*
+**/*services.json
