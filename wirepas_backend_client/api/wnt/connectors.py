@@ -2,14 +2,15 @@
     Sock
     ====
     .. Copyright:
-        Wirepas Oy licensed under Apache License, Version 2.0.
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 
 """
-import ssl
 import logging
-import websocket
+import ssl
 import threading
+
+import websocket
 
 
 class WNTSocket(object):
@@ -114,6 +115,3 @@ class WNTSocket(object):
     def run(self, sslopt=None):
         """Starts the websocket's thread loop"""
         self._socket.run_forever(sslopt=sslopt)
-
-
-#

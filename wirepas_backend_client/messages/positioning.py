@@ -5,23 +5,14 @@
     Contains helpers to translate network data from positioning tags
 
     .. Copyright:
-        Wirepas Oy licensed under Apache License, Version 2.0.
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 """
 
-import collections
-import binascii
 import datetime
-import logging
 import struct
-import json
-import time
-import math
 
-from .types import ApplicationTypes
 from .generic import GenericMessage
-
-from .. import tools
 
 
 class PositioningMessage(GenericMessage):
@@ -68,7 +59,7 @@ class PositioningMessage(GenericMessage):
         payload_len = header[2]
 
         if len(body) % 4:
-            self.logger.error("invalid payload {0}".format(len(body) / 4))
+            self.logger.error("invalid payload %s", len(body) / 4)
             return None
 
         measurements = list()

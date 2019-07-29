@@ -2,13 +2,10 @@
 #
 # Generates the Sphinx documentation
 #
-# Wirepas Oy
+# Copyright 2019 Wirepas Ltd
 
-
-sphinx-apidoc -f -o docs/source wirepas_backend_client
-cd docs;
+cd docs || exit 1
 rm -rf wm-bcli || true
 make html
 mv -vT build/html/ wm-bcli/ || true
 rm -rf build || true
-

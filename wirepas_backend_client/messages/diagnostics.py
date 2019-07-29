@@ -11,6 +11,7 @@
 
 import datetime
 import json
+
 import cbor2
 import pkg_resources
 
@@ -91,13 +92,11 @@ class Diagnostics(GenericMessage):
 
                     except KeyError:
                         self.logger.exception(
-                            "Error serializing field  {}->{}".format(k, v)
+                            "Error serializing field  %s->%s", k, v
                         )
             except AttributeError:
                 self.logger.exception(
-                    "apdu_content={}<-{}".format(
-                        self.apdu_content, self.data_payload
-                    )
+                    "apdu_content=%s<-%s", self.apdu_content, self.data_payload
                 )
             except Exception:
                 self.logger.exception("unknown exception when serializing")

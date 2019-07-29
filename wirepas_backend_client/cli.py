@@ -7,24 +7,23 @@
     launch as wm-gw-cli or python -m wirepas_gateway_client.cli
 
     .. Copyright:
-        Wirepas Oy licensed under Apache License, Version 2.0.
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 """
 
-import os
 import cmd
-import readline
-import subprocess
 import datetime
-import sys
-import select
 import logging
+import os
+import readline
+import select
+import subprocess
+import sys
+
+from wirepas_messaging.gateway.api import GatewayState
 
 from .api import Topics
 from .management import NetworkDiscovery, Daemon
-
-
-from wirepas_messaging.gateway.api import GatewayState
 
 
 class BackendShell(cmd.Cmd):
@@ -879,31 +878,26 @@ class BackendShell(cmd.Cmd):
                 timeout = int(params[4])
             except:
                 timeout = 0
-                pass
 
             try:
                 qos = int(params[5])
             except:
                 qos = 1
-                pass
 
             try:
                 is_unack_csma_ca = bool(params[6])
             except:
                 is_unack_csma_ca = False
-                pass
 
             try:
                 hop_limit = int(params[7])
             except:
                 hop_limit = 0
-                pass
 
             try:
                 initial_delay_ms = int(params[8])
             except:
                 initial_delay_ms = 0
-                pass
 
             message = self.mqtt_topics.request_message(
                 "send_data",

@@ -8,19 +8,11 @@
         Copyright 2019 Wirepas Ltd. All Rights Reserved.
         See file LICENSE.txt for full license details.
 """
-import collections
-import binascii
 import datetime
-import logging
 import struct
-import json
-import time
-import math
 
-from .types import ApplicationTypes
 from .generic import GenericMessage
-
-from .. import tools
+from .types import ApplicationTypes
 
 
 class RuuviMessage(GenericMessage):

@@ -1,4 +1,4 @@
-# Wirepas Oy
+# Copyright 2019 Wirepas Ltd
 #
 # See file LICENSE for full license details.
 

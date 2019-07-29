@@ -3,17 +3,18 @@
     ==============
 
     .. Copyright:
-        Wirepas Oy licensed under Apache License, Version 2.0.
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 
 """
 
 import json
 import logging
+
 from wirepas_messaging.wnt import AuthenticationMessages
 
-from ..sock import WNTSocket
 from .manager import Manager
+from ..connectors import WNTSocket
 
 
 class AuthenticationManager(Manager):

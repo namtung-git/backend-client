@@ -5,24 +5,29 @@
     Contains helpers to parse application arguments
 
     .. Copyright:
-        Wirepas Oy licensed under Apache License, Version 2.0.
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 """
 
-import os
-import sys
 import argparse
-import yaml
+import os
 import ssl
-from ..__about__ import __version__
+import sys
+
+import yaml
+
 from .utils import JsonSerializer
+from ..__about__ import __version__
 
 
-class Settings(object):
+class Settings:
     """Simple class to handle library settings"""
 
     def __init__(self, settings: dict):
         super(Settings, self).__init__()
+
+        self.debug_level = None
+
         for k, v in settings.items():
             self.__dict__[k] = v
 
@@ -30,7 +35,7 @@ class Settings(object):
         return self.__dict__.items()
 
     @classmethod
-    def validity(self) -> bool:
+    def validity(cls) -> bool:
         """ Validity serves as a mean to check if the settings are valid.
         For example, for database settings it should ensure that the
         hostname, username and password are at least not None.
@@ -41,7 +46,7 @@ class Settings(object):
         return True
 
 
-class ParserHelper(object):
+class ParserHelper:
     """
     ParserHelper
 
@@ -74,7 +79,10 @@ class ParserHelper(object):
 
     @property
     def arguments(self):
-        """ Returns arguments that it can parse and throwing an error otherwise """
+        """
+        Returns arguments that it can parse and throwing an error
+        otherwise
+        """
         return self._arguments
 
     @property

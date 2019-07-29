@@ -1,13 +1,13 @@
-# Wirepas Oy
-#
-# See file LICENSE for full license details.
+# Copyright 2019 Wirepas Ltd
 
 import os
 import queue
 import random
-import pandas
 import datetime
+import importlib
 import multiprocessing
+
+import pandas
 
 from wirepas_backend_client.messages import Inventory, AdvertiserMessage
 from wirepas_backend_client.tools import ParserHelper, LoggerHelper
@@ -16,16 +16,8 @@ from wirepas_backend_client.api import MQTTObserver, MQTTSettings
 from wirepas_backend_client.management import Daemon
 from wirepas_backend_client.test import TestManager
 
-try:
-    import MySQLdb
-
-    mysql_enabled = True
-    storage_name = "mysql"
-except ImportError:
-    print("Could not import MySQL module")
-    mysql_enabled = False
-    storage_name = "mysql"
-
+__MYSQL_ENABLED__ = importlib.util.find_spec("MySQLdb")
+__STORAGE_ENGINE__ = "mysql"
 __test_name__ = "test_advertiser"
 
 
@@ -255,17 +247,21 @@ def main(args, logger):
     mqtt_settings = MQTTSettings(args)
 
     if mysql_settings.sanity():
-        mysql_enabled = True
+        __MYSQL_ENABLED__ = True
         daemon.build(
-            storage_name, MySQLObserver, dict(mysql_settings=mysql_settings)
+            __STORAGE_ENGINE__,
+            MySQLObserver,
+            dict(mysql_settings=mysql_settings),
         )
 
         daemon.set_run(
-            storage_name, task_kwargs=dict(parallel=True), task_as_daemon=False
+            __STORAGE_ENGINE__,
+            task_kwargs=dict(parallel=True),
+            task_as_daemon=False,
         )
 
     else:
-        mysql_enabled = False
+        __MYSQL_ENABLED__ = False
         logger.info("Skipping Storage module")
 
     if mqtt_settings.sanity():
@@ -304,12 +300,12 @@ def main(args, logger):
                 duration=args.duration,
             ),
             receive_from="mqtt",
-            storage=mysql_enabled,
-            storage_name=storage_name,
+            storage=__MYSQL_ENABLED__,
+            storage_name=__STORAGE_ENGINE__,
         )
 
         adv_manager.execution_jitter(
-            min=args.jitter_minimum, max=args.jitter_maximum
+            _min=args.jitter_minimum, _max=args.jitter_maximum
         )
         adv_manager.register_task(
             adv_manager.test_inventory, number_of_runs=args.number_of_runs

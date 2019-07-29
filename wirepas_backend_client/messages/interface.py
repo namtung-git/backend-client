@@ -1,14 +1,23 @@
-from .types import ApplicationTypes
-from .generic import GenericMessage
+"""
+    Interface
+    =========
+
+    .. Copyright:
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
+        See file LICENSE for full license details.
+"""
+
 from .advertiser import AdvertiserMessage
 from .bootdiagnostics import BootDiagnosticsMessage
+from .diagnostics import Diagnostics
+from .generic import GenericMessage
 from .neighbordiagnostics import NeighborDiagnosticsMessage
 from .nodediagnostics import NodeDiagnosticsMessage
+from .positioning import PositioningMessage
+from .ruuvi import RuuviMessage
 from .testnw import TestNWMessage
 from .trafficdiagnostics import TrafficDiagnosticsMessage
-from .ruuvi import RuuviMessage
-from .positioning import PositioningMessage
-from .diagnostics import Diagnostics
+from .types import ApplicationTypes
 
 
 class MessageManager(object):

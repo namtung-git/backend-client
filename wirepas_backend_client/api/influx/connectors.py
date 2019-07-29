@@ -1,116 +1,18 @@
 """
-    Influx handlers
-    ===============
+    Connections
+    ===========
 
     .. Copyright:
-        Wirepas Oy licensed under Apache License, Version 2.0.
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 
 """
 
 import logging
 import influxdb
-import requests
+import pandas
 import google
 import wirepas_messaging
-import argparse
-import pandas
-import multiprocessing
-import queue
-
-from .stream import StreamObserver
-from ..tools import Settings
-
-
-class InfluxSettings(Settings):
-    """Influx Settings"""
-
-    def __init__(self, settings: Settings) -> "InfluxSettings":
-
-        super(InfluxSettings, self).__init__(settings)
-
-        self.username = self.influx_username
-        self.password = self.influx_password
-        self.hostname = self.influx_hostname
-        self.database = self.influx_database
-        self.port = self.influx_port
-        self.ssl = True
-        self.verify_ssl = True
-
-    def sanity(self) -> bool:
-        """ Checks if connection parameters are valid """
-        is_valid = (
-            self.username is not None
-            and self.password is not None
-            and self.hostname is not None
-            and self.port is not None
-            and self.database is not None
-        )
-
-        return is_valid
-
-
-class InfluxObserver(StreamObserver):
-    """ InfluxObserver monitors the internal queues and dumps events to the database """
-
-    def __init__(
-        self,
-        influx_settings: Settings,
-        start_signal: multiprocessing.Event,
-        exit_signal: multiprocessing.Event,
-        tx_queue: multiprocessing.Queue,
-        rx_queue: multiprocessing.Queue,
-        logger=None,
-    ):
-        super(InfluxObserver, self).__init__(
-            start_signal=start_signal,
-            exit_signal=exit_signal,
-            tx_queue=tx_queue,
-            rx_queue=rx_queue,
-        )
-
-        self.logger = logger or logging.getLogger(__name__)
-
-        self.influx = Influx(
-            username=influx_settings.username,
-            password=influx_settings.password,
-            hostname=influx_settings.hostname,
-            port=influx_settings.port,
-            database=influx_settings.database,
-            logger=self.logger,
-        )
-
-        self.timeout = 1
-
-    def on_data_received(self):
-        """ Monitors inbound queuer for data to be written to Influx """
-        raise NotImplementedError
-
-    def on_query_received(self):
-        """ Monitor inbound queue for queires to be sent to Influx """
-        try:
-            message = self.rx_queue.get(timeout=self.timeout, block=True)
-        except queue.Empty:
-            message = None
-            pass
-        self.logger.debug("Influx query: {}".format(message))
-        result = self.influx.query(message)
-        self.tx_queue.put(result)
-        self.logger.debug("Influx result: {}".format(result))
-
-    def run(self):
-        """ Runs until asked to exit """
-        try:
-            self.influx.connect()
-        except Exception as err:
-            self.logger.error("error connecting to database {}".format(err))
-            pass
-
-        while not self.exit_signal.is_set():
-            try:
-                self.on_query_received()
-            except EOFError:
-                break
 
 
 class Influx(object):
@@ -133,17 +35,18 @@ class Influx(object):
         self,
         hostname: str,
         port: int,
-        user: str,
+        username: str,
         password: str,
         database: str,
-        ssl: bool,
-        verify_ssl: bool,
+        ssl: bool = True,
+        verify_ssl: bool = True,
+        logger: logging.Logger = None,
     ):
         super(Influx, self).__init__()
-
+        self.logger = logger or logging.getLogger(__name__)
         self.hostname = hostname
         self.port = port
-        self.user = user
+        self.user = username
         self.password = password
         self.database = database
         self.ssl = ssl
@@ -183,7 +86,8 @@ class Influx(object):
 
         return payload
 
-    def _decode_array(self, payload: str, elements: dict) -> list:
+    @staticmethod
+    def _decode_array(payload: str, elements: dict) -> list:
         """
         Maps the elements of an array present in the payload string
 
@@ -310,18 +214,18 @@ class Influx(object):
         return result
 
     def _query_last_n_seconds(self, __measurement, last_n_seconds):
-
+        """ Retrieves results based on the previous last_n_seconds """
         __table = "{}".format(__measurement)
         __query = "SELECT * FROM {table} WHERE time > now() - {seconds}s".format(
             table=__table, seconds=last_n_seconds
         )
 
         try:
-            df = self.query(__query)[__measurement]
+            result = self.query(__query)[__measurement]
         except KeyError:
-            df = pandas.DataFrame()
+            result = pandas.DataFrame()
 
-        return df
+        return result
 
     def location_measurements(self, last_n_seconds=60):
         """ Retrieves location measurements from the server """
@@ -373,97 +277,3 @@ class Influx(object):
         df = self._query_last_n_seconds(__measurement, last_n_seconds)
 
         return df
-
-
-if __name__ == "__main__":
-
-    def main(
-        hostname="localhost",
-        port=8086,
-        user="influxuser",
-        password="influxuserpassword",
-        database="wirepas",
-        ssl=True,
-        verify_ssl=True,
-    ):
-        """Instantiate a connection to the InfluxDB."""
-
-        db = Influx(
-            hostname=hostname,
-            port=port,
-            user=user,
-            password=password,
-            database=database,
-            ssl=ssl,
-            verify_ssl=verify_ssl,
-        )
-
-        results = list()
-
-        try:
-            db.connect()
-            results.append(db.location_measurements())
-            results.append(db.location_updates())
-
-        except requests.exceptions.ConnectionError:
-            results = "Could not find host"
-
-        return results
-
-    def parse_args():
-        """Parse the args."""
-        parser = argparse.ArgumentParser(
-            description="example code to play with InfluxDB"
-        )
-        parser.add_argument(
-            "--influx_hostname",
-            type=str,
-            required=False,
-            default="localhost",
-            help="hostname of InfluxDB http API",
-        )
-
-        parser.add_argument(
-            "--influx_port",
-            type=int,
-            required=False,
-            default=8886,
-            help="port of InfluxDB http API",
-        )
-
-        parser.add_argument(
-            "--influx_user",
-            type=str,
-            required=False,
-            default="influxuser",
-            help="user of InfluxDB http API",
-        )
-
-        parser.add_argument(
-            "--influx_password",
-            type=str,
-            required=False,
-            default="influxuserpassword",
-            help="password of InfluxDB http API",
-        )
-
-        parser.add_argument(
-            "--influx_database",
-            type=str,
-            required=False,
-            default="wirepas",
-            help="port of InfluxDB http API",
-        )
-
-        parser.add_argument(
-            "--influx_ssl",
-            action="store_false",
-            required=False,
-            help="use https when talking to the API",
-        )
-
-        return parser.parse_args()
-
-    args = parse_args()
-
-    df = main(hostname=args.influx_hostname, port=args.influx_port)

@@ -1,14 +1,11 @@
 """
-    MySQL API
-    ============
-
-    Contains class to handle MySQL interaction
+    Connections
+    ===========
 
     .. Copyright:
-        Wirepas Oy licensed under Apache License, Version 2.0.
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 """
-import os
 
 try:
     import MySQLdb
@@ -18,238 +15,6 @@ except ImportError:
 import binascii
 import datetime
 import logging
-import multiprocessing
-import queue
-import time
-
-from .stream import StreamObserver
-from ..messages import GenericMessage
-from ..messages import AdvertiserMessage
-from ..messages import BootDiagnosticsMessage
-from ..messages import NeighborDiagnosticsMessage
-from ..messages import NodeDiagnosticsMessage
-from ..messages import TestNWMessage
-from ..messages import TrafficDiagnosticsMessage
-from ..tools import Settings
-
-
-class MySQLSettings(Settings):
-    """MySQL Settings"""
-
-    def __init__(self, settings: Settings) -> "MySQLSettings":
-
-        super(MySQLSettings, self).__init__(settings)
-
-        self.username = self.db_username
-        self.password = self.db_password
-        self.hostname = self.db_hostname
-        self.database = self.db_database
-        self.port = self.db_port
-        self.connection_timeout = self.db_connection_timeout
-
-    def sanity(self) -> bool:
-        """ Checks if connection parameters are valid """
-
-        is_valid = (
-            self.username is not None
-            and self.password is not None
-            and self.hostname is not None
-            and self.port is not None
-        )
-
-        return is_valid
-
-
-class MySQLObserver(StreamObserver):
-    """ MySQLObserver monitors the internal queues and dumps events to the database """
-
-    def __init__(
-        self,
-        mysql_settings: Settings,
-        start_signal: multiprocessing.Event,
-        exit_signal: multiprocessing.Event,
-        tx_queue: multiprocessing.Queue,
-        rx_queue: multiprocessing.Queue,
-        logger=None,
-    ) -> "MySQLObserver":
-        super(MySQLObserver, self).__init__(
-            start_signal=start_signal,
-            exit_signal=exit_signal,
-            tx_queue=tx_queue,
-            rx_queue=rx_queue,
-        )
-
-        self.logger = logger or logging.getLogger(__name__)
-
-        self.mysql = MySQL(
-            username=mysql_settings.username,
-            password=mysql_settings.password,
-            hostname=mysql_settings.hostname,
-            port=mysql_settings.port,
-            database=mysql_settings.database,
-            connection_timeout=mysql_settings.connection_timeout,
-            logger=self.logger,
-        )
-        self.settings = mysql_settings
-        self.timeout = 10
-
-    def on_data_received(self):
-        """ Monitor inbound queue for messages to be stored in MySQL """
-
-        while not self.exit_signal.is_set():
-
-            try:
-                message = self.rx_queue.get(timeout=self.timeout, block=True)
-            except queue.Empty:
-                message = None
-                continue
-
-            self._map_message(self.mysql, message)
-
-    @staticmethod
-    def _map_message(mysql, message):
-        """ Inserts the message according to its type """
-        if isinstance(message, AdvertiserMessage):
-            mysql.put_advertiser([message])
-        elif isinstance(message, BootDiagnosticsMessage):
-            mysql.put_boot_diagnostics(message)
-        elif isinstance(message, NeighborDiagnosticsMessage):
-            mysql.put_neighbor_diagnostics(message)
-        elif isinstance(message, NodeDiagnosticsMessage):
-            mysql.put_node_diagnostics(message)
-        elif isinstance(message, TestNWMessage):
-            mysql.put_testnw_measurements(message)
-        elif isinstance(message, TrafficDiagnosticsMessage):
-            mysql.put_traffic_diagnostics(message)
-        elif isinstance(message, GenericMessage):
-            mysql.put_to_received_packets(message)
-
-    def pool_on_data_received(self, n_workers=4):
-        """ Monitor inbound queue for messages to be stored in MySQL """
-
-        def work(storage_q, exit_signal, settings, logger):
-
-            mysql = MySQL(
-                username=settings.username,
-                password=settings.password,
-                hostname=settings.hostname,
-                port=settings.port,
-                database=settings.database,
-                connection_timeout=settings.connection_timeout,
-                logger=logger,
-            )
-
-            mysql.connect(table_creation=False)
-            pid = os.getpid()
-
-            logger.info("starting MySQL worker {}".format(pid))
-
-            while not exit_signal.is_set():
-                try:
-                    message = storage_q.get(block=True, timeout=2)
-                except queue.Empty:
-                    continue
-                except EOFError:
-                    break
-                except KeyboardInterrupt:
-                    break
-
-                try:
-                    mysql.database.ping(True)
-                except MySQLdb.OperationalError:
-                    logger.exception(
-                        "MySQL worker {}: restarting database connection.".format(
-                            pid
-                        )
-                    )
-                    mysql.close()
-                    while not exit_signal.is_set():
-                        try:
-                            mysql.connect(table_creation=False)
-                            logger.exception(
-                                "MySQL worker {}: connection restarted.".format(
-                                    pid
-                                )
-                            )
-                            break
-                        except MySQLdb.Error:
-                            logger.exception(
-                                "MySQL worker {}: connection restart failed.".format(
-                                    pid
-                                )
-                            )
-                            time.sleep(5)
-
-                if not exit_signal.is_set():
-                    try:
-                        MySQLObserver._map_message(mysql, message)
-                    except MySQLdb.Error:
-                        logger.exception(
-                            "MySQL worker {}: Database operation failed.".format(
-                                pid
-                            )
-                        )
-
-            logger.warning("exiting MySQL worker {}".format(pid))
-            return pid
-
-        workers = dict()
-        for pseq in range(1, n_workers):
-            workers[pseq] = multiprocessing.Process(
-                target=work,
-                args=(
-                    self.rx_queue,
-                    self.exit_signal,
-                    self.settings,
-                    self.logger,
-                ),
-            ).start()
-
-        self._wait_for_exit(workers=workers)
-
-    def run(self, **kwargs):
-        """ Runs until asked to exit """
-        try:
-            self.parallel = kwargs["parallel"]
-        except KeyError:
-            self.parallel = False
-
-        try:
-            self.n_workers = kwargs["n_workers"]
-        except KeyError:
-            self.n_workers = 4
-
-        try:
-            self.mysql.connect()
-        except Exception as err:
-            self.logger.error("error connecting to database {}".format(err))
-            self.exit_signal.set()
-            raise
-
-        if self.parallel:
-            self.logger.info(
-                "Starting // mysql work. "
-                "Number of workers is {}".format(self.n_workers)
-            )
-            self.pool_on_data_received(n_workers=self.n_workers)
-        else:
-            self.logger.info("Starting single threaded mysql work")
-            self.on_data_received()
-
-        self.mysql.close()
-
-    def _wait_for_exit(self, workers: dict = None):
-        """ waits until the exit signal is set """
-        while not self.exit_signal.is_set():
-            self.logger.debug("MySQL is running")
-            time.sleep(self.timeout)
-            if workers:
-                for seq, worker in workers.items():
-                    if worker.is_alive():
-                        continue
-                    self.logger.error("Worker {} is dead. Exiting".format(seq))
-                    self.exit_signal.set()
-                    break
 
 
 class MySQL(object):
@@ -284,13 +49,11 @@ class MySQL(object):
     def connect(self, table_creation=True) -> None:
         """ Establishes a connection and service loop. """
         self.logger.info(
-            "MySQL connection to {user}:{password}"
-            "@{host}:{port}".format(
-                user=self.username,
-                password=self.password,
-                host=self.hostname,
-                port=self.port,
-            )
+            "MySQL connection to %s:%s@%s:%s",
+            self.username,
+            self.password,
+            self.hostname,
+            self.port,
         )
         self.database = MySQLdb.connect(
             host=self.hostname,
@@ -940,7 +703,7 @@ class MySQL(object):
         for message in messages:
             for node_address, fields in message.advertisers.items():
                 self.logger.debug(
-                    "inserting advertiser message in mysql: {}".format(message)
+                    "inserting advertiser message in mysql: %s", message
                 )
                 for value in fields["value"]:
                     values.append(
@@ -1313,11 +1076,10 @@ class MySQL(object):
                 + ")"
                 + " VALUES ("
                 + "LAST_INSERT_ID(),"
-                + "{0:.32f}".format(message.rx_time_ms_epoch / 1000, ".32f")
+                + "{0:.32f}".format(message.rx_time_ms_epoch / 1000)
                 + ","
                 + "{0:.32f}".format(
-                    (message.rx_time_ms_epoch - message.travel_time_ms) / 1000,
-                    ".32f",
+                    (message.rx_time_ms_epoch - message.travel_time_ms) / 1000
                 )
                 + ","
                 + str(message.number_of_fields[row])

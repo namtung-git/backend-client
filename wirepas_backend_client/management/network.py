@@ -1,17 +1,24 @@
-# Wirepas Oy
+"""
+    Network
+    =======
 
-import wirepas_messaging
+    .. Copyright:
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0
+        See file LICENSE for full license details.
+"""
+
 import logging
 import queue
 import time
 
+import wirepas_messaging
+
 from ..api import MQTT
-from ..api import Topics
-from ..api import topic_message
-from ..api import decode_topic_message
 from ..api import StreamObserver
+from ..api import Topics
+from ..api import decode_topic_message
+from ..api import topic_message
 from ..tools import ExitSignal
-from ..messages.interface import MessageManager
 
 
 class NetworkDiscovery(StreamObserver):
@@ -95,7 +102,6 @@ class NetworkDiscovery(StreamObserver):
         else:
             self.message_publish_handlers = {"from_message": self.send_data}
 
-        self.logger.debug("setting up MQTT to: {}")
         self.mqtt = MQTT(
             username=mqtt_settings.username,
             password=mqtt_settings.password,
@@ -120,9 +126,7 @@ class NetworkDiscovery(StreamObserver):
         self.shared_state = shared_state
         self.device_manager = MeshManagement()
 
-    def run(
-        self, message_subscribe_handlers=None, message_publish_handlers=None
-    ):
+    def run(self):
         """
         Executes MQTT loop
 
@@ -131,7 +135,6 @@ class NetworkDiscovery(StreamObserver):
             message_publish_handlers (dict): overrides publish handlers
 
         """
-        self.logger.debug("calling mqtt loop")
         self.mqtt.serve()
 
     def notify(self, message, path="response"):
@@ -203,7 +206,7 @@ class NetworkDiscovery(StreamObserver):
         """
         try:
             message = self.request_queue.get(block=True, timeout=1)
-            self.logger.debug("publishing message {}".format(message))
+            self.logger.debug("publishing message %s", message)
 
             if "from_message" in topic:
                 topic = message["topic"]
@@ -255,7 +258,7 @@ class NetworkDiscovery(StreamObserver):
         def on_gateway_status_event_cb(message, topic: list):
             """ Decodes an incoming gateway status event """
 
-            self.logger.info("status event {}".format(message))
+            self.logger.info("status event %s", message)
             try:
                 message = wirepas_messaging.gateway.api.StatusEvent.from_payload(
                     message
@@ -276,7 +279,7 @@ class NetworkDiscovery(StreamObserver):
         def on_gateway_data_event_cb(message, topic: list):
             """ Decodes an incoming data event callback """
 
-            self.logger.info("data event: {}".format(message))
+            self.logger.info("data event: %s", message)
             self.device_manager.add_from_mqtt_topic(
                 topic, message.source_address
             )
@@ -289,7 +292,7 @@ class NetworkDiscovery(StreamObserver):
         def on_gateway_get_configs_cb(message, topic: list):
             """ Decodes and incoming configuration response """
 
-            self.logger.info("configs response: {}".format(message))
+            self.logger.info("configs response: %s", message)
             message = self.mqtt_topics.constructor(
                 "response", "get_configs"
             ).from_payload(message)
@@ -304,7 +307,7 @@ class NetworkDiscovery(StreamObserver):
         @topic_message
         def on_gateway_otap_status_cb(message, topic: list):
             """ Decodes an otap status response """
-            self.logger.info("otap status response: {}".format(message))
+            self.logger.info("otap status response: %s", message)
             message = self.mqtt_topics.constructor(
                 "response", "otap_status"
             ).from_payload(message)
@@ -316,7 +319,7 @@ class NetworkDiscovery(StreamObserver):
         @topic_message
         def on_gateway_set_config_response_cb(message, topic: list):
             """ Decodes a set config response """
-            self.logger.info("set config response: {}".format(message))
+            self.logger.info("set config response: %s", message)
             message = self.mqtt_topics.constructor(
                 "response", "set_config"
             ).from_payload(message)
@@ -328,7 +331,7 @@ class NetworkDiscovery(StreamObserver):
         @topic_message
         def on_gateway_data_response_cb(message, topic: list):
             """ Decodes a data response """
-            self.logger.info("send data response: {}".format(message))
+            self.logger.info("send data response: %s", message)
             self.device_manager.add_from_mqtt_topic(topic)
             message = self.mqtt_topics.constructor(
                 "response", "send_data"
@@ -342,7 +345,7 @@ class NetworkDiscovery(StreamObserver):
         @topic_message
         def on_gateway_load_scratchpad_response_cb(message, topic: list):
             """ """
-            self.logger.info("load scratchpad response: {}".format(message))
+            self.logger.info("load scratchpad response: %s", message)
             message = self.mqtt_topics.constructor(
                 "response", "otap_load_scratchpad"
             ).from_payload(message)
@@ -354,7 +357,7 @@ class NetworkDiscovery(StreamObserver):
         @topic_message
         def on_gateway_process_scratchpad_cb(message, topic: list):
             """ """
-            self.logger.info("process scratchpad response: {}".format(message))
+            self.logger.info("process scratchpad response: %s", message)
             message = self.mqtt_topics.constructor(
                 "response", "otap_process_scratchpad"
             ).from_payload(message)
@@ -387,7 +390,6 @@ class MeshDevice(object):
         gateway_id: str = None,
         state: int = None,
         role: int = None,
-        **kwargs
     ):
         super(MeshDevice, self).__init__()
         self._device_id = str(device_id)
@@ -435,7 +437,7 @@ class Sink(MeshDevice):
         self.role = None
         self.firmware_version = None
 
-    def set_app_config(kwargs):
+    def set_app_config(self, **kwargs):
         pass
 
     def __str__(self):
@@ -536,10 +538,10 @@ class Gateway(MeshDevice):
             "  Attached to network: {network_id}\n"
         ).format(gateway_id=self.gateway_id, network_id=self.network_id)
         id_str = "{}  Sinks:{}\n".format(
-            id_str, str(list(map(lambda x: str(x), self.sinks)))
+            id_str, str(list(map(str, self.sinks)))
         )
         id_str = "{}  Nodes:{}\n".format(
-            id_str, str(list(map(lambda x: str(x), self.nodes)))
+            id_str, str(list(map(str, self.nodes)))
         )
         return id_str
 
@@ -646,14 +648,14 @@ class MeshManagement(object):
     @property
     def networks(self):
         if not self._networks:
-            return list()
+            yield list()
         for network in self._networks.values():
             yield network
 
     @property
     def gateways(self):
         if not self._gateways:
-            return list()
+            yield list()
         for gateway in self._gateways.values():
             yield gateway
 
@@ -782,7 +784,7 @@ class MeshManagement(object):
     def __str__(self):
         obj = ""
 
-        for k, v in self._networks.items():
+        for _, v in self._networks.items():
             obj = "{}{}\n".format(obj, str(v))
 
         return obj

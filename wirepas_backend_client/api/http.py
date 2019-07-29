@@ -1,4 +1,4 @@
-# Wirepas Oy
+# Copyright 2019 Wirepas Ltd
 #
 # See file LICENSE for full license details.
 #
@@ -134,6 +134,9 @@ class HTTPSettings(Settings):
     """HTTP Settings"""
 
     def __init__(self, settings: Settings) -> "HTTPSettings":
+
+        self.http_host = None
+        self.http_port = None
 
         super(HTTPSettings, self).__init__(settings)
 

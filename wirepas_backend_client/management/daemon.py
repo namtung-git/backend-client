@@ -5,11 +5,11 @@
     Contains a generic class to manange processes
 
     .. Copyright:
-        Wirepas Oy licensed under Apache License, Version 2.0.
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 """
-import multiprocessing
 import logging
+import multiprocessing
 import time
 
 
@@ -82,7 +82,7 @@ class Daemon(object):
         """ Default loop. Waits until an exit signal is given or the processes are dead"""
         while not self.exit_signal.is_set():
             try:
-                for process, register in self.process.items():
+                for _, register in self.process.items():
                     if not register["runtime"]["object"].is_alive():
                         return
                 time.sleep(self.heartbeat)
@@ -95,7 +95,7 @@ class Daemon(object):
         """ Initialises a process entry """
         if name not in self.process:
             self.process[name] = self._process_details()
-            self.logger.debug("Creating message queues for {}".format(name))
+            self.logger.debug("Creating message queues for %s", name)
         else:
             self.logger.debug("Message queues already created")
 
@@ -121,7 +121,7 @@ class Daemon(object):
         # chose on which queue to put data to
         if send_to:
             self.logger.info(
-                "{} sending messages to {}[rx_queue]".format(name, send_to)
+                "%s sending messages to %s [rx_queue]", name, send_to
             )
             kwargs["tx_queue"] = self.process[send_to]["rx_queue"]
         else:
@@ -131,9 +131,7 @@ class Daemon(object):
         # chose on which queue to get data from
         if receive_from:
             self.logger.info(
-                "{} receiving messages from {}[tx_queue]".format(
-                    name, receive_from
-                )
+                "%s receiving messages from %s[tx_queue]", name, receive_from
             )
             kwargs["rx_queue"] = self.process[receive_from]["tx_queue"]
         else:
@@ -151,11 +149,11 @@ class Daemon(object):
         self.process[name]["object_kwargs"] = kwargs
         try:
             self.process[name]["runtime"]["task"] = obj.run
-        except Exception:
+        except AttributeError:
             self.logger.warning(
                 "Object does not have a run method. Runtime task undefined!"
             )
-            pass
+
         self.process[name]["runtime"]["kwargs"] = dict()
         self.process[name]["runtime"]["as_daemon"] = True
 
@@ -194,7 +192,7 @@ class Daemon(object):
                 )
 
                 register["runtime"]["object"].start()
-                self.logger.debug("started process: {}".format(name))
+                self.logger.debug("started process: %s", name)
             except KeyError:
                 raise
             except TypeError:
@@ -209,13 +207,13 @@ class Daemon(object):
             self.exit_signal.set()
         except Exception as err:
             self.logger.exception(
-                "main execution loop exited with error {}".format(err)
+                "main execution loop exited with error %s", err
             )
             if not self.exit_signal.is_set():
                 self.exit_signal.set()
 
         for name, register in self.process.items():
-            self.logger.debug("daemon killing {}".format(name))
+            self.logger.debug("daemon killing %s", name)
             if "main" in name:
                 continue
             try:
@@ -226,7 +224,7 @@ class Daemon(object):
                     )
 
             except Exception as err:
-                self.logger.exception("error killing {}: {}".format(name, err))
+                self.logger.exception("error killing %s: %s", name, err)
                 continue
 
         self.logger.debug("daemon has left")

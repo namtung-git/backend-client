@@ -3,35 +3,17 @@
     =======
 
     .. Copyright:
-        Wirepas Oy licensed under Apache License, Version 2.0.
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 
 """
 
-import queue
-import logging
 import datetime
+import logging
+import queue
 
-from ...tools import Settings, JsonSerializer
 from .manager import AuthenticationManager, RealtimeManager, MetadataManager
-
-
-class WNTSettings(Settings):
-    """WNT Settings"""
-
-    def __init__(self, settings: Settings) -> "WNTSettings":
-
-        super(WNTSettings, self).__init__(settings)
-
-    def sanity(self) -> bool:
-        """ Checks if connection parameters are valid """
-        is_valid = (
-            self.wnt_username is not None
-            and self.wnt_password is not None
-            and self.wnt_hostname is not None
-        )
-
-        return is_valid
+from ...tools import JsonSerializer
 
 
 class Backend(object):
@@ -110,10 +92,9 @@ class Backend(object):
                 message = self.realtime.tx_queue.get(block=True, timeout=10)
                 if message:
                     self.logger.info(
-                        "{utc} | {message}".format(
-                            utc=datetime.datetime.utcnow().isoformat("T"),
-                            message=JsonSerializer.serialize(message),
-                        )
+                        "%s | %s",
+                        datetime.datetime.utcnow().isoformat("T"),
+                        JsonSerializer.serialize(message),
                     )
             except queue.Empty:
                 pass

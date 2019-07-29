@@ -6,12 +6,13 @@
     wirepas network tool services.
 
     .. Copyright:
-        Wirepas Oy licensed under Apache License, Version 2.0.
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 
 """
 
-from .backend import WNTSettings, Backend
+from .handlers import Backend
+from .settings import WNTSettings
 from ...tools import ParserHelper, LoggerHelper
 
 

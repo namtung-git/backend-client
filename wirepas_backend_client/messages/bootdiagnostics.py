@@ -6,19 +6,13 @@
     within the library and test framework.
 
     .. Copyright:
-        Wirepas Oy licensed under Apache License, Version 2.0.
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 """
-import datetime
-import logging
 import struct
-import binascii
-import json
 
-from .types import ApplicationTypes
 from .generic import GenericMessage
-
-from .. import tools
+from .types import ApplicationTypes
 
 
 class BootDiagnosticsMessage(GenericMessage):

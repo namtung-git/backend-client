@@ -1,20 +1,9 @@
-# Wirepas Oy
+# Copyright 2019 Wirepas Ltd
 #
 # See file LICENSE for full license details.
 
 import os
-import sys
-import enum
 import queue
-import pprint
-import struct
-import logging
-import argparse
-import binascii
-import datetime
-import multiprocessing
-import time
-import MySQLdb
 
 from functools import wraps
 
@@ -22,7 +11,7 @@ import wirepas_backend_client
 from wirepas_backend_client.messages.interface import MessageManager
 from wirepas_backend_client.api import topic_message
 from wirepas_messaging.gateway.api import GatewayState
-from wirepas_backend_client.tools import Settings, ParserHelper, LoggerHelper
+from wirepas_backend_client.tools import ParserHelper, LoggerHelper
 from wirepas_backend_client.api import MySQLSettings
 from wirepas_backend_client.api import MQTTSettings
 from wirepas_backend_client.api import HTTPSettings

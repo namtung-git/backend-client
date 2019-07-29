@@ -6,21 +6,18 @@
     within the library and test framework.
 
     .. Copyright:
-        Wirepas Oy licensed under Apache License, Version 2.0.
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 """
 import collections
-import binascii
 import datetime
 import logging
-import struct
-import json
-import time
 import math
+import struct
+import time
 
-from .types import ApplicationTypes
 from .generic import GenericMessage
-
+from .types import ApplicationTypes
 from .. import tools
 
 
@@ -70,6 +67,8 @@ class Inventory(object):
         self._deadline = None
         self._finish = None
         self._elapsed = None
+        self._otaped_nodes = set()
+        self._runtime = None
 
         self.logger = logger or logging.getLogger(__name__)
 
@@ -407,6 +406,7 @@ class AdvertiserMessage(GenericMessage):
         self.apdu_message_type = None
         self.apdu_reserved_field = None
         self.index = None
+        self.decode_time = None
 
     def count(self):
         AdvertiserMessage.MESSAGE_COUNTER = (

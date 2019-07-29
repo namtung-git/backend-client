@@ -3,14 +3,15 @@
     =======
 
     .. Copyright:
-        Wirepas Oy licensed under Apache License, Version 2.0.
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 
 """
 
 import logging
 import queue
-from ..sock import WNTSocket
+
+from ..connectors import WNTSocket
 
 
 class Manager(object):
@@ -79,6 +80,9 @@ class Manager(object):
         """ Stops the websocket """
         self.socket.stop()
 
+    def stop(self):
+        self.close()
+
     @property
     def tx_queue(self):
         """
@@ -99,11 +103,11 @@ class Manager(object):
         """
         return self._rx_queue
 
-    def _check_size(self, queue):
+    def _check_size(self, q):
         """ Ensure the queues contain up to _max_queue_length items"""
         try:
-            if queue.qsize() > self._max_queue_length:
-                while queue.empty():
+            if q.qsize() > self._max_queue_length:
+                while q.empty():
                     pass
         except queue.Empty:
             pass
@@ -136,16 +140,16 @@ class Manager(object):
 
     def on_open(self, _websocket):
         """ Generic function to print open status """
-        self.logger.error("{} socket open".format(self.name))
+        self.logger.error("%s socket open", self.name)
 
     def on_message(self, _websocket, message):
         """ Generic function to print message status """
-        self.logger.error("{} socket message: {}".format(self.name, message))
+        self.logger.error("%s socket message: %s", self.name, message)
 
     def on_error(self, _websocket, error):
         """ Generic function to print error status """
-        self.logger.error("{} socket error: {}".format(self.name, error))
+        self.logger.error("%s socket error: %s", self.name, error)
 
     def on_close(self, _websocket):
         """ Generic function to print close status """
-        self.logger.error("{} socket close".format(self.name))
+        self.logger.error("%s socket close", self.name)

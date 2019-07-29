@@ -1,4 +1,4 @@
-# Wirepas Oy 2018
+# Copyright 2019 Wirepas Ltd 2018
 wirepas_messaging==1.2.0rc3
 cbor2==4.1.2
 

@@ -1,4 +1,4 @@
-# Wirepas Oy
+# Copyright 2019 Wirepas Ltd
 
 FROM python:3.7
 

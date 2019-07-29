@@ -6,15 +6,16 @@
     arguments from the command line.
 
     .. Copyright:
-        Wirepas Oy licensed under Apache License, Version 2.0.
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 """
 
-import json
-import datetime
-import threading
-import google
 import binascii
+import datetime
+import json
+import threading
+
+from google.protobuf import json_format
 
 
 def deferred_thread(fn):
@@ -63,12 +64,13 @@ class JsonSerializer(json.JSONEncoder):
             return str(obj)
 
         if hasattr(obj, "DESCRIPTOR"):
+
             if self.proto_as_json is True:
-                pstr = google.protobuf.json_format.MessageToJson(
+                pstr = json_format.MessageToJson(
                     obj, including_default_value_fields=True
                 )
             else:
-                pstr = google.protobuf.json_format.MessageToDict(
+                pstr = json_format.MessageToDict(
                     obj, including_default_value_fields=True
                 )
             return pstr
@@ -82,7 +84,7 @@ class JsonSerializer(json.JSONEncoder):
         )
 
 
-class ExitSignal(object):
+class ExitSignal:
     """Wrapper around and exit signal"""
 
     def __init__(self, signal=None):
@@ -95,15 +97,20 @@ class ExitSignal(object):
 
     def is_set(self) -> bool:
         try:
-            self.signal.is_set()
+            ret = self.signal.is_set()
         except AttributeError:
-            return self.signal
+            ret = self.signal
+
+        return ret
 
     def set(self) -> bool:
         try:
-            self.signal.set()
+            ret = self.signal.set()
         except AttributeError:
-            return self.signal
+            self.signal = True
+            ret = True
+
+        return ret
 
 
 def chunker(seq, size) -> list():

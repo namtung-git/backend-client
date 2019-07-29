@@ -5,11 +5,11 @@
     Contains a generic class to handle IO streams.
 
     .. Copyright:
-        Wirepas Oy licensed under Apache License, Version 2.0.
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 """
-import multiprocessing
 import logging
+import multiprocessing
 
 
 class StreamObserver(object):
@@ -45,13 +45,13 @@ class StreamObserver(object):
     def send_data(self, message: dict):
         pass
 
-    def receive_data(self, message: dict, *args, **kwargs):
-        if self.push_data.is_set() and message is not None:
+    def receive_data(self, message: dict):
+        if self.start_signal.is_set() and message is not None:
             self.tx_queue.put(message)
 
     def generate_data_received_cb(self) -> callable:
         """ Returns a callback to process the incoming data """
-        return self.receive
+        return self.receive_data
 
     def generate_data_send_cb(self) -> callable:
         """ Returns a callback to publish the outgoing data """

@@ -1,15 +1,11 @@
-# Wirepas Oy
+# Copyright 2019 Wirepas Ltd
 #
 # See file LICENSE for full license details.
-import os
-import wirepas_messaging
-import wirepas_backend_client
-import multiprocessing
-import time
 
+import wirepas_backend_client
 
 from wirepas_backend_client.api.mqtt import retrieve_message, MQTTSettings
-from wirepas_backend_client.tools import ParserHelper, LoggerHelper, Settings
+from wirepas_backend_client.tools import ParserHelper, LoggerHelper
 
 
 class NodeObserver(wirepas_backend_client.api.MQTTObserver):
@@ -91,12 +87,6 @@ def main(settings, logger):
 
 if __name__ == "__main__":
 
-    debug_level = "debug"
-    try:
-        debug_level = os.environ["WM_DEBUG_LEVEL"]
-    except KeyError:
-        pass
-
     parser = ParserHelper("Find all nodes arguments")
     parser.add_file_settings()
     parser.add_mqtt()
@@ -105,7 +95,9 @@ if __name__ == "__main__":
 
     if settings.sanity():
         log = LoggerHelper(
-            module_name="find all nodes", args=settings, level=debug_level
+            module_name="find all nodes",
+            args=settings,
+            level=settings.debug_level,
         )
         logger = log.setup()
 

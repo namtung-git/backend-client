@@ -5,16 +5,16 @@
     Contains the interface for the test framework.
 
     .. Copyright:
-        Wirepas Oy licensed under Apache License, Version 2.0.
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 """
 
 
-import time
-import random
-import logging
 import datetime
+import logging
 import multiprocessing
+import random
+import time
 
 
 class TestManager(object):
@@ -49,7 +49,8 @@ class TestManager(object):
         self._tasks = list()
         self.logger = logger or logging.getLogger(__name__)
 
-    def until(self, deadline: datetime) -> int:
+    @staticmethod
+    def until(deadline: datetime) -> int:
         """ returns the amount of seconds until the next deadline"""
         now = datetime.datetime.utcnow()
         return (deadline - now).total_seconds()
@@ -66,17 +67,17 @@ class TestManager(object):
 
         self.number_of_runs = len(self._tasks)
 
-    def execution_jitter(self, min=0, max=0):
+    def execution_jitter(self, _min=0, _max=0):
         """ Defines the jitter amount"""
-        self._jitter_interval["min"] = min
-        self._jitter_interval["max"] = max
+        self._jitter_interval["min"] = _min
+        self._jitter_interval["max"] = _max
 
     def jitter(self):
         """ sleep for a random amount of seconds """
         rnd = random.uniform(
             self._jitter_interval["min"], self._jitter_interval["max"]
         )
-        self.logger.info("Applying task jitter {}s".format(rnd))
+        self.logger.info("Applying task jitter %ss", rnd)
         time.sleep(rnd)
 
     def reset(self):
@@ -92,12 +93,10 @@ class TestManager(object):
             task_counter = 0
             for task in self._tasks:
                 task_counter = task_counter + 1
-                self.logger.info("starting task: {}".format(task_counter))
+                self.logger.info("starting task: %s", task_counter)
                 self.jitter()
                 task(task_counter)
                 self.reset()
         except Exception as err:
-            self.logger.exception(
-                "Could not start task due to: {}".format(err)
-            )
+            self.logger.exception("Could not start task due to: %s", err)
             self.exit_signal.set()

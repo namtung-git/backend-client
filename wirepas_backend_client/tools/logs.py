@@ -5,12 +5,14 @@
     Contains helpers to setup the application logging facilities
 
     .. Copyright:
-        Wirepas Oy licensed under Apache License, Version 2.0.
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 """
 
-import sys
+
 import logging
+import sys
+
 from fluent import handler as fluent_handler
 
 
@@ -30,7 +32,8 @@ class ContextFilter(logging.Filter):
 
         return True
 
-    def add_sequence(self, record):
+    @staticmethod
+    def add_sequence(record):
         args = record.args
         if "sequence" in args:
             try:
@@ -41,10 +44,10 @@ class ContextFilter(logging.Filter):
                 )
 
 
-class LoggerHelper(object):
+class LoggerHelper:
     """LoggerHelper"""
 
-    def __init__(self, module_name, args, level: str = None, **kwargs):
+    def __init__(self, module_name, args, level: str = None):
         super(LoggerHelper, self).__init__()
 
         for key, value in args.__dict__.items():
@@ -56,7 +59,7 @@ class LoggerHelper(object):
 
         self._logger = logging.getLogger(module_name)
         self._name = module_name
-        self._level = "{0}".format(level.upper())
+        self._level = level.upper()
         self._handlers = dict()
 
         self._log_format = dict()
@@ -76,8 +79,9 @@ class LoggerHelper(object):
         }
 
         try:
-            self._logger.setLevel(eval("logging.{0}".format(self._level)))
+            self._logger.setLevel(getattr(logging, self._level))
         except Exception:
+            self._logger.error("unrecognized log level %s", self._level)
             self._logger.setLevel(logging.DEBUG)
 
     @property
@@ -95,7 +99,7 @@ class LoggerHelper(object):
         self._level = "{0}".format(value.upper())
 
         try:
-            self._logger.setLevel(eval("logging.{0}".format(self._level)))
+            self._logger.setLevel(getattr(logging, self._level))
         except Exception:
             self._logger.setLevel(logging.DEBUG)
 
@@ -130,9 +134,7 @@ class LoggerHelper(object):
         # it will limit the input of this handler.
         try:
             level = "{0}".format(value.upper())
-            self._handlers["stderr"].setLevel(
-                eval("logging.{0}".format(level))
-            )
+            self._handlers["stderr"].setLevel(getattr(logging, level))
         except Exception:
             self._handlers["stderr"].setLevel(logging.ERROR)
         self._logger.addHandler(self._handlers["stderr"])
@@ -223,7 +225,5 @@ class LoggerHelper(object):
                 handler.close()
             except Exception as err:
                 self._logger.error(
-                    "Could not close logging handler {} due to {}".format(
-                        name, err
-                    )
+                    "Could not close logging handler %s due to %s", name, err
                 )

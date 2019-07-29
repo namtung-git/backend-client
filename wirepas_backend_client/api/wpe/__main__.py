@@ -14,7 +14,7 @@
     certificates in place
 
     .. Copyright:
-        Wirepas Oy licensed under Apache License, Version 2.0.
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 
 """
@@ -22,8 +22,10 @@ import datetime
 import json
 
 import wirepas_messaging.wpe as messaging
+
+from .connectors import Service
+from .settings import WPESettings
 from ...tools import ParserHelper, LoggerHelper, JsonSerializer
-from . import Service, WPESettings
 
 
 def main():
@@ -56,31 +58,28 @@ def main():
         # checks if the remote server is connected
         try:
             response = service.stub.status(messaging.Query())
-            logger.debug("{status}".format(status=response))
+            logger.debug("%s", response)
 
         except Exception as err:
-            logger.exception("failed to query status - {}".format(err))
+            logger.exception("failed to query status - %s", err)
 
         # subscribe to the flow if a network id is provided
         if settings.wpe_network is not None:
             subscription = messaging.Query(network=settings.wpe_network)
             status = service.stub.subscribe(subscription)
-            logger.debug("subscription status: {status}".format(status=status))
+            logger.debug("subscription status: %s", status)
 
             if status.code == status.CODE.Value("SUCCESS"):
 
                 subscription.subscriber_id = status.subscriber_id
-                logger.info(
-                    "observation starting for: {0}".format(subscription)
-                )
+                logger.info("observation starting for: %s", subscription)
 
                 try:
                     for message in service.stub.observe(subscription):
                         logger.info(
-                            "{utc} | {message}".format(
-                                utc=datetime.datetime.utcnow().isoformat("T"),
-                                message=JsonSerializer.serialize(message),
-                            )
+                            "%s | %s",
+                            datetime.datetime.utcnow().isoformat("T"),
+                            JsonSerializer.serialize(message),
                         )
 
                 except KeyboardInterrupt:
@@ -88,9 +87,7 @@ def main():
 
                 subscription = service.stub.unsubscribe(subscription)
 
-                logger.info(
-                    "subscription termination:{0}".format(subscription)
-                )
+                logger.info("subscription termination: %s", subscription)
 
             else:
                 logger.error("insufficient parameters")

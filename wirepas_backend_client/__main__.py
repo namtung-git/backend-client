@@ -1,17 +1,17 @@
 """
     Main
-    =======
+    ====
 
-    Contains a generic interface to handle network to object translations.
+    Defines the package's entrypoints.
 
     .. Copyright:
-        Wirepas Oy licensed under Apache License, Version 2.0.
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 """
 
-from .cli import main as cli_main
 from .api.wnt import wnt_main
 from .api.wpe import wpe_main
+from .cli import main as cli_main
 
 
 def wnt_client():

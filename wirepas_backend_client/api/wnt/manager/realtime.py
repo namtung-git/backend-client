@@ -3,18 +3,19 @@
     ========
 
     .. Copyright:
-        Wirepas Oy licensed under Apache License, Version 2.0.
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 
 """
 
 import json
 import logging
+
 import wirepas_messaging.wnt as wnt_proto
 from wirepas_messaging.wnt import RealtimeSituationMessages
 
-from ..sock import WNTSocket
 from .manager import Manager
+from ..connectors import WNTSocket
 
 
 class RealtimeManager(Manager):
@@ -84,10 +85,10 @@ class RealtimeManager(Manager):
             # self.send(proto_message)
             self.write(proto_message)
         else:
-            if not self.messages.parse_realtime_situation_login(
+            if self.messages.parse_realtime_situation_login(
                 json.loads(message)
             ):
-                raise ValueError("Could not log in to realtime endpoint")
-            else:
                 self._logged_in = True
                 super().on_open(websocket)
+            else:
+                raise ValueError("Could not log in to realtime endpoint")

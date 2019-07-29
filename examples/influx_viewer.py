@@ -1,8 +1,5 @@
-# Wirepas Oy
-#
-# See file LICENSE for full license details.
+# Copyright 2019 Wirepas Ltd
 
-import os
 import requests
 
 from wirepas_backend_client.api import Influx
@@ -16,7 +13,7 @@ def main(settings, logger):
     influx = Influx(
         hostname=settings.hostname,
         port=settings.port,
-        user=settings.username,
+        username=settings.username,
         password=settings.password,
         database=settings.database,
         ssl=settings.ssl,
@@ -29,20 +26,24 @@ def main(settings, logger):
         influx.connect()
 
         if settings.query_statement:
-            r = influx.query(statement=settings.query_statement)
-            if not r.empty:
-                results.append(r)
-                if settings.write_csv:
-                    r.to_csv(settings.write_csv)
-                logger.info(
-                    "Custom query ({}) {}".format(settings.query_statement, r)
-                )
+            result_set = influx.query(statement=settings.query_statement)
+            if result_set:
+                for point in result_set:
+                    r = result_set[point]
+                    results.append(r)
+                    if settings.write_csv:
+                        r.to_csv("{}_{}".format(point, settings.write_csv))
+                    logger.info(
+                        "Custom query ({}) {}:{}".format(
+                            settings.query_statement, point, r
+                        )
+                    )
 
         else:
             r = influx.traffic_diagnostics(
                 last_n_seconds=settings.last_n_seconds
             )
-            if r is not None:
+            if r:
                 results.append(r)
                 r.to_csv("./traffic_diagnostics.csv")
                 logger.info("Traffic diagnostics (251) {}".format(r))
@@ -50,19 +51,19 @@ def main(settings, logger):
             r = influx.neighbor_diagnostics(
                 last_n_seconds=settings.last_n_seconds
             )
-            if r is not None:
+            if r:
                 results.append(r)
                 r.to_csv("./neighbor_diagnostics.csv")
                 logger.info("Neighbor diagnostics (252) {}".format(r))
 
             r = influx.node_diagnostics(last_n_seconds=settings.last_n_seconds)
-            if r is not None:
+            if r:
                 results.append(r)
                 r.to_csv("./node_diagnostics.csv")
                 logger.info("Node diagnostics (253) {}".format(r))
 
             r = influx.boot_diagnostics(last_n_seconds=settings.last_n_seconds)
-            if r is not None:
+            if r:
                 results.append(r)
                 r.to_csv("./boot_diagnostics.csv")
                 logger.info("Boot diagnostics (254) {}".format(r))
@@ -70,12 +71,12 @@ def main(settings, logger):
             r = influx.location_measurements(
                 last_n_seconds=settings.last_n_seconds
             )
-            if r is not None:
+            if r:
                 results.append(r)
                 logger.info("Location measurement {}".format(r))
 
             r = influx.location_updates(last_n_seconds=settings.last_n_seconds)
-            if r is not None:
+            if r:
                 results.append(r)
                 logger.info("Location update {}".format(r))
 
@@ -86,11 +87,6 @@ def main(settings, logger):
 
 
 if __name__ == "__main__":
-
-    try:
-        debug_level = os.environ["DEBUG_LEVEL"]
-    except KeyError:
-        debug_level = "debug"
 
     parser = ParserHelper("Gateway client arguments")
     parser.add_file_settings()
@@ -113,11 +109,11 @@ if __name__ == "__main__":
     settings = parser.settings(settings_class=InfluxSettings)
 
     if settings.sanity():
-        log = LoggerHelper(
-            module_name="Influx viewer", args=settings, level=debug_level
-        )
-        logger = log.setup()
-
+        logger = LoggerHelper(
+            module_name="Influx viewer",
+            args=settings,
+            level=settings.debug_level,
+        ).setup()
         results, influx = main(settings, logger)
     else:
         print("Please check your connection settings")

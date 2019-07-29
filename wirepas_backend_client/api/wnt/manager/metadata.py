@@ -3,21 +3,22 @@
     ===========
 
     .. Copyright:
-        Wirepas Oy licensed under Apache License, Version 2.0.
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 
 """
 
-from wirepas_messaging.wnt import ApplicationConfigurationMessages
-from wirepas_messaging.wnt import AreaMessages
-from wirepas_messaging.wnt import FloorPlanMessages
-from wirepas_messaging.wnt import BuildingMessages
-from wirepas_messaging.wnt import NetworkMessages
-from wirepas_messaging.wnt import NodeMessages
 import logging
 
-from ..sock import WNTSocket
+from wirepas_messaging.wnt import ApplicationConfigurationMessages
+from wirepas_messaging.wnt import AreaMessages
+from wirepas_messaging.wnt import BuildingMessages
+from wirepas_messaging.wnt import FloorPlanMessages
+from wirepas_messaging.wnt import NetworkMessages
+from wirepas_messaging.wnt import NodeMessages
+
 from .manager import Manager
+from ..connectors import WNTSocket
 
 
 class MetadataManager(Manager):
