@@ -11,5 +11,4 @@ assignees: PFigs
 Describe what is the problem you are aiming to solve with your proposal or the new feature you want to implement
 
 ### Suggestion
-
 Provide a brief description on how to tackle your problem/feature proposal
