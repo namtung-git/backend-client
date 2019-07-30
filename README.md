@@ -1,7 +1,6 @@
 # Backend client
 
-
-[![Build Status](https://travis-ci.com/wirepas/backend-apis.svg?branch=master)](https://travis-ci.com/wirepas/backend-apis) [![PyPi](https://img.shields.io/pypi/v/wirepas-backend-client.svg)](https://pypi.org/project/wirepas-backend-client/)
+[![Build Status](https://travis-ci.com/wirepas/backend-apis.svg?branch=master)](https://travis-ci.com/wirepas/backend-apis) [![PyPi](https://img.shields.io/pypi/v/wirepas-backend-client.svg)](https://pypi.org/project/wirepas-backend-client/) [![Documentation Status](https://readthedocs.org/projects/backend-client/badge/?version=latest)](https://backend-client.readthedocs.io/en/latest/?badge=latest)
 
 
 Backend client is a tool to interface with Wirepas' WM-RM-128 API. The API
@@ -10,14 +9,11 @@ consists of a set of MQTT topic to interact with a Wirepas Mesh network.
 For successfully communicating with a Wirepas network you will need to
 have a complaint gateway which publishes and subscribes to a MQTT broker.
 
-
 The backend client tool allows you too consume data from such API as well
 as interacting with other Wirepas' services, such as Wirepas Network Tool
 and the Wirepas Positioning Engine.
 
-
 ## Docker Hub builds
-
 
 Backend client builds are avilable from Docker Hub. Each release has a
 corresponding tag which you can pull.
@@ -40,7 +36,7 @@ To run it with docker type:
                 wirepas/backend-client
 ```
 
-### Running with docker compose 
+### Running with docker compose
 
 To run the backend client using docker compose, drop or move the settings file in
 **container/.settings.yml** and start the service with:
@@ -113,25 +109,20 @@ mqtt broker at *mqttbroker.com*:
     mqtt_port: 8883
 
 ```
-
-** WARNING **
+**WARNING**
     Parameters read from the file will take precedence over command line
     arguments.
-
 
 ### WNT parameters
 
 When talking to a WNT target, you must set the following settings with
 the backend client
 
-
-
 ```yaml
     wnt_username: "wntuser"
     wnt_password: "98asuyd907171ehjmasd"
     wnt_hostname: "wnthost.com"
 ```
-
 
 ### WPE parameters
 
@@ -141,7 +132,6 @@ the backend client
     wpe_service_definition: ./mywpesettings.json
     wpe_network: 1092
 ```
-
 
 ### Fluentd parameters
 
@@ -162,7 +152,6 @@ you configure the settingd.yml file with
 ```
 The same commands can be provided as input arguments.
 
-
 ### Influx parameters
 
 The backend client can talk to an influx database and it requires the
@@ -176,16 +165,14 @@ following parameters to be defined.
     influx_database: "somedatabase"
 ```
 
-
 ## Shell entrypoints
 
 The backend client provides the following entry points:
 
-
+```shell
     wm-gw-cli: interacts with a MQTT broker to view details
                 about the gateways and its networks
-
-
+```
 
 ## Examples
 
@@ -197,15 +184,13 @@ folder.
 Once inside the folder execute the example you wish with
 
 ```shell
-    python3 example_file.py --settings ./settings.yml
+    python3 example_file.py --settings ./.settings.yml
 ```
 
 where
 
-- **example_file.py**: is one of the examples given below
-
-- **settings.yml**: contains all the connection details and program arguments
-
+-   **example_file.py**: is one of the examples given below
+-   **.settings.yml**: contains all the connection details and program arguments
 
 ### Logging & decoding MQTT traffic
 
@@ -214,12 +199,10 @@ and decodes incoming MQTT data on the fly.
 
 This example is ideal if you want to pass through WM data to [fluentd and kibana](https://github.com/wirepas/evk).
 
-
 ### Find all nodes
 
 The [find all nodes](./examples/find_all_nodes.py) prints the nodes
 present in the network as it observes data packets from them.
-
 
 ### Influx viewer
 
@@ -227,8 +210,6 @@ The [influx viewer](./examples/influx_viewer.py) allows you to query the
 WNT influx datastore and transform the coded column names to human readable
 names.
 
-
 ### License
 
 Licensed under the Apache License, Version 2.0. See LICENSE for the full license text.
-
