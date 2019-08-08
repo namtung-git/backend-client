@@ -73,11 +73,13 @@ def main(settings, logger):
             )
             if not r.empty:
                 results.append(r)
+                r.to_csv("./location_measurements.csv")
                 logger.info("Location measurement {}".format(r))
 
             r = influx.location_updates(last_n_seconds=settings.last_n_seconds)
             if not r.empty:
                 results.append(r)
+                r.to_csv("./location_updates.csv")
                 logger.info("Location update {}".format(r))
 
     except requests.exceptions.ConnectionError:
