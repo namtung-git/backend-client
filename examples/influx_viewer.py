@@ -43,7 +43,7 @@ def main(settings, logger):
             r = influx.traffic_diagnostics(
                 last_n_seconds=settings.last_n_seconds
             )
-            if r:
+            if not r.empty:
                 results.append(r)
                 r.to_csv("./traffic_diagnostics.csv")
                 logger.info("Traffic diagnostics (251) {}".format(r))
@@ -51,19 +51,19 @@ def main(settings, logger):
             r = influx.neighbor_diagnostics(
                 last_n_seconds=settings.last_n_seconds
             )
-            if r:
+            if not r.empty:
                 results.append(r)
                 r.to_csv("./neighbor_diagnostics.csv")
                 logger.info("Neighbor diagnostics (252) {}".format(r))
 
             r = influx.node_diagnostics(last_n_seconds=settings.last_n_seconds)
-            if r:
+            if not r.empty:
                 results.append(r)
                 r.to_csv("./node_diagnostics.csv")
                 logger.info("Node diagnostics (253) {}".format(r))
 
             r = influx.boot_diagnostics(last_n_seconds=settings.last_n_seconds)
-            if r:
+            if not r.empty:
                 results.append(r)
                 r.to_csv("./boot_diagnostics.csv")
                 logger.info("Boot diagnostics (254) {}".format(r))
@@ -71,12 +71,12 @@ def main(settings, logger):
             r = influx.location_measurements(
                 last_n_seconds=settings.last_n_seconds
             )
-            if r:
+            if not r.empty:
                 results.append(r)
                 logger.info("Location measurement {}".format(r))
 
             r = influx.location_updates(last_n_seconds=settings.last_n_seconds)
-            if r:
+            if not r.empty:
                 results.append(r)
                 logger.info("Location update {}".format(r))
 
