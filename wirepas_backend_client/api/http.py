@@ -22,25 +22,6 @@ from ..messages.interface import MessageManager
 from .mqtt import Topics
 import queue
 
-# Following globals are used for delivering data between
-# HTTPObserver class and HTTPServer class
-http_tw_queue = None
-gateways_and_sinks = {}
-# { 'gw_id':
-#     {'sink_id':
-#         {# Following fields from item of gw-response/get_configs->configs[]
-#          'started': True/False,
-#          'app_config_seq': int,
-#          'app_config_diag': int,
-#          'app_config_data': bytes,
-#          # Internal field for monitoring sink's presense
-#          'present': True/False
-#         }
-#     }
-# }
-
-mqtt_topics = Topics()
-
 
 class SinkAndGatewayStatusObserver(Thread):
     def __init__(self, exit_signal, gw_status_queue, logger):
@@ -48,6 +29,21 @@ class SinkAndGatewayStatusObserver(Thread):
         self.exit_signal = exit_signal
         self.gw_status_queue = gw_status_queue
         self.logger = logger
+        self.gateways_and_sinks = {}
+        # gateways_and_sinks has following scheme:
+        # { 'gw_id':
+        #     {'sink_id':
+        #         {# Following fields from item of
+        #          # gw-response/get_configs->configs[]
+        #          'started': True/False,
+        #          'app_config_seq': int,
+        #          'app_config_diag': int,
+        #          'app_config_data': bytes,
+        #          # Internal field for monitoring sink's presense
+        #          'present': True/False
+        #         }
+        #     }
+        # }
 
     def run(self):
         while not self.exit_signal.is_set():
@@ -55,11 +51,11 @@ class SinkAndGatewayStatusObserver(Thread):
                 status_msg = self.gw_status_queue.get(block=True, timeout=60)
                 self.logger.info("HTTP status_msg={}".format(status_msg))
                 # New status of gateway received.
-                if status_msg["gw_id"] not in gateways_and_sinks:
+                if status_msg["gw_id"] not in self.gateways_and_sinks:
                     # New gateway detected
-                    gateways_and_sinks[status_msg["gw_id"]] = {}
+                    self.gateways_and_sinks[status_msg["gw_id"]] = {}
                 # Initially mark all sinks of this gateway as not present
-                for sink_id, sink in gateways_and_sinks[
+                for sink_id, sink in self.gateways_and_sinks[
                     status_msg["gw_id"]
                 ].items():
                     sink["present"] = False
@@ -69,13 +65,13 @@ class SinkAndGatewayStatusObserver(Thread):
                     if "sink_id" in config:
                         if (
                             config["sink_id"]
-                            not in gateways_and_sinks[status_msg["gw_id"]]
+                            not in self.gateways_and_sinks[status_msg["gw_id"]]
                         ):
                             # New sink detected
-                            gateways_and_sinks[status_msg["gw_id"]][
+                            self.gateways_and_sinks[status_msg["gw_id"]][
                                 config["sink_id"]
                             ] = {}
-                        sink = gateways_and_sinks[status_msg["gw_id"]][
+                        sink = self.gateways_and_sinks[status_msg["gw_id"]][
                             config["sink_id"]
                         ]
                         # Check that other mandatory fields are present
@@ -107,7 +103,7 @@ class SinkAndGatewayStatusObserver(Thread):
                 # Cannot delete sink while iterating gateways_and_sinks dict,
                 # thus create separate list for sinks to be deleted.
                 delete = []
-                for sink_id, sink in gateways_and_sinks[
+                for sink_id, sink in self.gateways_and_sinks[
                     status_msg["gw_id"]
                 ].items():
                     if not sink["present"]:
@@ -119,10 +115,10 @@ class SinkAndGatewayStatusObserver(Thread):
                         )
                 # And delete those sinks in separate loop.
                 for i in delete:
-                    del gateways_and_sinks[status_msg["gw_id"]][i]
+                    del self.gateways_and_sinks[status_msg["gw_id"]][i]
                 self.logger.info(
                     "HTTP Server gateways_and_sinks={}".format(
-                        gateways_and_sinks
+                        self.gateways_and_sinks
                     )
                 )
 
@@ -160,8 +156,17 @@ class ConnectionServer(http.server.ThreadingHTTPServer):
     protocol_version = "HTTP/1.0"
 
     def __init__(
-        self, server_address, RequestHandlerClass, bind_and_activate=True
+        self,
+        server_address,
+        RequestHandlerClass,
+        bind_and_activate=True,
+        logger=None,
+        http_tx_queue=None,
+        status_observer=None,
     ):
+        self.logger = logger or logging.getLogger(__name__)
+        self.http_tx_queue = http_tx_queue
+        self.status_observer = status_observer
 
         super(ConnectionServer, self).__init__(
             server_address, RequestHandlerClass, bind_and_activate
@@ -215,16 +220,22 @@ class HTTPObserver(StreamObserver):
         self.port = http_settings.port
         self.hostname = http_settings.hostname
         self.gw_status_queue = gw_status_queue
-        global http_tx_queue
-        http_tx_queue = tx_queue
+        self.http_tx_queue = tx_queue
+
+        self.status_observer = SinkAndGatewayStatusObserver(
+            self.exit_signal, self.gw_status_queue, self.logger
+        )
 
         while not self.exit_signal.is_set():
             try:
                 # Crate the HTTP server.
                 self.httpd = ConnectionServer(
                     (self.hostname, self.port),
-                    HTTPServer,
+                    wbcHTTPRequestHandler,
                     bind_and_activate=True,
+                    logger=self.logger,
+                    http_tx_queue=self.http_tx_queue,
+                    status_observer=self.status_observer,
                 )
                 self.logger.info(
                     "HTTP Server is serving at port: {}".format(self.port)
@@ -237,10 +248,6 @@ class HTTPObserver(StreamObserver):
                     )
                 )
                 time.sleep(10)
-
-        self.status_observer = SinkAndGatewayStatusObserver(
-            self.exit_signal, self.gw_status_queue, self.logger
-        )
 
     def run(self):
         # Start status observer thread
@@ -267,7 +274,7 @@ class HTTPObserver(StreamObserver):
         urllib.urlopen("http://{}:{}".format(self.hostname, self.port)).read()
 
 
-class HTTPServer(http.server.SimpleHTTPRequestHandler):
+class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     """A simple HTTP server class.
 
@@ -275,28 +282,55 @@ class HTTPServer(http.server.SimpleHTTPRequestHandler):
     all the GET requests and processes them into commands.
     """
 
+    def __init__(self, request, client_address, server):
+        self.logger = server.logger or logging.getLogger(__name__)
+        self.http_tx_queue = server.http_tx_queue
+        self.status_observer = server.status_observer
+        self.mqtt_topics = Topics()
+        super(wbcHTTPRequestHandler, self).__init__(
+            request, client_address, server
+        )
+
     # flake8: noqa
     def do_GET(self):
         """Process a single HTTP GET request.
         """
 
-        print("GET request: {}".format(self.path))
+        self.logger.info(
+            "HTTP GET request: {} while gateways_and_sinks: {}".format(
+                self.path, self.status_observer.gateways_and_sinks
+            )
+        )
 
         try:
             # Parse into commands and parameters
             splitted = urllib.parse.urlsplit(self.path)
             command = splitted.path.split("/")[1]
 
+            # in case command is not defined, default to info command
+            if command == "":
+                command = "info"
+
             # Convert the parameter list into a dictionary.
             params = dict(
                 urllib.parse.parse_qsl(urllib.parse.urlsplit(self.path).query)
             )
 
-            # By default assume good from people and their code
-            http_response = 200
+            # By default assume that gateway configuration does not need
+            # refreshing after command is executed
+            refresh = False
 
-            # Go through all gateways and sinks that are currently known to be
-            # online.
+            # By default assume good from people and their code
+            http_response_code = 200
+
+            if command == "info":
+                http_response_text = "<html><head><title>INFO</title></head>"
+                http_response_text += "<body><h1>INFO</h1>"
+            else:
+                http_response_text = None
+
+            # Go through all gateways and sinks that are currently known
+            gateways_and_sinks = self.status_observer.gateways_and_sinks
             for gateway_id, sinks in gateways_and_sinks.items():
                 for sink_id, sink in sinks.items():
 
@@ -330,8 +364,7 @@ class HTTPServer(http.server.SimpleHTTPRequestHandler):
                                 count -= 1
 
                                 # Create sendable message.
-                                global http_tx_queue
-                                message = mqtt_topics.request_message(
+                                message = self.mqtt_topics.request_message(
                                     "send_data",
                                     dict(
                                         sink_id=sink_id,
@@ -346,16 +379,18 @@ class HTTPServer(http.server.SimpleHTTPRequestHandler):
                                     ),
                                 )
                                 # Insert the message(s) tx queue
-                                http_tx_queue.put(message)
+                                self.http_tx_queue.put(message)
 
                         except Exception as err:
-                            print("Malformed data tx request {}".format(err))
-                            http_response = 500
+                            self.logger.error(
+                                "Malformed data tx request {}".format(err)
+                            )
+                            http_response_code = 500
 
                     elif command == "start":
 
                         new_config = {"started": True}
-                        message = mqtt_topics.request_message(
+                        message = self.mqtt_topics.request_message(
                             "set_config",
                             dict(
                                 sink_id=sink_id,
@@ -363,12 +398,13 @@ class HTTPServer(http.server.SimpleHTTPRequestHandler):
                                 new_config=new_config,
                             ),
                         )
-                        http_tx_queue.put(message)
+                        self.http_tx_queue.put(message)
+                        refresh = True
 
                     elif command == "stop":
 
                         new_config = {"started": False}
-                        message = mqtt_topics.request_message(
+                        message = self.mqtt_topics.request_message(
                             "set_config",
                             dict(
                                 sink_id=sink_id,
@@ -376,7 +412,8 @@ class HTTPServer(http.server.SimpleHTTPRequestHandler):
                                 new_config=new_config,
                             ),
                         )
-                        http_tx_queue.put(message)
+                        self.http_tx_queue.put(message)
+                        refresh = True
 
                     elif command == "setconfig":
 
@@ -400,7 +437,7 @@ class HTTPServer(http.server.SimpleHTTPRequestHandler):
                             "app_config_data": data,
                             "app_config_seq": seq,
                         }
-                        message = mqtt_topics.request_message(
+                        message = self.mqtt_topics.request_message(
                             "set_config",
                             dict(
                                 sink_id=sink_id,
@@ -408,12 +445,57 @@ class HTTPServer(http.server.SimpleHTTPRequestHandler):
                                 new_config=new_config,
                             ),
                         )
-                        http_tx_queue.put(message)
+                        self.http_tx_queue.put(message)
+                        refresh = True
+
+                    elif command == "info":
+
+                        self.logger.info(
+                            "HTTP INFO: gateway: {} sink: {}".format(
+                                gateway_id, sink_id
+                            )
+                        )
+                        http_response_text += "<br>gateway: {}".format(
+                            gateway_id
+                        )
+                        http_response_text += "<br>sink: {}".format(sink_id)
+                        http_response_text += "<br>started: {}".format(
+                            sink["started"]
+                        )
+                        http_response_text += "<br>app_config_seq: {}".format(
+                            sink["app_config_seq"]
+                        )
+                        http_response_text += "<br>app_config_diag: {}".format(
+                            sink["app_config_diag"]
+                        )
+                        http_response_text += "<br>app_config_data: {}".format(
+                            sink["app_config_data"]
+                        )
+                        http_response_text += "<p>"
+                        refresh = True
+
                     else:
-                        http_response = 500
+                        self.logger.error(
+                            "HTTP invalid command: {}".format(command)
+                        )
+                        http_response_code = 500
+                if refresh:
+                    # Initiate refreshing of gateway's configuration
+                    # to gateways_and_sinks dict
+                    message = self.mqtt_topics.request_message(
+                        "get_configs", dict(gw_id=gateway_id)
+                    )
+                    self.http_tx_queue.put(message)
         except Exception as err:
-            print(err)
+            self.logger.error("HTTP error: {}".format(err))
 
         # Respond to front-end
-        self.send_response(http_response)
+        self.send_response(http_response_code)
         self.end_headers()
+        if http_response_text:
+            http_response_text += "</body></html>"
+            self.wfile.write(http_response_text.encode("latin1"))
+            self.wfile.flush()
+            self.logger.info(
+                "HTTP response text: {}".format(http_response_text)
+            )

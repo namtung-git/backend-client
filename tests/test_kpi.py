@@ -72,9 +72,16 @@ class MultiMessageMqttObserver(wirepas_backend_client.api.MQTTObserver):
                 sink_id=self.sink_id,
                 network_id=self.network_id,
             ): self.generate_data_received_cb(),
-            "gw-event/status/{gw_id}/#".format(
-                gw_id=self.gateway_id
-            ): self.generate_gw_status_cb(),
+            # There seems to be problem, at least with some versions of
+            # mosquito MQTT Broker when subscribing "gw-event/status/+/#".
+            # The last stored gw status is not received after subscription
+            # is performed. It should, just like with "gw-event/status/#".
+            # To workaround this problem gw_id filter is not used with
+            # gw-event/status. Filter in subscription of get_configs
+            # handles cases where gw is online, but in offline case
+            # receiver of gw_status_queue must be capable to handle
+            # unfiltered gw_ids.
+            "gw-event/status/#": self.generate_gw_status_cb(),
             "gw-response/get_configs/{gw_id}/#".format(
                 gw_id=self.gateway_id
             ): self.generate_got_gw_configs_cb(),
