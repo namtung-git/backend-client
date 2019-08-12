@@ -220,10 +220,10 @@ if __name__ == "__main__":
     log.add_stderr("warning")
     logger = log.setup()
 
-    mqtt_setings = MQTTSettings(settings)
+    mqtt_settings = MQTTSettings(settings)
     http_settings = HTTPSettings(settings)
 
-    if mqtt_setings.sanity() and http_settings.sanity():
+    if mqtt_settings.sanity() and http_settings.sanity():
 
         daemon = wirepas_backend_client.management.Daemon(logger=logger)
 
