@@ -1109,6 +1109,10 @@ CREATE TABLE IF NOT EXISTS `{}` (
         for i in range(1, default_column_count + 1):
             query += ",\n`DataCol_{}` INT UNSIGNED DEFAULT NULL".format(i)
 
+        query += (
+            ",\nFOREIGN KEY (received_packet) REFERENCES received_packets(id)"
+        )
+
         query += "\n) ENGINE=MyISAM DEFAULT CHARSET=utf8;"
 
         cursor.execute(query)
