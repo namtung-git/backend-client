@@ -13,6 +13,10 @@ The backend client tool allows you too consume data from such API as well
 as interacting with other Wirepas' services, such as Wirepas Network Tool
 and the Wirepas Positioning Engine.
 
+Requirements:
+* Python 3.7 
+* Linux (for wm-gw-cli entrypoint)
+
 ## Docker Hub builds
 
 Backend client builds are avilable from Docker Hub. Each release has a
