@@ -16,5 +16,5 @@ pandas==0.25.0
 websocket-client==0.48.0
 
 # tools
-PyYAML==5.1.1
+PyYAML==5.1.2
 fluent-logger==0.9.3
