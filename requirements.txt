@@ -10,7 +10,7 @@ mysqlclient==1.4.4
 influxdb==5.2.3
 
 # data viz
-pandas==0.25.0
+pandas==0.25.1
 
 # websocket
 websocket-client==0.48.0
