@@ -2,19 +2,19 @@
 
 version: '2'
 services:
-  backend-client:
-    restart: always
-    image: wirepas/backend-client:latest
-    build:
-      dockerfile: container/Dockerfile
-      context: ../
-    network_mode: host
+    backend-client:
+      restart: always
+      image: wirepas/backend-client:latest
+      build:
+        dockerfile: container/ubuntu/Dockerfile
+        context: ../
+      network_mode: host
 
-    environment:
-      - WM_DEBUG_LEVEL=info
-      - PYTHONUNBUFFERED=true
+      environment:
+        - WM_DEBUG_LEVEL=info
+        - PYTHONUNBUFFERED=true
 
-    volumes:
-      - ./.settings.yml:/home/wirepas/vars/settings.yml
+      volumes:
+        - ./.settings.yml:/home/wirepas/vars/settings.yml
 
-    command: python examples/mqtt_viewer.py --settings /home/wirepas/vars/settings.yml
+      command: python examples/mqtt_viewer.py --settings /home/wirepas/vars/settings.yml

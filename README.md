@@ -46,21 +46,23 @@ To run the backend client using docker compose, drop or move the settings file i
 **container/.settings.yml** and start the service with:
 
 ```shell
-    docker-compose container/docker-compose.yml up
+    docker-compose container/slim/docker-compose.yml up
 ```
 The file .settings.yml is set as ignored for git and docker.
+
+If you prefer alpine based images, please change *slim* to *alpine*.
 
 ### Building the image locally
 
 To build the image locally in the root of the repo type:
 ```shell
-    docker build -f container/Dockerfile -t backend-client .
+    docker build -f container/slim/Dockerfile -t backend-client .
 ```
 Alternatively you can also build using the docker-compose.yml present in
 the root of the directory:
 
 ```shell
-    docker-compose -f container/docker-compose.yml  build
+    docker-compose -f container/slim/docker-compose.yml  build
 ```
 
 ## Installation
