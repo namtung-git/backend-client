@@ -599,6 +599,9 @@ class Network(object):
 
     def update(self, gateway_id, sink_configuration: dict):
         """ updates the inner setting of the gateway device """
+        if gateway_id not in self._gateways:
+            gateway_device = Gateway(gateway_id)
+            self._gateways[gateway_id] = gateway_device
         self._gateways[gateway_id].update([sink_configuration])
 
     def remove(self, device_id: str):
