@@ -179,6 +179,7 @@ class MQTT(object):
 
         if self.force_unsecure is False:
             if self.allow_untrusted:
+                self.client.tls_set()
                 self.client.tls_insecure_set(self.allow_untrusted)
             else:
                 self.client.tls_set(
