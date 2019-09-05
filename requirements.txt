@@ -7,7 +7,7 @@ paho-mqtt==1.4.0
 
 # dbs
 mysqlclient==1.4.4
-influxdb==5.2.2
+influxdb==5.2.3
 
 # data viz
 pandas==0.25.0
