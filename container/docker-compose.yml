@@ -6,7 +6,7 @@ services:
       restart: always
       image: wirepas/backend-client:latest
       build:
-        dockerfile: container/ubuntu/Dockerfile
+        dockerfile: container/slim/Dockerfile
         context: ../
       network_mode: host
 
