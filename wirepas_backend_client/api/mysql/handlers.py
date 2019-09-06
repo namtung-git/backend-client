@@ -195,7 +195,7 @@ class MySQLObserver(StreamObserver):
         try:
             self.mysql.connect()
         except Exception as err:
-            self.logger.error("error connecting to database %s", err)
+            self.logger.exception("error connecting to database %s", err)
             self.exit_signal.set()
             raise
 

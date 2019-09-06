@@ -59,12 +59,26 @@ class MySQL(object):
             host=self.hostname,
             user=self.username,
             passwd=self.password,
-            database=self.database_name,
             port=self.port,
             connect_timeout=self.connection_timeout,
         )
 
         self.cursor = self.database.cursor()
+        self.cursor.execute("SHOW DATABASES")
+
+        try:
+            self.cursor.execute(
+                "CREATE DATABASE {}".format(self.database_name)
+            )
+        except MySQLdb._exceptions.ProgrammingError as error_message:
+            if error_message.args[0] != 1007:
+                self.logger.error(
+                    "Could not create database {}".format(self.database_name)
+                )
+                raise
+
+            self.cursor.execute("USE {}".format(self.database_name))
+
         if table_creation:
             self.create_tables()
 
