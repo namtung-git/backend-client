@@ -177,7 +177,7 @@ class ParserHelper:
         self.framework.add_argument(
             "--heartbeat",
             action="store",
-            default=os.environ.get("WM_HEARTBEAT", 10),
+            default=os.environ.get("WM_BCLI_HEARTBEAT", 10),
             type=int,
             help="Amount of seconds to check if processes are alive",
         )
@@ -188,7 +188,7 @@ class ParserHelper:
             "--settings",
             type=str,
             required=False,
-            default=None,
+            default=os.environ.get("WM_BCLI_FILE_SETTINGS", None),
             help="settings file.",
         )
 
@@ -197,7 +197,7 @@ class ParserHelper:
 
         self.mqtt.add_argument(
             "--mqtt_hostname",
-            default=None,
+            default=os.environ.get("WM_SERVICES_MQTT_HOST", None),
             action="store",
             type=str,
             help="MQTT broker hostname ",
@@ -205,7 +205,7 @@ class ParserHelper:
 
         self.mqtt.add_argument(
             "--mqtt_username",
-            default=None,
+            default=os.environ.get("WM_SERVICES_MQTT_USERNAME", None),
             action="store",
             type=str,
             help="MQTT broker username ",
@@ -213,7 +213,7 @@ class ParserHelper:
 
         self.mqtt.add_argument(
             "--mqtt_password",
-            default=None,
+            default=os.environ.get("WM_SERVICES_MQTT_PASSWORD", None),
             action="store",
             type=str,
             help="MQTT broker password",
@@ -221,23 +221,15 @@ class ParserHelper:
 
         self.mqtt.add_argument(
             "--mqtt_port",
-            default=8883,
+            default=os.environ.get("WM_SERVICES_MQTT_PORT", 883),
             action="store",
             type=int,
             help="MQTT broker port",
         )
 
         self.mqtt.add_argument(
-            "--mqtt_topic",
-            default="#",
-            action="store",
-            type=str,
-            help="MQTT topic to subscribe to",
-        )
-
-        self.mqtt.add_argument(
             "--mqtt_ca_certs",
-            default=None,
+            default=os.environ.get("WM_SERVICES_MQTT_CA_CERTS", None),
             action="store",
             type=str,
             help=(
@@ -250,7 +242,7 @@ class ParserHelper:
 
         self.mqtt.add_argument(
             "--mqtt_certfile",
-            default=None,
+            default=os.environ.get("WM_SERVICES_MQTT_CLIENT_CRT", None),
             action="store",
             type=str,
             help=("Strings pointing to the PEM encoded client certificate"),
@@ -258,7 +250,7 @@ class ParserHelper:
 
         self.mqtt.add_argument(
             "--mqtt_keyfile",
-            default=None,
+            default=os.environ.get("WM_SERVICES_MQTT_CLIENT_KEY", None),
             action="store",
             type=str,
             help=(
@@ -270,7 +262,9 @@ class ParserHelper:
 
         self.mqtt.add_argument(
             "--mqtt_cert_reqs",
-            default=ssl.CERT_REQUIRED,
+            default=os.environ.get(
+                "WM_SERVICES_MQTT_CERT_REQS", ssl.CERT_REQUIRED
+            ),
             action="store",
             type=str,
             help=(
@@ -282,7 +276,9 @@ class ParserHelper:
 
         self.mqtt.add_argument(
             "--mqtt_tls_version",
-            default=ssl.PROTOCOL_TLSv1_2,
+            default=os.environ.get(
+                "WM_SERVICES_MQTT_CERT_REQS", ssl.PROTOCOL_TLSv1_2
+            ),
             action="store",
             type=str,
             help=(
@@ -292,7 +288,7 @@ class ParserHelper:
 
         self.mqtt.add_argument(
             "--mqtt_ciphers",
-            default=None,
+            default=os.environ.get("WM_SERVICES_MQTT_CLIENT_KEY", None),
             action="store",
             type=str,
             help=(
@@ -304,7 +300,7 @@ class ParserHelper:
 
         self.mqtt.add_argument(
             "--mqtt_persist_session",
-            default=False,
+            default=os.environ.get("WM_SERVICES_MQTT_PERSIST_SESSION", False),
             action="store_true",
             help=(
                 "When False the broker will buffer"
@@ -315,21 +311,30 @@ class ParserHelper:
 
         self.mqtt.add_argument(
             "--mqtt_force_unsecure",
-            default=False,
+            default=os.environ.get("WM_SERVICES_MQTT_FORCE_UNSECURE", False),
             action="store_true",
             help=("When True the broker will skip the TLS handshake"),
         )
 
+        # TODO: drop this one
         self.mqtt.add_argument(
             "--mqtt_allow_untrusted",
-            default=False,
+            default=os.environ.get("WM_SERVICES_MQTT_ALLOW_UNTRUSTED", False),
             action="store_true",
             help=("When true the client will skip the TLS check"),
         )
 
         self.mqtt.add_argument(
+            "--mqtt_topic",
+            default=os.environ.get("WM_SERVICES_MQTT_SUB_TOPIC", "#"),
+            action="store",
+            type=str,
+            help="MQTT topic to subscribe to",
+        )
+
+        self.mqtt.add_argument(
             "--mqtt_subscribe_network_id",
-            default="+",
+            default=os.environ.get("WM_SERVICES_MQTT_SUB_NETWORK_ID", "+"),
             action="store",
             type=str,
             help=(
@@ -339,7 +344,7 @@ class ParserHelper:
 
         self.mqtt.add_argument(
             "--mqtt_subscribe_sink_id",
-            default="+",
+            default=os.environ.get("WM_SERVICES_MQTT_SUB_SINK_ID", "+"),
             action="store",
             type=str,
             help=(
@@ -349,7 +354,7 @@ class ParserHelper:
 
         self.mqtt.add_argument(
             "--mqtt_subscribe_gateway_id",
-            default="+",
+            default=os.environ.get("WM_SERVICES_MQTT_SUB_GATEWAY_ID", "+"),
             action="store",
             type=str,
             help=(
@@ -359,7 +364,9 @@ class ParserHelper:
 
         self.mqtt.add_argument(
             "--mqtt_subscribe_source_endpoint",
-            default="+",
+            default=os.environ.get(
+                "WM_SERVICES_MQTT_SUB_SOURCE_ENDPOINT", "+"
+            ),
             action="store",
             type=str,
             help=(
@@ -369,7 +376,9 @@ class ParserHelper:
 
         self.mqtt.add_argument(
             "--mqtt_subscribe_destination_endpoint",
-            default="+",
+            default=os.environ.get(
+                "WM_SERVICES_MQTT_SUB_DESTINATION_ENDPOINT", "+"
+            ),
             action="store",
             type=str,
             help=(
@@ -381,70 +390,77 @@ class ParserHelper:
         """ Commonly used arguments for test execution """
         self.test.add_argument(
             "--delay",
-            default=None,
+            default=os.environ.get("WM_BCLI_TEST_DELAY", None),
             type=int,
             help="Initial wait in seconds - set None for random",
         )
 
         self.test.add_argument(
-            "--duration", default=10, type=int, help="Time to collect data for"
+            "--duration",
+            default=os.environ.get("WM_BCLI_TEST_DURATION", 10),
+            type=int,
+            help="Time to collect data for",
         )
 
         self.test.add_argument(
             "--nodes",
-            default="range(0,100)",
+            default=os.environ.get("WM_BCLI_TEST_NODES", "range(0,100)"),
             type=str,
             help="Where to fetch nodes",
         )
 
         self.test.add_argument(
             "--jitter_minimum",
-            default=0,
+            default=os.environ.get("WM_BCLI_TEST_JITTER_MIN", 0),
             type=int,
             help="Minimum amount of sleep between tasks",
         )
 
         self.test.add_argument(
             "--jitter_maximum",
-            default=0,
+            default=os.environ.get("WM_BCLI_TEST_JITTER_MAX", 0),
             type=int,
             help="Maximum amount of sleep between tasks",
         )
 
         self.test.add_argument(
             "--input",
-            default="report.json",
+            default=os.environ.get("WM_BCLI_TEST_INPUT", None),
             type=str,
             help="file where to read from",
         )
 
         self.test.add_argument(
             "--output",
-            default="report.json",
+            default=os.environ.get("WM_BCLI_TEST_OUTPUT", None),
             type=str,
             help="file where to ouput the report",
         )
 
         self.test.add_argument(
             "--output_time",
+            default=os.environ.get("WM_BCLI_TEST_OUTPUT_TIME", False),
             action="store_true",
             help=("appends datetime information to the output filename"),
         )
 
         self.test.add_argument(
-            "--target_otap", default=None, type=int, help="target_otap"
+            "--target_otap",
+            default=os.environ.get("WM_BCLI_TEST_TARGET_OTAP", None),
+            type=int,
+            help="target_otap",
         )
 
         self.test.add_argument(
             "--target_frequency",
-            default=None,
+            default=os.environ.get("WM_BCLI_TEST_TARGET_FREQUENCY", None),
             type=int,
             help=("Number of messages that should be observed for each node"),
         )
 
         self.test.add_argument(
             "--number_of_runs",
-            default=1,
+            default=os.environ.get("WM_BCLI_TEST_NUMBER_RUNS", 1),
             type=int,
             help="Number of test runs to execute",
         )
@@ -453,7 +469,7 @@ class ParserHelper:
         """ Commonly used database arguments """
         self.database.add_argument(
             "--db_hostname",
-            default=None,
+            default=os.environ.get("WM_SERVICES_MYSQL_HOSTNAME", "127.0.0.1"),
             action="store",
             type=str,
             help="Database hostname",
@@ -461,7 +477,7 @@ class ParserHelper:
 
         self.database.add_argument(
             "--db_port",
-            default=3306,
+            default=os.environ.get("WM_SERVICES_MYSQL_PORT", 3306),
             action="store",
             type=int,
             help="Database port",
@@ -469,7 +485,7 @@ class ParserHelper:
 
         self.database.add_argument(
             "--db_database",
-            default=None,
+            default=os.environ.get("WM_SERVICES_MYSQL_DATABASE", None),
             action="store",
             type=str,
             help="Database schema to use",
@@ -477,7 +493,7 @@ class ParserHelper:
 
         self.database.add_argument(
             "--db_username",
-            default=None,
+            default=os.environ.get("WM_SERVICES_MYSQL_USERNAME", None),
             action="store",
             type=str,
             help="Database user",
@@ -485,7 +501,7 @@ class ParserHelper:
 
         self.database.add_argument(
             "--db_password",
-            default=None,
+            default=os.environ.get("WM_SERVICES_MYSQL_PASSWORD", None),
             action="store",
             type=str,
             help="Database password",
@@ -493,7 +509,9 @@ class ParserHelper:
 
         self.database.add_argument(
             "--db_connection_timeout",
-            default="60",
+            default=os.environ.get(
+                "WM_SERVICES_MYSQL_CONNECTION_TIMEOUT", 1200
+            ),
             action="store",
             type=int,
             help="Database connection timeout",
@@ -503,7 +521,7 @@ class ParserHelper:
         """ Commonly used fluentd arguments """
         self.fluentd.add_argument(
             "--fluentd_hostname",
-            default=None,
+            default=os.environ.get("WM_SERVICES_FLUENTD_HOSTNAME", None),
             action="store",
             type=str,
             help="Fluentd hostname",
@@ -511,7 +529,7 @@ class ParserHelper:
 
         self.fluentd.add_argument(
             "--fluentd_port",
-            default=24224,
+            default=os.environ.get("WM_SERVICES_FLUENTD_PORT", 24224),
             action="store",
             type=int,
             help="Fluentd port",
@@ -519,7 +537,7 @@ class ParserHelper:
 
         self.fluentd.add_argument(
             "--fluentd_record",
-            default="log",
+            default=os.environ.get("WM_SERVICES_FLUENTD_RECORD", "log"),
             action="store",
             type=str,
             help="Name of record to use (tag.record)",
@@ -527,7 +545,7 @@ class ParserHelper:
 
         self.fluentd.add_argument(
             "--fluentd_tag",
-            default="python",
+            default=os.environ.get("WM_SERVICES_FLUENTD_TAG", "python"),
             action="store",
             type=str,
             help="How to tag outgoing data to fluentd",
@@ -537,7 +555,7 @@ class ParserHelper:
         """ Commonly used http server arguments """
         self.http.add_argument(
             "--http_host",
-            default="0.0.0.0",
+            default=os.environ.get("WM_SERVICES_HTTP_HOSTNAME", "127.0.0.1"),
             action="store",
             type=str,
             help=("Hostname or ip-address that HTTP server is bind to."),
@@ -545,7 +563,7 @@ class ParserHelper:
 
         self.http.add_argument(
             "--http_port",
-            default=8000,
+            default=os.environ.get("WM_SERVICES_HTTP_PORT", 8000),
             action="store",
             type=int,
             help="HTTP server port ",
@@ -553,29 +571,33 @@ class ParserHelper:
 
     def add_wnt(self):
         """ WNT related settings """
-        self.wnt.add_argument(
-            "--wnt_username",
-            type=str,
-            required=False,
-            default=None,
-            help="username to login with.",
-        )
-
-        self.wnt.add_argument(
-            "--wnt_password", type=str, default=None, help="password for user."
-        )
 
         self.wnt.add_argument(
             "--wnt_hostname",
-            default=None,
+            default=os.environ.get("WM_SERVICES_WNT_HOSTNAME", None),
             type=str,
             help="domain where to point requests.",
         )
 
         self.wnt.add_argument(
+            "--wnt_username",
+            type=str,
+            required=False,
+            default=os.environ.get("WM_SERVICES_WNT_USERNAME", None),
+            help="username to login with.",
+        )
+
+        self.wnt.add_argument(
+            "--wnt_password",
+            type=str,
+            default=os.environ.get("WM_SERVICES_WNT_PASSWORD", None),
+            help="password for user.",
+        )
+
+        self.wnt.add_argument(
             "--wnt_protocol_version",
             type=int,
-            default=2,
+            default=os.environ.get("WM_SERVICES_WNT_WS_PROTOCOL", 2),
             help="WS API protocol version.",
         )
 
@@ -585,13 +607,16 @@ class ParserHelper:
             "--wpe_service_definition",
             type=str,
             required=False,
-            default="./services.json",
+            default=os.environ.get(
+                "WM_SERVICES_WPE_SERVICE_DEFINITION", "./services.json"
+            ),
             help="service configuration file.",
         )
 
         self.wpe.add_argument(
             "--wpe_unsecure",
             required=False,
+            default=os.environ.get("WM_SERVICES_WPE_UNSECURE", False),
             action="store_false",
             help="forces the creation of insecure channels.",
         )
@@ -599,7 +624,7 @@ class ParserHelper:
         self.wpe.add_argument(
             "--wpe_network",
             required=False,
-            default=None,
+            default=os.environ.get("WM_SERVICES_WPE_NETWORK", None),
             type=int,
             help="network id to subscribe to.",
         )
@@ -610,7 +635,7 @@ class ParserHelper:
             "--influx_hostname",
             type=str,
             required=False,
-            default=None,
+            default=os.environ.get("WM_SERVICES_INFLUX_HOSTNAME", None),
             help="hostname of InfluxDB http API",
         )
 
@@ -618,7 +643,7 @@ class ParserHelper:
             "--influx_port",
             type=int,
             required=False,
-            default=8886,
+            default=os.environ.get("WM_SERVICES_INFLUX_PORT", 8886),
             help="port of InfluxDB http API",
         )
 
@@ -626,7 +651,7 @@ class ParserHelper:
             "--influx_username",
             type=str,
             required=False,
-            default=None,
+            default=os.environ.get("WM_SERVICES_INFLUX_USERNAME", None),
             help="user of InfluxDB http API",
         )
 
@@ -634,7 +659,7 @@ class ParserHelper:
             "--influx_password",
             type=str,
             required=False,
-            default=None,
+            default=os.environ.get("WM_SERVICES_INFLUX_PASSWORD", None),
             help="password of InfluxDB http API",
         )
 
@@ -642,13 +667,14 @@ class ParserHelper:
             "--influx_database",
             type=str,
             required=False,
-            default="wirepas",
+            default=os.environ.get("WM_SERVICES_INFLUX_DATABASE", "wirepas"),
             help="port of InfluxDB http API",
         )
 
         self.influx.add_argument(
             "--no-influx_ssl",
             action="store_false",
+            default=os.environ.get("WM_SERVICES_INFLUX_UNSECURE", False),
             required=False,
             help="use https when talking to the API",
         )
@@ -657,7 +683,7 @@ class ParserHelper:
             "--query_statement",
             action="store",
             type=str,
-            default=None,
+            default=os.environ.get("WM_SERVICES_INFLUX_QUERY_STATEMENT", None),
             required=False,
             help="A generic query to run against InfluxDB",
         )

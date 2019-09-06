@@ -2,6 +2,9 @@ language: python
 python:
   - "3.7"
 
+services:
+  - docker
+
 dist: "xenial"
 jobs:
 install:
@@ -13,6 +16,7 @@ install:
 script:
   - "./.ci/style-check.sh"
   - "./.ci/build.sh"
+  - WM_BACKEND_CLI_CMD="python -m wirepas_backend_client.test.kpi_mesh" timeout --preserve-status 30 docker-compose -f tests/services/docker-compose.yml up
 
 deploy:
   provider: pypi

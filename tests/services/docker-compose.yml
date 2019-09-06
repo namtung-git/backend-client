@@ -1,0 +1,47 @@
+version: '2'
+services:
+    mysql:
+        container_name: mysql
+        image: mysql/mysql-server:5.7
+        env_file:
+            - ./test-secrets
+
+        restart: always
+        expose:
+            - 3306
+
+        volumes:
+            - storage:/var/lib/mysql/
+
+    mosquitto:
+        container_name: mosquitto
+        image: wirepas/mosquitto
+        restart: always
+
+        env_file:
+            - ./test-secrets
+        expose:
+            - 1883
+
+    backend-client:
+        restart: always
+        container_name: backend-client
+        image: wirepas/backend-client:dev
+        build:
+            dockerfile: container/slim/Dockerfile
+            context: ../..
+
+        depends_on:
+            - mosquitto
+            - mysql
+
+        env_file:
+            - ./test-secrets
+
+        volumes:
+            - ./.settings.yml:/home/wirepas/vars/settings.yml
+
+        command: ${WM_BACKEND_CLI_CMD}
+
+volumes:
+    storage: {}
