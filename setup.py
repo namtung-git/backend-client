@@ -68,7 +68,6 @@ setup(
                 "README.md",
                 "requirements.txt",
                 "wirepas_backend_client/example_settings.yml",
-                "wirepas_backend_client/certs/extwirepas.pem",
                 "wirepas_backend_client/messages/diag_cbor_id.json",
                 "setup.py",
             ],

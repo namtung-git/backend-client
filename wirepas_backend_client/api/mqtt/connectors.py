@@ -17,7 +17,7 @@ import uuid
 import paho
 import paho.mqtt.client as mqtt
 
-from ...tools import ExitSignal
+from ...tools import Signal
 
 
 class MQTT(object):
@@ -49,7 +49,8 @@ class MQTT(object):
         heartbeat: int = 100,
         keep_alive: int = 120,
         message_subscribe_handlers: dict = None,
-        message_publish_handlers: dict = None,
+        publish_cb: callable = None,
+        block_on_publish: bool = True,
         mqtt_protocol=None,
         logger: logging.Logger = None,
     ):
@@ -60,7 +61,7 @@ class MQTT(object):
 
         self.running = False
         self.heartbeat = heartbeat
-        self.exit_signal = ExitSignal(exit_signal)
+        self.exit_signal = Signal(exit_signal)
         self.id = "wm-gw-cli:{0}".format(uuid.uuid1(clock_seq=0).urn)
 
         self.username = username
@@ -119,10 +120,8 @@ class MQTT(object):
         self.keep_alive = keep_alive
         self.allow_untrusted = allow_untrusted
         self.force_unsecure = force_unsecure
-
-        self.message_publish_handlers = dict()
-        if message_publish_handlers is not None:
-            self.message_publish_handlers = message_publish_handlers
+        self.publish_cb = publish_cb
+        self.block_on_publish = block_on_publish
 
         self.message_subscribe_handlers = dict()
         if message_subscribe_handlers is not None:
@@ -142,7 +141,7 @@ class MQTT(object):
         try:
             self.connect()
         except Exception as err:
-            self.logger.exception("Could not connect due to: {}".format(err))
+            self.logger.exception("Could not connect due to: %s", err)
             self.exit_signal.set()
             raise
 
@@ -151,11 +150,12 @@ class MQTT(object):
 
         while not self.exit_signal.is_set():
             self.logger.debug("mqtt loop running")
-            if len(self.message_publish_handlers) == 0:
+            if self.publish_cb is None:
                 time.sleep(self.heartbeat)
             else:
-                for topic, cb in self.message_publish_handlers.items():
-                    cb(topic=topic, mqtt_publish=self.send)
+                self.publish_cb(
+                    timeout=self.heartbeat, block=self.block_on_publish
+                )
 
         if not self.exit_signal.is_set():
             self.exit_signal.set()
@@ -209,13 +209,16 @@ class MQTT(object):
         Handlers is a dictionary with contains as key the topic filter
         and as value the callable who should handle such messages.
         """
-        if len(handlers) > 0:
+
+        if handlers:
             for topic_filter, cb in handlers.items():
                 self.client.message_callback_add(topic_filter, cb)
                 self.subscription.add(topic_filter)
                 self.logger.info("%s -> %s", topic_filter, cb)
 
             self.message_subscribe_handlers = handlers
+        else:
+            self.logger.warning("No subscription handlers set")
 
     def on_close(self: "MQTT") -> None:
         """ Override for handling before closing events, like last will"""
@@ -244,9 +247,7 @@ class MQTT(object):
         # Check the connection result.
         if rc == mqtt.CONNACK_ACCEPTED:
             self.logger.info(
-                "connected to MQTT {0} {1}".format(
-                    flags, mqtt.connack_string(rc)
-                )
+                "connected to MQTT %s %s", flags, mqtt.connack_string(rc)
             )
 
             for topic in self.subscription:

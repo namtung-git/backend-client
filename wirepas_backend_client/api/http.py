@@ -9,21 +9,17 @@ import time
 import urllib
 import binascii
 import logging
-import socketserver
-
+import queue
 from threading import Thread
 
 from .stream import StreamObserver
-from ..tools import Settings
-from ..tools import ExitSignal
-from .. import messages
-from functools import wraps
-from ..messages.interface import MessageManager
 from .mqtt import Topics
-import queue
+from ..tools import Settings
 
 
 class SinkAndGatewayStatusObserver(Thread):
+    """ SinkAndGatewayStatusObserver """
+
     def __init__(self, exit_signal, gw_status_queue, logger):
         super(SinkAndGatewayStatusObserver, self).__init__()
         self.exit_signal = exit_signal
@@ -45,6 +41,7 @@ class SinkAndGatewayStatusObserver(Thread):
         #     }
         # }
 
+    # pylint: disable=locally-disabled, too-many-nested-blocks, too-many-branches
     def run(self):
         while not self.exit_signal.is_set():
             try:
@@ -148,6 +145,9 @@ class HTTPSettings(Settings):
 
 
 class ConnectionServer(http.server.ThreadingHTTPServer):
+    """ ConnectionServer """
+
+    # pylint: disable=locally-disabled, too-many-arguments
 
     close_connection = False
     request_queue_size = 10
@@ -194,6 +194,7 @@ class HTTPObserver(StreamObserver):
     monitors what gateways and sinks are online.
     """
 
+    # pylint: disable=locally-disabled, too-many-arguments, broad-except, unused-argument
     def __init__(
         self,
         http_settings: Settings,
@@ -238,19 +239,19 @@ class HTTPObserver(StreamObserver):
                     status_observer=self.status_observer,
                 )
                 self.logger.info(
-                    "HTTP Server is serving at port: {}".format(self.port)
+                    "HTTP Server is serving at port: %s", self.port
                 )
                 break
             except Exception as ex:
                 self.logger.error(
-                    'ERROR: Opening HTTP Server port {} failed. Reason: "{}". Retrying after 10 seconds.'.format(
-                        self.port, ex
-                    )
+                    "ERROR: Opening HTTP Server port %s failed. Reason: %s. Retrying after 10 seconds.",
+                    self.port,
+                    ex,
                 )
                 time.sleep(10)
 
     def run(self):
-        # Start status observer thread
+        """ main loop: starts status observer thread """
         self.status_observer.start()
 
         # Run until killed.
@@ -260,7 +261,7 @@ class HTTPObserver(StreamObserver):
                 self.logger.info("Waiting for next request")
                 self.httpd.handle_request()
         except Exception as err:
-            print(err)
+            self.logger.exception(err)
 
         self.httpd.server_close()
         self.logger.info("HTTP Control server killed")
@@ -271,16 +272,20 @@ class HTTPObserver(StreamObserver):
         """
 
         # Send a dummy request to let the handle_request to proceed.
-        urllib.urlopen("http://{}:{}".format(self.hostname, self.port)).read()
+        urllib.request.urlopen(
+            "http://{}:{}".format(self.hostname, self.port)
+        ).read()
 
 
 class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
-
     """A simple HTTP server class.
 
     Only overrides the do_GET from the HTTP server so it catches
     all the GET requests and processes them into commands.
     """
+
+    # pylint: disable=locally-disabled, too-many-arguments, broad-except, unused-argument, invalid-name
+    # pylint: disable=locally-disabled, too-many-statements, too-many-locals, too-many-branches, too-many-nested-blocks
 
     def __init__(self, request, client_address, server):
         self.logger = server.logger or logging.getLogger(__name__)
@@ -366,7 +371,7 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                                 # Create sendable message.
                                 message = self.mqtt_topics.request_message(
                                     "send_data",
-                                    dict(
+                                    **dict(
                                         sink_id=sink_id,
                                         gw_id=gateway_id,
                                         dest_add=dest_add,
@@ -392,7 +397,7 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                         new_config = {"started": True}
                         message = self.mqtt_topics.request_message(
                             "set_config",
-                            dict(
+                            **dict(
                                 sink_id=sink_id,
                                 gw_id=gateway_id,
                                 new_config=new_config,
@@ -406,7 +411,7 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                         new_config = {"started": False}
                         message = self.mqtt_topics.request_message(
                             "set_config",
-                            dict(
+                            **dict(
                                 sink_id=sink_id,
                                 gw_id=gateway_id,
                                 new_config=new_config,
@@ -439,7 +444,7 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                         }
                         message = self.mqtt_topics.request_message(
                             "set_config",
-                            dict(
+                            **dict(
                                 sink_id=sink_id,
                                 gw_id=gateway_id,
                                 new_config=new_config,
@@ -483,7 +488,7 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     # Initiate refreshing of gateway's configuration
                     # to gateways_and_sinks dict
                     message = self.mqtt_topics.request_message(
-                        "get_configs", dict(gw_id=gateway_id)
+                        "get_configs", **dict(gw_id=gateway_id)
                     )
                     self.http_tx_queue.put(message)
         except Exception as err:

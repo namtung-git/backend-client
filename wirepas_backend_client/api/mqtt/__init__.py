@@ -13,7 +13,7 @@
 
 
 from .connectors import MQTT
-from .decorators import decode_topic_message, topic_message, retrieve_message
+from .decorators import decode_topic_message, topic_message
 from .handlers import MQTTObserver
 from .settings import MQTTSettings
 from .topics import Topics
@@ -21,7 +21,6 @@ from .topics import Topics
 __all__ = [
     "decode_topic_message",
     "topic_message",
-    "retrieve_message",
     "MQTTObserver",
     "MQTT",
     "MQTTSettings",

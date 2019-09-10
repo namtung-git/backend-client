@@ -271,21 +271,16 @@ def main(args, logger):
             MQTTObserver,
             dict(
                 mqtt_settings=mqtt_settings,
-                message_publish_handlers=dict(),
                 logger=logger,
                 allowed_endpoints=set([AdvertiserMessage.ADVERTISER_SRC_EP]),
             ),
         )
 
-        daemon.set_run(
-            "mqtt",
-            task=mqtt_process.run,
-            task_kwargs=dict(
-                message_subscribe_handlers={
-                    "gw-event/received_data/#": mqtt_process.generate_data_received_cb()
-                }
-            ),
-        )
+        mqtt_process.message_subscribe_handlers = {
+            "gw-event/received_data/#": mqtt_process.generate_data_received_cb()
+        }
+
+        daemon.set_run("mqtt", task=mqtt_process.run)
 
         # build each process and set the communication
         adv_manager = daemon.build(

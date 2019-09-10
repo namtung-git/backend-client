@@ -4,6 +4,4 @@
         See file LICENSE for full license details.
 """
 
-# flake8: noqa
-
-from .daemon import Daemon
+# for remote api

@@ -23,7 +23,8 @@ import sys
 from wirepas_messaging.gateway.api import GatewayState
 
 from .api import Topics
-from .management import NetworkDiscovery, Daemon
+from .management import Daemon
+from .mesh.interfaces.mqtt import NetworkDiscovery
 
 
 class BackendShell(cmd.Cmd):
@@ -39,10 +40,12 @@ class BackendShell(cmd.Cmd):
 
     """
 
+    # pylint: disable=locally-disabled, too-many-arguments, unused-argument
+
     intro = (
         "Welcome to the Wirepas Gateway Client cli!\n"
         "Connecting to {mqtt_username}@{mqtt_hostname}:{mqtt_port}"
-        "(secure: {mqtt_force_unsecure})\n\n"
+        " (unsecure: {mqtt_force_unsecure})\n\n"
         "Type help or ? to list commands\n\n"
         "Type ! to escape shell commands\n"
         "Use Arrow Up/Down to navigate your command history\n"
@@ -108,19 +111,19 @@ class BackendShell(cmd.Cmd):
         """ The prompt time format """
         return datetime.datetime.now().strftime("%H:%M.%S")
 
-    def _consume_response_queue(self):
+    def consume_response_queue(self):
         """ Exhausts the response queue """
         while not self.response_queue.empty():
             message = self.response_queue.get(block=False)
             self.cli_print(message, "Pending response <<")
 
-    def _consume_data_queue(self):
+    def consume_data_queue(self):
         """ Exhausts the data queue """
         while not self.data_queue.empty():
             message = self.data_queue.get(block=False)
             yield message
 
-    def _consume_event_queue(self):
+    def consume_event_queue(self):
         """ Exhausts the event queue """
         while not self.event_queue.empty():
             message = self.event_queue.get(block=False)
@@ -129,13 +132,13 @@ class BackendShell(cmd.Cmd):
     def _trim_queues(self):
         """ Trim queues ensures that queue size does not run too long"""
         if self.data_queue.qsize() > self._max_queue_size:
-            self._consume_data_queue()
+            self.consume_data_queue()
 
         if self.event_queue.qsize() > self._max_queue_size:
-            self._consume_event_queue()
+            self.consume_event_queue()
 
         if self.response_queue.qsize() > self._max_queue_size:
-            self._consume_response_queue()
+            self.consume_response_queue()
 
     def _update_prompt(self):
         """ Updates the prompt with the gateway and sink selection """
@@ -226,15 +229,13 @@ class BackendShell(cmd.Cmd):
         else:
             print(reply)
 
-    def is_match(self, message, field, value):
+    @staticmethod
+    def is_match(message, field, value):
+        """ Checks if the class has an attribute that matches the provided field """
         match = True
         try:
             if value:
-                if value == getattr(message, field):
-                    match = True
-                else:
-                    match = False
-
+                match = bool(value == getattr(message, field))
         except AttributeError:
             pass
 
@@ -292,12 +293,12 @@ class BackendShell(cmd.Cmd):
             iterations = int(params[0])
             try:
                 update_rate = int(params[1])
-            except:
+            except IndexError:
                 pass
 
             try:
                 silent = bool(params[2])
-            except:
+            except IndexError:
                 pass
 
         self._tracking_loop(
@@ -330,31 +331,31 @@ class BackendShell(cmd.Cmd):
 
             try:
                 source_address = int(params[0])
-            except:
+            except IndexError:
                 pass
 
             try:
                 iterations = int(params[1])
-            except:
+            except IndexError:
                 pass
 
             try:
                 update_rate = int(params[2])
-            except:
+            except IndexError:
                 pass
 
             try:
                 silent = bool(params[3])
-            except:
+            except IndexError:
                 pass
 
         def handler_cb(cli, source_address=None, **kwargs):
 
-            for message in cli._consume_data_queue():
+            for message in cli.consume_data_queue():
                 if cli.is_match(message, "source_address", source_address):
                     cli.cli_print(message)
 
-            for message in cli._consume_event_queue():
+            for message in cli.consume_event_queue():
                 if cli.is_match(message, "source_address", source_address):
                     cli.cli_print(message)
 
@@ -474,11 +475,11 @@ class BackendShell(cmd.Cmd):
             self.do_set_gateway(arg)
 
         sinks = list(self.device_manager.sinks)
-        if len(sinks) == 0:
+        if not sinks:
             self.do_gateway_configuration(arg="")
             sinks = list(self.device_manager.sinks)
 
-        if len(sinks) > 0:
+        if sinks:
             for sink in sinks:
                 print(
                     "{index} : {nw_id}:{gw_id}:{device_id}".format(
@@ -518,7 +519,7 @@ class BackendShell(cmd.Cmd):
         """
 
         gateways = list(self.device_manager.gateways)
-        if len(gateways) > 0:
+        if gateways:
             for gateway in gateways:
                 print(
                     "{} : {} : {}".format(
@@ -556,7 +557,7 @@ class BackendShell(cmd.Cmd):
         for gateway in gateways:
             if gateway.state.value == GatewayState.OFFLINE.value:
                 message = self.mqtt_topics.event_message(
-                    "clear", dict(gw_id=gateway.device_id)
+                    "clear", **dict(gw_id=gateway.device_id)
                 )
                 message["data"].Clear()
                 message["data"] = message["data"].SerializeToString()
@@ -654,7 +655,7 @@ class BackendShell(cmd.Cmd):
 
             print("requesting configuration for {}".format(gw_id))
             message = self.mqtt_topics.request_message(
-                "get_configs", dict(gw_id=gw_id)
+                "get_configs", **dict(gw_id=gw_id)
             )
             self.request_queue.put(message)
             try:
@@ -697,7 +698,7 @@ class BackendShell(cmd.Cmd):
 
                 message = self.mqtt_topics.request_message(
                     "set_config",
-                    dict(
+                    **dict(
                         sink_id=sink_id,
                         gw_id=gateway_id,
                         new_config={
@@ -738,7 +739,7 @@ class BackendShell(cmd.Cmd):
             sink_id = self.sink.device_id
 
             message = self.mqtt_topics.request_message(
-                "otap_status", dict(sink_id=sink_id, gw_id=gateway_id)
+                "otap_status", **dict(sink_id=sink_id, gw_id=gateway_id)
             )
 
             self.request_queue.put(message)
@@ -770,7 +771,7 @@ class BackendShell(cmd.Cmd):
 
             message = self.mqtt_topics.request_message(
                 "otap_process_scratchpad",
-                dict(sink_id=sink_id, gw_id=gateway_id),
+                **dict(sink_id=sink_id, gw_id=gateway_id),
             )
 
             message["qos"] = 2
@@ -813,7 +814,7 @@ class BackendShell(cmd.Cmd):
             if scratchpad:
                 message = self.mqtt_topics.request_message(
                     "otap_load_scratchpad",
-                    dict(
+                    **dict(
                         sink_id=sink_id,
                         scratchpad=scratchpad,
                         seq=seq,
@@ -901,7 +902,7 @@ class BackendShell(cmd.Cmd):
 
             message = self.mqtt_topics.request_message(
                 "send_data",
-                dict(
+                **dict(
                     sink_id=sink_id,
                     dest_add=destination_address,
                     src_ep=source_endpoint,
@@ -988,7 +989,9 @@ class BackendShell(cmd.Cmd):
 
             message = self.mqtt_topics.request_message(
                 "set_config",
-                dict(sink_id=sink_id, gw_id=gateway_id, new_config=new_config),
+                **dict(
+                    sink_id=sink_id, gw_id=gateway_id, new_config=new_config
+                ),
             )
             self.request_queue.put(message)
             try:
@@ -1033,16 +1036,17 @@ class BackendShell(cmd.Cmd):
         """ Captures CTRL-D """
         return self.do_bye(arg)
 
-    def do_shell(self, arg):
+    @staticmethod
+    def do_shell(arg):
         """ Escape shell commands with ! """
         try:
             subprocess.run(arg.split())  # doesn't capture output
-        except:
-            pass
+        except FileNotFoundError:
+            print("Unknown shell command: {}".format(arg.split()))
 
     def emptyline(self):
         """ What happens when an empty line is provided """
-        self._consume_response_queue()
+        self.consume_response_queue()
 
     def precmd(self, line):
         """ Executes before a command is run in onecmd """
@@ -1064,7 +1068,7 @@ class BackendShell(cmd.Cmd):
         try:
             self.device_manager = self._shared_state["devices"]
             if self.device_manager and not self.exit_signal.is_set():
-                self._consume_response_queue()
+                self.consume_response_queue()
                 self._trim_queues()
                 self._update_prompt()
                 rc = cmd.Cmd.onecmd(self, arg)
@@ -1089,14 +1093,13 @@ class BackendShell(cmd.Cmd):
 
     def preloop(self):
         """ runs before the cmd loop is started """
-        if readline and os.path.exists(self._histfile):
+        if os.path.exists(self._histfile):
             readline.read_history_file(self._histfile)
 
     def postloop(self):
         """ runs when the cmd loop finishes """
-        if readline:
-            readline.set_history_length(self._histfile_size)
-            readline.write_history_file(self._histfile)
+        readline.set_history_length(self._histfile_size)
+        readline.write_history_file(self._histfile)
 
     # ----- record and playback -----
     def do_record(self, arg="shell-session.record"):
@@ -1135,14 +1138,14 @@ class BackendShell(cmd.Cmd):
 
 
 def launch_cli(settings, logger):
-    """ Main loop """
+    """ command line launcher """
 
     # process management
     daemon = Daemon(logger=logger)
 
-    shared_state = daemon._manager.dict(devices=None)
-    data_queue = daemon._manager.Queue()
-    event_queue = daemon._manager.Queue()
+    shared_state = daemon.create_shared_dict(devices=None)
+    data_queue = daemon.create_queue()
+    event_queue = daemon.create_queue()
 
     discovery = daemon.build(
         "discovery",
@@ -1171,6 +1174,7 @@ def launch_cli(settings, logger):
 
 
 def main():
+    """ entrypoint loop """
 
     from .tools import ParserHelper, LoggerHelper
     from .api import MQTTSettings

@@ -78,6 +78,14 @@ class Daemon(object):
         """ Returns a process queue """
         return self.process[name][queue_name]
 
+    def create_shared_dict(self, **kwargs):
+        """ Creates and returns a new manager dictionary """
+        return self._manager.dict(**kwargs)
+
+    def create_queue(self):
+        """ Creates and returns a new manager queue """
+        return self._manager.Queue()
+
     def wait_loop(self):
         """ Default loop. Waits until an exit signal is given or the processes are dead"""
         while not self.exit_signal.is_set():

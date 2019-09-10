@@ -26,6 +26,8 @@ class StreamObserver(object):
 
     """
 
+    # pylint: disable=locally-disabled, too-many-arguments,
+
     def __init__(
         self,
         start_signal: multiprocessing.Event,
@@ -42,12 +44,13 @@ class StreamObserver(object):
         self.rx_queue = rx_queue
         self.logger = logger
 
-    def send_data(self, message: dict):
-        pass
+    def send_data(self, timeout: int, block: bool):
+        """ puts data on the outbound queue """
+        raise NotImplementedError
 
-    def receive_data(self, message: dict):
-        if self.start_signal.is_set() and message is not None:
-            self.tx_queue.put(message)
+    def receive_data(self, timeout: int, block: bool):
+        """ retrieves data from the inbound queue """
+        raise NotImplementedError
 
     def generate_data_received_cb(self) -> callable:
         """ Returns a callback to process the incoming data """

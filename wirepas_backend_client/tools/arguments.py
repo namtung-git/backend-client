@@ -32,6 +32,7 @@ class Settings:
             self.__dict__[k] = v
 
     def items(self):
+        """ returns the internal dictionary items """
         return self.__dict__.items()
 
     @classmethod

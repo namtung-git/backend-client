@@ -5,5 +5,3 @@
 """
 
 # flake8: noqa
-
-from .daemon import Daemon

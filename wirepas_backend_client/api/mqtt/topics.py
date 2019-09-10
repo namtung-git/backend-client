@@ -28,7 +28,7 @@ class Topics(object):
 
     def __init__(self, api_version: str = "1"):
         super(Topics, self).__init__()
-        if not api_version == "1":
+        if api_version != "1":
             raise ValueError("Unsupported API version")
 
         self.api_version = str(api_version)
@@ -40,6 +40,9 @@ class Topics(object):
         )
 
     def list(self):
+        """ Provides a dictionary with a list of known requests,
+            events and response topics
+        """
         return dict(
             requests=self._topics[self.api_version]["request"].values(),
             events=self._topics[self.api_version]["event"].values(),
@@ -47,6 +50,7 @@ class Topics(object):
         )
 
     def _build_topics(self, api_version: str = "1"):
+        """ Builds the internal dictionary with topics based on the input arguments """
 
         self._topics = {
             api_version: dict(request=dict(), response=dict(), event=dict())
@@ -143,16 +147,20 @@ class Topics(object):
             path="", constructor=wirepas_messaging.gateway.api.Response
         )
 
-    def request(self, name, kwargs):
-        return self.path(topic_type="request", name=name, kwargs=kwargs)
+    def request(self, name, **kwargs):
+        """ returns a string for the request identified by name """
+        return self.path(topic_type="request", name=name, **kwargs)
 
-    def response(self, name, kwargs):
-        return self.path(topic_type="response", name=name, kwargs=kwargs)
+    def response(self, name, **kwargs):
+        """ returns a string for the response identified by name """
+        return self.path(topic_type="response", name=name, **kwargs)
 
-    def event(self, name, kwargs):
-        return self.path(topic_type="event", name=name, kwargs=kwargs)
+    def event(self, name, **kwargs):
+        """ returns a string for the event identified by name """
+        return self.path(topic_type="event", name=name, **kwargs)
 
-    def request_message(self, name, kwargs):
+    def request_message(self, name, **kwargs):
+        """ constructs a request message for the topic identified by name """
         message = None
         if kwargs:
             topic_info = self._topics[self.api_version]["request"][name]
@@ -163,7 +171,8 @@ class Topics(object):
                 )
         return message
 
-    def response_message(self, name, kwargs):
+    def response_message(self, name, **kwargs):
+        """ constructs a response message for the topic identified by name """
         message = None
         if kwargs:
             topic_info = self._topics[self.api_version]["response"][name]
@@ -174,23 +183,20 @@ class Topics(object):
                 )
         return message
 
-    def event_message(self, name, kwargs):
+    def event_message(self, name, **kwargs):
+        """ constructs an event message for the topic identified by name """
         message = None
         if kwargs:
             topic_info = self._topics[self.api_version]["event"][name]
             if topic_info["constructor"]:
                 path = topic_info["path"].format(**kwargs)
-                try:
-                    message = dict(
-                        topic=path, data=topic_info["constructor"](**kwargs)
-                    )
-                except:
-                    message = dict(
-                        topic=path, data=topic_info["constructor"]()
-                    )
+                message = dict(
+                    topic=path, data=topic_info["constructor"](**kwargs)
+                )
+
         return message
 
-    def path(self, topic_type: str, name: str, kwargs: dict = None):
+    def path(self, topic_type: str, name: str, **kwargs):
         """
         Builds a topic based on its type, name and kwargs
 
@@ -221,6 +227,7 @@ class Topics(object):
         return topic
 
     def constructor(self, topic_type: str, name: str):
+        """ retrieves the message that is in use for a given topic """
 
         topic_type = topic_type.lower()
         name = name.lower()

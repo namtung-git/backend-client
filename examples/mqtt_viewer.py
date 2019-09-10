@@ -3,54 +3,14 @@
 # See file LICENSE for full license details.
 
 import os
-import wirepas_backend_client
 import time
 import queue
-import logging
 
 from wirepas_backend_client.api import MQTTSettings
 from wirepas_backend_client.tools import ParserHelper, LoggerHelper
 from wirepas_backend_client.tools.utils import deferred_thread
-
-
-class MQTTViewer(wirepas_backend_client.management.NetworkDiscovery):
-    """
-    NetworkDiscovery
-
-    Tracks the MQTT topics and generates an object representation of the
-    devices present in a given network.
-
-    It builds a map of gateways, sinks and devices.
-
-    """
-
-    def __init__(
-        self,
-        mqtt_settings,
-        data_queue=None,
-        event_queue=None,
-        response_queue=None,
-        network_parameters=None,
-        **kwargs
-    ):
-        if "logger" in kwargs:
-            self.logger = kwargs["logger"] or logging.getLogger(__name__)
-
-        if network_parameters is None:
-            self.network_parameters = dict(
-                gw_id="+", sink_id="+", network_id="+", src_ep="+", dst_ep="+"
-            )
-        else:
-            self.network_parameters = network_parameters
-
-        """ MQTT Observer constructor """
-        super(MQTTViewer, self).__init__(
-            mqtt_settings=mqtt_settings,
-            data_queue=data_queue,
-            event_queue=event_queue,
-            shared_state=None,
-            **kwargs
-        )
+from wirepas_backend_client.mesh.interfaces import NetworkDiscovery
+from wirepas_backend_client.management import Daemon
 
 
 def loop(
@@ -97,16 +57,16 @@ def main(settings, logger):
     """ Main loop """
 
     # process management
-    daemon = wirepas_backend_client.management.Daemon(logger=logger)
+    daemon = Daemon(logger=logger)
 
-    data_queue = daemon._manager.Queue()
-    event_queue = daemon._manager.Queue()
-    response_queue = daemon._manager.Queue()
+    data_queue = daemon.create_queue()
+    event_queue = daemon.create_queue()
+    response_queue = daemon.create_queue()
 
     # create the process queues
-    daemon.build(
+    net = daemon.build(
         "discovery",
-        MQTTViewer,
+        NetworkDiscovery,
         dict(
             data_queue=data_queue,
             event_queue=event_queue,
@@ -114,6 +74,8 @@ def main(settings, logger):
             mqtt_settings=settings,
         ),
     )
+
+    print("MAIN", net.message_subscribe_handlers)
 
     daemon.set_loop(
         loop,
@@ -131,31 +93,31 @@ def main(settings, logger):
 if __name__ == "__main__":
 
     try:
-        debug_level = os.environ["WM_DEBUG_LEVEL"]
+        DEBUG_LEVEL = os.environ["WM_DEBUG_LEVEL"]
     except KeyError:
-        debug_level = "info"
+        DEBUG_LEVEL = "info"
 
-    parser = ParserHelper(description="Default arguments")
+    PARSER = ParserHelper(description="Default arguments")
 
-    parser.add_file_settings()
-    parser.add_mqtt()
-    parser.add_test()
-    parser.add_database()
-    parser.add_fluentd()
+    PARSER.add_file_settings()
+    PARSER.add_mqtt()
+    PARSER.add_test()
+    PARSER.add_database()
+    PARSER.add_fluentd()
 
-    settings = parser.settings(settings_class=MQTTSettings)
+    SETTINGS = PARSER.settings(settings_class=MQTTSettings)
 
-    if settings.sanity():
-        logger = LoggerHelper(
-            module_name="MQTT viewer", args=settings, level=debug_level
+    if SETTINGS.sanity():
+        LOGGER = LoggerHelper(
+            module_name="MQTT viewer", args=SETTINGS, level=DEBUG_LEVEL
         ).setup()
 
         # sets up the message_decoding which is picked up by the
         # message decoders
         LoggerHelper(
-            module_name="message_decoding", args=settings, level=debug_level
+            module_name="message_decoding", args=SETTINGS, level=DEBUG_LEVEL
         ).setup()
 
-        main(settings, logger)
+        main(SETTINGS, LOGGER)
     else:
         print("Please check your connection settings")

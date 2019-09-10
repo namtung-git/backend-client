@@ -14,13 +14,20 @@ import multiprocessing
 import queue
 
 from .connectors import MQTT
-from .decorators import retrieve_message
+from .decorators import decode_topic_message
 from ..stream import StreamObserver
 from ...tools import Settings
 
 
 class MQTTObserver(StreamObserver):
-    """MQTTObserver monitors the MQTT topics for test data"""
+    """
+    MQTTObserver
+
+    This class acts a wrapper for the MQTT connector, containing the
+    primitives to setup a subscription list and handlers to act on that
+    data.
+
+    """
 
     def __init__(
         self,
@@ -31,7 +38,7 @@ class MQTTObserver(StreamObserver):
         rx_queue: multiprocessing.Queue,
         allowed_endpoints: set = None,
         message_subscribe_handlers: dict = None,
-        message_publish_handlers: dict = None,
+        publish_cb: callable = None,
         logger=None,
     ) -> "MQTTObserver":
         """ MQTT Observer constructor """
@@ -49,12 +56,13 @@ class MQTTObserver(StreamObserver):
         else:
             self.message_subscribe_handlers = message_subscribe_handlers
 
-        if message_publish_handlers is None:
-            self.message_publish_handlers = {
-                "publish/example": self.generate_data_send_cb()
-            }
+        for topic, cb in self.message_subscribe_handlers.items():
+            self.logger.debug("%s-->%s", topic, cb)
+
+        if publish_cb is None:
+            self.publish_cb = self.generate_data_send_cb()
         else:
-            self.message_publish_handlers = message_publish_handlers
+            self.publish_cb = publish_cb
 
         self.mqtt = MQTT(
             username=mqtt_settings.username,
@@ -73,7 +81,7 @@ class MQTTObserver(StreamObserver):
             keep_alive=mqtt_settings.keep_alive,
             exit_signal=self.exit_signal,
             message_subscribe_handlers=message_subscribe_handlers,
-            message_publish_handlers=self.message_publish_handlers,
+            publish_cb=self.publish_cb,
             logger=self.logger,
         )
 
@@ -85,61 +93,85 @@ class MQTTObserver(StreamObserver):
             self.allowed_endpoints = allowed_endpoints
 
     @staticmethod
-    @retrieve_message
-    def simple_mqtt_print(message):
-        print("MQTT >> {}".format(message))
+    @decode_topic_message
+    def simple_mqtt_print(message, topic):
+        """ Simple example to outpu topic and message contents """
+        print("MQTTObserver | {} >> {}".format("/".join(topic), message))
 
     def generate_data_received_cb(self) -> callable:
         """ Returns a callback to process the incoming data """
 
-        @retrieve_message
-        def on_data_received(message):
+        @decode_topic_message
+        def on_data_received(message, topic_items):
             """ Retrieves a MQTT message and sends it to the tx_queue """
 
-            if len(self.allowed_endpoints) == 0 or (
+            if not self.allowed_endpoints or (
                 message.source_endpoint in self.allowed_endpoints
                 and message.destination_endpoint in self.allowed_endpoints
             ):
 
                 if self.start_signal.is_set():
-                    self.logger.debug("sending message {}".format(message))
+                    self.logger.debug("sending message %s", message)
                     self.tx_queue.put(message)
                 else:
                     self.logger.debug("waiting for manager readiness")
 
         return on_data_received
 
-    def send_data(self, mqtt_publish, topic):
-        """ Callback provided by the interface's cb generator """
+    def send_data(self, timeout, block):
+        """
+        Send_data awaits for a message in the request (rx) queue.
+
+        The message consists of a dictionary with the following contents
+        topic, qos, retain, wait_for_publish, data
+
+        """
         try:
-            message = self.rx_queue.get(block=True, timeout=self.timeout)
-            self.logger.debug("publishing message {}".format(message))
-            mqtt_publish(message.payload, topic)
-
+            message = self.rx_queue.get(timeout=timeout, block=block)
         except queue.Empty:
-            pass
+            return False
 
-        except AttributeError:
-            self.logger.error("Unable to fetch from uninitialized queue")
+        qos = 1
+        retain = False
+        wait_for_publish = False
+        data = None
+        topic = None
 
-    def run(
-        self, message_subscribe_handlers=None, message_publish_handlers=None
-    ):
+        if "topic" in message:
+            topic = message["topic"]
+
+        if "qos" in message:
+            qos = message["qos"]
+
+        if "retain" in message:
+            retain = message["retain"]
+
+        if "wait_for_publish" in message:
+            wait_for_publish = message["wait_for_publish"]
+
+        if "data" in message:
+            try:
+                data = message["data"].payload
+            except AttributeError:
+                data = message["data"]
+
+        self.logger.debug("message for MQTT publish %s", message)
+
+        if data is not None and topic is not None:
+            self.mqtt.send(
+                message=data,
+                retain=retain,
+                qos=qos,
+                topic=topic,
+                wait_for_publish=wait_for_publish,
+            )
+            return True
+
+        return False
+
+    def run(self):
         """
         Executes MQTT loop
-
-        Attributes:
-            message_subscribe_handlers (dict): overrides message handlers
-            message_publish_handlers (dict): overrides publish handlers
-
         """
-
-        if message_subscribe_handlers is not None:
-            self.message_subscribe_handlers = message_subscribe_handlers
-
-        if message_publish_handlers is not None:
-            self.message_publish_handlers = message_publish_handlers
-
         self.mqtt.subscribe_messages(self.message_subscribe_handlers)
-        self.mqtt.message_publish_handlers = self.message_publish_handlers
         self.mqtt.serve()

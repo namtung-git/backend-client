@@ -35,6 +35,9 @@ class Inventory(object):
 
     """
 
+    # pylint: disable=locally-disabled, too-many-public-methods, too-many-instance-attributes, too-many-arguments
+    # pylint: disable=locally-disabled, invalid-name
+
     def __init__(
         self,
         target_nodes=None,
@@ -73,15 +76,18 @@ class Inventory(object):
         self.logger = logger or logging.getLogger(__name__)
 
     @property
-    def start(self):
+    def start(self) -> datetime.datetime:
+        """ Returs when the inventory has started """
         return self._start
 
     @property
-    def deadline(self):
+    def deadline(self) -> datetime.datetime:
+        """ Returs the inventory deadline """
         return self._deadline
 
     @property
-    def elapsed(self):
+    def elapsed(self) -> int:
+        """ Returs how much time has elapsed since the start of the run """
         runtime = datetime.datetime.utcnow()
         if self._finish:
             runtime = self._finish
@@ -89,23 +95,28 @@ class Inventory(object):
         return self._runtime
 
     @property
-    def sequence(self):
+    def sequence(self) -> int:
+        """ Returs the current inventory sequence number """
         return self._sequence
 
     @sequence.setter
     def sequence(self, value):
+        """ sets the sequence value """
         self._sequence = value
 
-    def until(self, deadline: datetime) -> int:
+    @staticmethod
+    def until(deadline: datetime) -> int:
         """ returns the amount of seconds until the next deadline"""
         now = datetime.datetime.utcnow()
         return (deadline - now).total_seconds()
 
     def finish(self):
+        """ Procedure when an inventory has completed """
         self._finish = datetime.datetime.utcnow()
         return self._finish
 
     def reset(self):
+        """ Clean up the internal variables to start over """
         self._nodes = set()  # unique list of nodes
         self._index = dict()
 
@@ -151,12 +162,11 @@ class Inventory(object):
         """
         self._nodes.add(node_address)
 
-        try:
+        otap_min = None
+        otap_max = None
+        if otap_sequence:
             otap_min = min(otap_sequence)
             otap_max = max(otap_sequence)
-        except:
-            otap_min = None
-            otap_max = None
 
         # creates an event
         if otap_min and otap_max and any(rss):
@@ -215,7 +225,7 @@ class Inventory(object):
         Compares a set of nodes return true if they are the same
         or False otherwise
         """
-        if len(self._target_nodes) == 0 or self._target_frequency < math.inf:
+        if not self._target_nodes or self._target_frequency < math.inf:
             return False
 
         if self._nodes.issuperset(self._target_nodes):
@@ -230,17 +240,17 @@ class Inventory(object):
             )
             return False
 
+        return False
+
     def is_otaped(self) -> bool:
         """
         Compares the ottaped nodes against the known nodes, returning True
         when the sets are the same and False otherwise.
         """
-        if len(self._target_nodes) == 0 or self._target_otap_sequence is None:
+        if not self._target_nodes or self._target_otap_sequence is None:
             return False
 
-        if self.otaped_nodes.issuperset(self._target_nodes):
-            return True
-        else:
+        if not self.otaped_nodes.issuperset(self._target_nodes):
             self.logger.critical(
                 "elapsed {} - otap missing {}".format(
                     self.elapsed, self.otaped_nodes ^ self._target_nodes
@@ -249,12 +259,14 @@ class Inventory(object):
             )
             return False
 
+        return True
+
     def is_frequency_reached(self) -> bool:
         """
         Compares the node frequency against the predefined frequency
         target
         """
-        if len(self._target_nodes) == 0 or self._target_frequency is None:
+        if not self._target_nodes or self._target_frequency is None:
             return False
 
         frequency = self.frequency()
@@ -266,8 +278,9 @@ class Inventory(object):
         )
 
     def _filter_dict(self, d: dict):
+        """ Returns a dictionary that has keys occurying in _target_nodes """
         w = dict()
-        for k, v in d.items():
+        for k, _ in d.items():
             if k in self._target_nodes:
                 w[k] = d[k]
         return w
@@ -279,19 +292,22 @@ class Inventory(object):
                     d[node] = 0
 
     def difference(self):
-        """ returns the difference between seen nodes and targe nodes """
+        """ Returns the difference between seen nodes and targe nodes """
         return self.nodes ^ self._target_nodes
 
     @property
     def target_nodes(self):
+        """ Returns the target nodes to observe in the interface"""
         return self._target_nodes
 
     @property
     def target_otap_sequence(self):
+        """ Returns the target otap to achieve"""
         return self._target_otap_sequence
 
     @property
     def target_frequency(self):
+        """ Returns the target frequency (number of times) a node is seen"""
         return self._target_frequency
 
     @property
@@ -304,8 +320,7 @@ class Inventory(object):
         """ Retrieves information about a single node"""
         if node_address in self.nodes:
             return self._index[node_address]
-        else:
-            return None
+        return None
 
     @property
     def otaped_nodes(self):
@@ -340,6 +355,7 @@ class Inventory(object):
         return frequency
 
     def frequency_by_value(self):
+        """ Returns an ordered dictionary where frequency is used as a key"""
         frequency = dict()
         nodes = self._index.keys()
         max_value = 0
@@ -387,6 +403,8 @@ class AdvertiserMessage(GenericMessage):
         apdu_reserved_field (int): APDU reserved field
     """
 
+    # pylint: disable=locally-disabled, too-many-instance-attributes
+
     ADVERTISER_SRC_EP = 200
     ADVERTISER_DST_EP = 200
 
@@ -407,8 +425,10 @@ class AdvertiserMessage(GenericMessage):
         self.apdu_reserved_field = None
         self.index = None
         self.decode_time = None
+        self.data_payload = None
 
     def count(self):
+        """ Increases the message counter """
         AdvertiserMessage.MESSAGE_COUNTER = (
             AdvertiserMessage.MESSAGE_COUNTER + 1
         )

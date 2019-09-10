@@ -44,6 +44,12 @@ class JsonSerializer(json.JSONEncoder):
         super(JsonSerializer, self).__init__(**kwargs)
         self.proto_as_json = proto_as_json
 
+        if "indent" in kwargs:
+            self.indent = kwargs["indent"]
+
+        if "sort_keys" in kwargs:
+            self.sort_keys = kwargs["sort_keys"]
+
     def default(self, obj) -> str:
         """Lookup table for serializing objects
 
@@ -60,6 +66,7 @@ class JsonSerializer(json.JSONEncoder):
 
         if isinstance(obj, (bytearray, bytes)):
             return binascii.hexlify(obj)
+
         if isinstance(obj, set):
             return str(obj)
 
@@ -75,20 +82,19 @@ class JsonSerializer(json.JSONEncoder):
                 )
             return pstr
 
-        raise json.JSONEncoder.default(self, obj)
+        return json.JSONEncoder.default(self, obj)
 
-    @classmethod
-    def serialize(cls, obj):
+    def serialize(self, obj):
         return json.dumps(
-            obj, cls=cls, sort_keys=cls.sort_keys, indent=cls.indent
+            obj, cls=self, sort_keys=self.sort_keys, indent=self.indent
         )
 
 
-class ExitSignal:
+class Signal:
     """Wrapper around and exit signal"""
 
     def __init__(self, signal=None):
-        super(ExitSignal, self).__init__()
+        super(Signal, self).__init__()
 
         if signal is None:
             signal = False

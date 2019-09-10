@@ -77,7 +77,7 @@ class MySQL(object):
                 )
                 raise
 
-            self.cursor.execute("USE {}".format(self.database_name))
+        self.cursor.execute("USE {}".format(self.database_name))
 
         if table_creation:
             self.create_tables()
@@ -1049,7 +1049,7 @@ class MySQL(object):
                     "({},{},{})".format(last_received_packet, i, event)
                 )
 
-        if len(events) > 0:
+        if events:
             query = (
                 "INSERT INTO diagnostic_event "
                 "(received_packet, position, event) "
@@ -1111,12 +1111,12 @@ class MySQL(object):
         default_column_count = 30
 
         query = """
-CREATE TABLE IF NOT EXISTS `{}` (
-`received_packet` int(11) DEFAULT NULL,
-`logged_time` double DEFAULT NULL,
-`launch_time` double DEFAULT NULL,
-`ID_ctrl` INT UNSIGNED DEFAULT NULL,
-`field_count` int DEFAULT 0""".format(
+                CREATE TABLE IF NOT EXISTS `{}` (
+                `received_packet` int(11) DEFAULT NULL,
+                `logged_time` double DEFAULT NULL,
+                `launch_time` double DEFAULT NULL,
+                `ID_ctrl` INT UNSIGNED DEFAULT NULL,
+                `field_count` int DEFAULT 0""".format(
             table_name
         )
 

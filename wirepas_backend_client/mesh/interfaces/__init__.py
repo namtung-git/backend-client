@@ -6,4 +6,6 @@
 
 # flake8: noqa
 
-from .daemon import Daemon
+from .beacon import *
+from .mqtt import *
+from .remote_api import *

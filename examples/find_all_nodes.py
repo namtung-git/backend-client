@@ -5,7 +5,7 @@
 import json
 import wirepas_backend_client
 
-from wirepas_backend_client.api.mqtt import retrieve_message, MQTTSettings
+from wirepas_backend_client.api.mqtt import decode_topic_message, MQTTSettings
 from wirepas_backend_client.tools import ParserHelper, LoggerHelper
 
 
@@ -33,30 +33,19 @@ class NodeObserver(wirepas_backend_client.api.MQTTObserver):
         super(NodeObserver, self).__init__(**kwargs)
 
         self.nodes = set()
-
-        self.message_publish_handlers = dict()
         self.message_subscribe_handlers = {
             "gw-event/received_data/#": self.generate_data_receive_cb()
         }
 
     def generate_data_receive_cb(self) -> callable:
-        @retrieve_message
-        def on_data_received(message):
+        @decode_topic_message
+        def on_data_received(message, topic):
             """ Retrieves a MQTT message and sends it to the tx_queue """
             self.nodes.add(message.source_address)
             self.print_nodes()
             self.logger.debug(message)
 
         return on_data_received
-
-    def generate_data_send_cb(self) -> callable:
-        """ Provides a callback that handles data publishing """
-
-        def on_data_send(mqtt_publish, topic):
-            """ pass call back to mqtt client """
-            pass
-
-        return on_data_send
 
     def print_nodes(self):
         """ How nodes are shown in the terminal window """
@@ -84,12 +73,7 @@ def main(settings, logger):
     daemon.build(
         "search",
         NodeObserver,
-        dict(
-            mqtt_settings=MQTTSettings(settings),
-            message_publish_handlers=dict(),
-            logger=logger,
-            start_signal=None,
-        ),
+        dict(mqtt_settings=MQTTSettings(settings), logger=logger),
     )
 
     daemon.start()

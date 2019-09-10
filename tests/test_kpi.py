@@ -1,45 +1,32 @@
-# Copyright 2019 Wirepas Ltd
-#
-# See file LICENSE for full license details.
+"""
+    TEST KPI
+    ========
+
+    Allows executing mesh kpi tests
+
+    .. Copyright:
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
+        See file LICENSE for full license details.
+"""
 
 import os
-import queue
 
-from functools import wraps
-
-import wirepas_backend_client
-from wirepas_backend_client.messages.interface import MessageManager
-from wirepas_backend_client.api import topic_message
 from wirepas_messaging.gateway.api import GatewayState
+from wirepas_backend_client.api import topic_message, decode_topic_message
 from wirepas_backend_client.tools import ParserHelper, LoggerHelper
-from wirepas_backend_client.api import MySQLSettings
-from wirepas_backend_client.api import MQTTSettings
-from wirepas_backend_client.api import HTTPSettings
+from wirepas_backend_client.api import MySQLSettings, MySQLObserver
+from wirepas_backend_client.api import MQTTSettings, MQTTObserver, Topics
+from wirepas_backend_client.api import HTTPSettings, HTTPObserver
+from wirepas_backend_client.management import Daemon
+
 
 __test_name__ = "test_kpi"
 
 
-# Own version of retrieve_message inorder to have network_id in message.
-def retrieve_message_kpi(f):
-    """ Decorator to decode incoming proto message """
-
-    @wraps(f)
-    def wrapper_retrieve_message_kpi(client, userdata, message, **kwargs):
-        """ Receives an MQTT message and retrieves its protobuffer """
-        topic = message.topic.split("/")
-        source_endpoint = topic[-2]
-        destination_endpoint = topic[-1]
-        data = MessageManager.map(
-            source_endpoint, destination_endpoint
-        ).from_bus(message.payload)
-        data.network_id = topic[-3]
-        f(data)
-
-    return wrapper_retrieve_message_kpi
-
-
-class MultiMessageMqttObserver(wirepas_backend_client.api.MQTTObserver):
+class MultiMessageMqttObserver(MQTTObserver):
     """ MultiMessageMqttObserver """
+
+    # pylint: disable=locally-disabled, too-many-instance-attributes
 
     def __init__(self, **kwargs):
         self.logger = kwargs["logger"]
@@ -56,16 +43,15 @@ class MultiMessageMqttObserver(wirepas_backend_client.api.MQTTObserver):
         ].destination_endpoint
 
         self.logger.debug(
-            "subscription filters: {}/{}/{}/{}/{}".format(
-                self.gateway_id,
-                self.sink_id,
-                self.network_id,
-                self.source_endpoint,
-                self.destination_endpoint,
-            )
+            "subscription filters: %s/%s/%s/%s/%s",
+            self.gateway_id,
+            self.sink_id,
+            self.network_id,
+            self.source_endpoint,
+            self.destination_endpoint,
         )
 
-        self.message_publish_handlers = {"useless-key": self.send_data}
+        self.publish_cb = self.send_data
         self.message_subscribe_handlers = {
             "gw-event/received_data/{gw_id}/{sink_id}/{network_id}/#".format(
                 gw_id=self.gateway_id,
@@ -86,7 +72,7 @@ class MultiMessageMqttObserver(wirepas_backend_client.api.MQTTObserver):
                 gw_id=self.gateway_id
             ): self.generate_got_gw_configs_cb(),
         }
-        self.mqtt_topics = wirepas_backend_client.api.Topics()
+        self.mqtt_topics = Topics()
 
     def run(self):
         # Disable KeyboardInterrupts in mqttl observer process
@@ -98,11 +84,11 @@ class MultiMessageMqttObserver(wirepas_backend_client.api.MQTTObserver):
     def generate_data_received_cb(self) -> callable:
         """ Returns a callback to process the incoming data """
 
-        @retrieve_message_kpi
-        def on_data_received(message):
+        @decode_topic_message
+        def on_data_received(message, topics):
             """ Retrieves a MQTT data message and sends it to the tx_queue """
             if self.start_signal.is_set():
-                self.logger.debug("mqtt data received {}".format(message))
+                self.logger.debug("mqtt data received %s", message)
                 # In KPI testing all received data packages are directed to
                 # storage
                 self.storage_queue.put(message)
@@ -118,6 +104,7 @@ class MultiMessageMqttObserver(wirepas_backend_client.api.MQTTObserver):
 
         @topic_message
         def on_status_received(message, topic: list):
+            # pylint: disable=locally-disabled, unused-argument
             """ Retrieves a MQTT gw status event and
                 sends gw configuration request to MQTT broker
             """
@@ -125,11 +112,11 @@ class MultiMessageMqttObserver(wirepas_backend_client.api.MQTTObserver):
                 message = self.mqtt_topics.constructor(
                     "event", "status"
                 ).from_payload(message)
-                self.logger.debug("mqtt gw status received {}".format(message))
+                self.logger.debug("mqtt gw status received %s", message)
                 if message.state == GatewayState.ONLINE:
                     # Gateway is online, ask configuration
                     request = self.mqtt_topics.request_message(
-                        "get_configs", dict(gw_id=message.gw_id)
+                        "get_configs", **dict(gw_id=message.gw_id)
                     )
                     # MQTTObserver's queue naming might be confusing here.
                     # 'rx_queue' == 'send to MQTT broker'
@@ -138,7 +125,7 @@ class MultiMessageMqttObserver(wirepas_backend_client.api.MQTTObserver):
                     # Gateway is offline, inform to status_queue that
                     # gateway and gateway's all sinks are not running.
                     gw_status_msg = {"gw_id": message.gw_id, "configs": []}
-                    self.logger.debug("gw_status_msg={}".format(gw_status_msg))
+                    self.logger.debug("gw_status_msg=%s", gw_status_msg)
                     self.gw_status_queue.put(gw_status_msg)
             else:
                 self.logger.debug(
@@ -157,9 +144,7 @@ class MultiMessageMqttObserver(wirepas_backend_client.api.MQTTObserver):
                 message = self.mqtt_topics.constructor(
                     "response", "get_configs"
                 ).from_payload(message)
-                self.logger.debug(
-                    "mqtt gw configuration received {}".format(message)
-                )
+                self.logger.debug("mqtt gw configuration received %s", message)
                 self.gw_status_queue.put(message.__dict__)
             else:
                 self.logger.debug(
@@ -168,17 +153,14 @@ class MultiMessageMqttObserver(wirepas_backend_client.api.MQTTObserver):
 
         return on_response_cb
 
-    def send_data(self, mqtt_publish, topic):
-        """ Callback provided by the interface's cb generator """
-        try:
-            message = self.rx_queue.get(block=True, timeout=self.timeout)
-            self.logger.debug("publishing message {}".format(message))
-            mqtt_publish(message["data"].payload, message["topic"])
-        except queue.Empty:
-            pass
 
+class MySqlStorage(MySQLObserver):
+    """
+    MySqlStorage
 
-class MySqlStorage(wirepas_backend_client.api.MySQLObserver):
+    Wrapper around MySQLObserver to allow escaping keyboar interrupts
+    """
+
     def run(self, **kwargs):
         # Disable KeyboardInterrupts in mysql storage process
         try:
@@ -187,7 +169,13 @@ class MySqlStorage(wirepas_backend_client.api.MySQLObserver):
             pass
 
 
-class HttpControl(wirepas_backend_client.api.HTTPObserver):
+class HttpControl(HTTPObserver):
+    """
+    HttpControl
+
+    Wrapper around HTTPObserver to allow escaping keyboar interrupts
+    """
+
     def run(self):
         # Disable KeyboardInterrupts in http control process
         try:
@@ -198,75 +186,75 @@ class HttpControl(wirepas_backend_client.api.HTTPObserver):
 
 if __name__ == "__main__":
 
-    parser = ParserHelper("KPi test arguments")
-    parser.add_file_settings()
-    parser.add_mqtt()
-    parser.add_test()
-    parser.add_database()
-    parser.add_fluentd()
-    parser.add_http()
+    PARSER = ParserHelper("KPi test arguments")
+    PARSER.add_file_settings()
+    PARSER.add_mqtt()
+    PARSER.add_test()
+    PARSER.add_database()
+    PARSER.add_fluentd()
+    PARSER.add_http()
 
-    settings = parser.settings()
+    SETTINGS = PARSER.settings()
 
-    debug_level = "debug"
+    DEBUG_LEVEL = "debug"
     try:
-        debug_level = os.environ["WM_DEBUG_LEVEL"]
+        DEBUG_LEVEL = os.environ["WM_DEBUG_LEVEL"]
     except KeyError:
         pass
 
-    log = LoggerHelper(
-        module_name=__test_name__, args=settings, level=debug_level
+    LOG = LoggerHelper(
+        module_name=__test_name__, args=SETTINGS, level=DEBUG_LEVEL
     )
-    log.add_stderr("warning")
-    logger = log.setup()
+    LOG.add_stderr("warning")
+    LOGGER = LOG.setup()
 
-    mqtt_settings = MQTTSettings(settings)
-    http_settings = HTTPSettings(settings)
+    MQTT_SETTINGS = MQTTSettings(SETTINGS)
+    HTTP_SETTINGS = HTTPSettings(SETTINGS)
 
-    if mqtt_settings.sanity() and http_settings.sanity():
+    if MQTT_SETTINGS.sanity() and HTTP_SETTINGS.sanity():
 
-        daemon = wirepas_backend_client.management.Daemon(logger=logger)
+        DAEMON = Daemon(logger=LOGGER)
 
-        gw_status_from_mqtt_broker = daemon._manager.Queue()
+        GW_STATUS_FROM_MQTT_BROKER = DAEMON.create_queue()
 
-        mqtt_name = "mqtt"
-        storage_name = "mysql"
-        control_name = "http"
+        MQTT_NAME = "mqtt"
+        STORAGE_NAME = "mysql"
+        CONTROL_NAME = "http"
 
-        daemon.build(
-            storage_name,
+        DAEMON.build(
+            STORAGE_NAME,
             MySqlStorage,
-            dict(mysql_settings=MySQLSettings(settings)),
+            dict(mysql_settings=MySQLSettings(SETTINGS)),
         )
-        daemon.set_run(
-            storage_name,
+        DAEMON.set_run(
+            STORAGE_NAME,
             task_kwargs={"parallel": True, "n_workers": 8},
             task_as_daemon=False,
         )
 
-        daemon.build(
-            mqtt_name,
+        DAEMON.build(
+            MQTT_NAME,
             MultiMessageMqttObserver,
             dict(
-                gw_status_queue=gw_status_from_mqtt_broker,
-                mqtt_settings=MQTTSettings(settings),
+                gw_status_queue=GW_STATUS_FROM_MQTT_BROKER,
+                mqtt_settings=MQTTSettings(SETTINGS),
             ),
             storage=True,
-            storage_name=storage_name,
+            storage_name=STORAGE_NAME,
         )
 
-        daemon.build(
-            control_name,
+        DAEMON.build(
+            CONTROL_NAME,
             HttpControl,
             dict(
-                gw_status_queue=gw_status_from_mqtt_broker,
-                http_settings=HTTPSettings(settings),
+                gw_status_queue=GW_STATUS_FROM_MQTT_BROKER,
+                http_settings=HTTPSettings(SETTINGS),
             ),
-            send_to=mqtt_name,
+            send_to=MQTT_NAME,
         )
 
-        daemon.start(set_start_signal=True)
+        DAEMON.start(set_start_signal=True)
     else:
-        logger.error("Please check your MQTT and MySQL settings")
+        LOGGER.error("Please check your MQTT and MySQL settings")
 
-    logger.debug("test_kpi exit!")
+    LOGGER.debug("test_kpi exit!")
