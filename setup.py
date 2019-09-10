@@ -67,11 +67,19 @@ setup(
                 "LICENSE",
                 "README.md",
                 "requirements.txt",
-                "wirepas_backend_client/example_settings.yml",
                 "wirepas_backend_client/messages/diag_cbor_id.json",
                 "setup.py",
             ],
-        )
+        ),
+        (
+            "./wirepas_backend_client-extras/examples",
+            [
+                "examples/find_all_nodes.py",
+                "examples/influx_viewer.py",
+                "examples/mqtt_viewer.py",
+                "examples/settings.yml",
+            ],
+        ),
     ],
     entry_points={
         "console_scripts": [

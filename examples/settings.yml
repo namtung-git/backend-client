@@ -1,4 +1,37 @@
-mqtt_hostname: host_address
-mqtt_username: mqtt_user
-mqtt_password: mqtt_password
-mqtt_port: 1883
+---
+# Example arguments that the framework ingests.
+#
+# You can see default values from:
+#   wirepas_backend_client/tools/arguments.py
+#
+
+# mqtt - where gateway publishes data
+mqtt_hostname: "host_address"
+mqtt_username: "mqtt_user"
+mqtt_password: "mqtt_password"
+mqtt_port: 8883
+
+# against a local and unsecure broker you will need to be explicit
+# mqtt_force_unsecure: true
+# mqtt_port: 1883
+
+# wnt
+# wnt_username: "wntuser"
+# wnt_password: "98asuyd907171ehjmasd"
+# wnt_hostname: "wnt_host"
+
+# wpe
+# wpe_service_definition: "./mywpesettings.json"
+# wpe_network: 1092
+
+# fluentd
+# fluentd_hostname: "myfluenthost"
+# fluentd_record: mesh
+# fluentd_tag: app
+
+# influx
+# influx_username: "influx_user"
+# influx_password: "influx_password"
+# influx_database: "influx_database"
+# influx_hostname: "influx_host"
+# influx_port: "influx_port"

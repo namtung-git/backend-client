@@ -3,6 +3,7 @@ Pipfile
 *.private*
 **/.settings.yml
 .settings.yml
+**/*secret
 *~
 examples/*crt
 examples/*key
@@ -35,3 +36,5 @@ run_informatio*
 
 *.csv*
 **/*services.json
+
+certs/*
