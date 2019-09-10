@@ -103,6 +103,9 @@ if __name__ == "__main__":
     parser.add_fluentd()
     settings = parser.settings(settings_class=MQTTSettings)
 
+    if settings.debug_level is None:
+        settings.debug_level = "error"
+
     if settings.sanity():
         log = LoggerHelper(
             module_name="find all nodes",
