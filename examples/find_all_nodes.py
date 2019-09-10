@@ -2,6 +2,7 @@
 #
 # See file LICENSE for full license details.
 
+import json
 import wirepas_backend_client
 
 from wirepas_backend_client.api.mqtt import retrieve_message, MQTTSettings
@@ -59,9 +60,18 @@ class NodeObserver(wirepas_backend_client.api.MQTTObserver):
 
     def print_nodes(self):
         """ How nodes are shown in the terminal window """
-        print("Found nodes (total: {})".format(len(self.nodes)))
+        node_enum = 1
+        node_repr = dict()
+
         for node in sorted(self.nodes):
-            print(node)
+            node_repr[str(node_enum)] = node
+            node_enum += 1
+
+        node_repr["total"] = len(self.nodes)
+        node_json = json.dumps(node_repr)
+        print(node_json)
+
+        return node_repr
 
 
 def main(settings, logger):
