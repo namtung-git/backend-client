@@ -55,6 +55,13 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
 
     @property
     def logger(self):
+        """
+        Retrieves the message_decoding logger.
+
+        If you wish the messages to show debug information, please
+        remember to configure the logging prior to this call.
+
+        """
         return logging.getLogger("message_decoding")
 
     @classmethod
@@ -62,8 +69,8 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
         """ Translates a bus message into a message object """
         if isinstance(d, dict):
             return cls.from_dict(d)
-        else:
-            return cls.from_proto(d)
+
+        return cls.from_proto(d)
 
     @classmethod
     def from_dict(cls, d: dict):
@@ -82,17 +89,28 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
         raise NotImplementedError
 
     @staticmethod
-    def map_list_to_dict(apdu_names, apdu_values):
+    def map_list_to_dict(apdu_names: list, apdu_values: list):
+        """
+        Maps a list of apdu values and apdu names into a single dictionary.
+
+        Args:
+            apdu_name (list): list of apdu names
+            apdu_values (list): list of apdu values
+
+        """
+
         apdu = dict()
-        j = 0
-        for i in apdu_names:
+        value_index = 0
+
+        for name in apdu_names:
             try:
-                apdu[i] = apdu_values[j]
+                apdu[name] = apdu_values[value_index]
             except IndexError:
                 # Detected more apdu_names than apdu_values.
                 # By ignoring this, accept optional fields at end of message.
                 break
-            j += 1
+            value_index += 1
+
         return apdu
 
     @staticmethod
@@ -126,6 +144,7 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
             return None
 
     def serialize(self):
+        """ Provides a generic serialization of the message"""
 
         self.serialization = {
             "gw_id": self.gw_id,

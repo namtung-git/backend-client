@@ -1,8 +1,16 @@
-# Copyright 2019 Wirepas Ltd
-#
-# See file LICENSE for full license details.
-#
+"""
+    HTTP API
+    ============
 
+    Creates a HTTP server and handles incoming requests to the
+    gateway MQTT api.
+
+    Please use the MQTT api whenever possible.
+
+    .. Copyright:
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
+        See file LICENSE for full license details.
+"""
 import multiprocessing
 import http.server
 import time

@@ -7,11 +7,9 @@
         See file LICENSE for full license details.
 """
 
-
 from functools import wraps
-
-from ...messages.interface import MessageManager
 import wirepas_messaging
+from ...messages.interface import MessageManager
 
 
 def decode_topic_message(f):

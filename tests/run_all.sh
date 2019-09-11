@@ -10,7 +10,7 @@ EXIT_WITH=${EXIT_WITH:-1}
 TIMEOUT_DURATION=${TIMEOUT_DURATION:-10}
 
 # Execution manifest
-PERFORMANCE_TESTS_DIR=${PERFORMANCE_TESTS_DIR:-"tests/*"}
+KPI_TESTS=("-m wirepas_backend_client.test.kpi_mesh" "-m wirepas_backend_client.test.kpi_adv")
 ENTRYPOINTS=("wm-gw-cli" "wm-wnt-viewer" "wm-wpe-viewer" )
 EXAMPLES_DIR=${EXAMPLES_DIR:-"examples/*"}
 
@@ -77,13 +77,15 @@ function _test()
 function _main()
 {
     echo "running entrypoints"
+    LOOP_CMD=
     _loop "${ENTRYPOINTS[@]}"
 
     echo "running perf tests"
     LOOP_CMD="python"
-    _loop ${PERFORMANCE_TESTS_DIR}
+    _loop "${KPI_TESTS[@]}"
 
     echo "running examples"
+    LOOP_CMD="python"
     _loop ${EXAMPLES_DIR}
 }
 

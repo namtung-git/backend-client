@@ -6,6 +6,7 @@
         Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 """
+# pylint: disable=locally-disabled, too-many-lines
 
 try:
     import MySQLdb
@@ -48,6 +49,8 @@ class MySQL(object):
 
     def connect(self, table_creation=True) -> None:
         """ Establishes a connection and service loop. """
+        # pylint: disable=locally-disabled, protected-access
+
         self.logger.info(
             "MySQL connection to %s:%s@%s:%s",
             self.username,
@@ -73,7 +76,7 @@ class MySQL(object):
         except MySQLdb._exceptions.ProgrammingError as error_message:
             if error_message.args[0] != 1007:
                 self.logger.error(
-                    "Could not create database {}".format(self.database_name)
+                    "Could not create database %s", self.database_name
                 )
                 raise
 
@@ -87,13 +90,11 @@ class MySQL(object):
         self.cursor.close()
         self.database.close()
 
-    def write(self, message):
-        pass
-
     def create_tables(self):
         """
         Create tables if they do not exist
         """
+        # pylint: disable=locally-disabled, too-many-statements
 
         query = (
             "CREATE TABLE IF NOT EXISTS known_nodes ("
@@ -564,8 +565,9 @@ class MySQL(object):
         self.database.commit()
 
     def update_diagnostic_node_table_4_0(self):
-        # See if we need to expand the old diagnostic_node table with
-        # the new fields introduced in stack release 4.0:
+        """ Checks if there is a need to expand the old diagnostic_node
+        table with the new fields introduced in stack release 4.0"""
+
         query = "SHOW COLUMNS FROM diagnostic_node;"
         self.cursor.execute(query)
         self.database.commit()
@@ -645,8 +647,9 @@ class MySQL(object):
             self.database.commit()
 
     def update_diagnostic_node_table_4_2(self):
-        # See if we need to expand the old diagnostic_node table with
-        # the new fields introduced in stack release 4.2:
+        """ Checks if there is a need to expand the old diagnostic_node
+        table with the new fields introduced in stack release 4.2"""
+
         query = "SHOW COLUMNS FROM diagnostic_node;"
         self.cursor.execute(query)
         self.database.commit()
@@ -762,7 +765,7 @@ class MySQL(object):
         self.database.commit()
 
     def put_to_received_packets(self, message):
-        # Insert received packet to the database
+        """ Insert received packet to the database """
         try:
             hop_count = message.hop_count
         except:
@@ -789,6 +792,8 @@ class MySQL(object):
         self.database.commit()
 
     def put_traffic_diagnostics(self, message):
+        """ Insert traffic diagnostic packets """
+
         # Put first to received packets to get the received packet id
         self.put_to_received_packets(message)
 
@@ -825,9 +830,9 @@ class MySQL(object):
         self.database.commit()
 
     def put_neighbor_diagnostics(self, message):
-        # Put first to received packets to get the received packet id
-        self.put_to_received_packets(message)
+        """ Insert neighbor diagnostic packets """
 
+        self.put_to_received_packets(message)
         # See if any neighbors, do not do insert
         try:
             if message.neighbor[0]["address"] == 0:
@@ -867,6 +872,8 @@ class MySQL(object):
         self.database.commit()
 
     def put_boot_diagnostics(self, message):
+        """ Insert boot diagnostic packets """
+
         # Put first to received packets to get the received packet id
         self.put_to_received_packets(message)
 
@@ -910,6 +917,9 @@ class MySQL(object):
         self.database.commit()
 
     def put_node_diagnostics(self, message):
+        """ Insert node diagnostic packets """
+        # pylint: disable=locally-disabled, too-many-branches
+
         # Put first to received packets to get the received packet id
         self.put_to_received_packets(message)
 
@@ -918,46 +928,39 @@ class MySQL(object):
 
         voltage = float(message.apdu["voltage"]) / 100.0 + 2.0
 
+        pending_ucast_cluster = "NULL"
+        pending_ucast_members = "NULL"
+        pending_bcast_le_mbers = "NULL"
+        pending_bcast_ll_mbers = "NULL"
+        pending_bcast_unack = "NULL"
+        pending_expire_queue = "NULL"
+        pending_bcast_next_hop = "NULL"
+        pending_reroute_packets = "NULL"
+
         # Optional buffer statistics
         if "pending_ucast_cluster" in message.apdu:
             pending_ucast_cluster = message.apdu["pending_ucast_cluster"]
-        else:
-            pending_ucast_cluster = "NULL"
 
         if "pending_ucast_members" in message.apdu:
             pending_ucast_members = message.apdu["pending_ucast_members"]
-        else:
-            pending_ucast_members = "NULL"
 
         if "pending_bcast_le_members" in message.apdu:
             pending_bcast_le_mbers = message.apdu["pending_bcast_le_members"]
-        else:
-            pending_bcast_le_mbers = "NULL"
 
         if "pending_bcast_ll_members" in message.apdu:
             pending_bcast_ll_mbers = message.apdu["pending_bcast_ll_members"]
-        else:
-            pending_bcast_ll_mbers = "NULL"
 
         if "pending_bcast_unack" in message.apdu:
             pending_bcast_unack = message.apdu["pending_bcast_unack"]
-        else:
-            pending_bcast_unack = "NULL"
 
         if "pending_expire_queue" in message.apdu:
             pending_expire_queue = message.apdu["pending_expire_queue"]
-        else:
-            pending_expire_queue = "NULL"
 
         if "pending_bcast_next_hop" in message.apdu:
             pending_bcast_next_hop = message.apdu["pending_bcast_next_hop"]
-        else:
-            pending_bcast_next_hop = "NULL"
 
         if "pending_reroute_packets" in message.apdu:
             pending_reroute_packets = message.apdu["pending_reroute_packets"]
-        else:
-            pending_reroute_packets = "NULL"
 
         query = (
             "INSERT INTO diagnostic_node "
@@ -1059,6 +1062,7 @@ class MySQL(object):
             self.database.commit()
 
     def put_testnw_measurements(self, message):
+        """ Insert received test network application packets """
         self.put_to_received_packets(message)
 
         for row in range(message.row_count):
@@ -1107,7 +1111,9 @@ class MySQL(object):
             self.cursor.execute(query)
             self.database.commit()
 
-    def _create_testnw_mysql_table(self, cursor, database, table_name):
+    @staticmethod
+    def _create_testnw_mysql_table(cursor, database, table_name):
+        """ Creates a table for the test network application """
         default_column_count = 30
 
         query = """

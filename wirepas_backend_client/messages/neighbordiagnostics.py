@@ -31,8 +31,9 @@ class NeighborDiagnosticsMessage(GenericMessage):
     """
 
     def __init__(self, *args, **kwargs) -> "NeighborDiagnosticsMessage":
-        super(NeighborDiagnosticsMessage, self).__init__(*args, **kwargs)
 
+        self.data_payload = None
+        super(NeighborDiagnosticsMessage, self).__init__(*args, **kwargs)
         self.type = ApplicationTypes.NeighborDiagnosticsMessage
 
         if isinstance(self.data_payload, str):

@@ -39,8 +39,9 @@ class BootDiagnosticsMessage(GenericMessage):
     """
 
     def __init__(self, *args, **kwargs) -> "BootDiagnosticsMessage":
-        super(BootDiagnosticsMessage, self).__init__(*args, **kwargs)
 
+        self.data_payload = None
+        super(BootDiagnosticsMessage, self).__init__(*args, **kwargs)
         self.type = ApplicationTypes.BootDiagnosticsMessage
 
         if isinstance(self.data_payload, str):

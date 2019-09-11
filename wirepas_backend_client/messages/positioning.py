@@ -33,6 +33,7 @@ class PositioningMessage(GenericMessage):
 
     def __init__(self, *args, **kwargs) -> "PositioningMessage":
 
+        self.data_payload = None
         super(PositioningMessage, self).__init__(*args, **kwargs)
 
         self.timestamp = self.rx_time_ms_epoch
@@ -86,6 +87,8 @@ class PositioningMessage(GenericMessage):
 
         if self.data_payload:
             self.data_payload = self.data_payload.hex()
+
+        return None
 
     def serialize(self):
         """ Extends the packet serilization """

@@ -6,14 +6,19 @@
         Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 """
+# pylint: disable=locally-disabled, duplicate-code
 
 import json
-
 from ...tools import Settings
 
 
 class MQTTSettings(Settings):
-    """MQTTSettings"""
+    """
+    MQTTSettings
+
+    Argument wrapper to translate inbound to internal properties.
+
+    """
 
     def __init__(self, settings: Settings) -> "MQTTSettings":
 
@@ -29,7 +34,9 @@ class MQTTSettings(Settings):
         self.mqtt_subscribe_destination_endpoint = None
         self.mqtt_ca_certs = None
         self.mqtt_ciphers = None
-        self.mqtt_topic = "#"
+        self.mqtt_allow_untrusted = None
+        self.mqtt_force_unsecure = None
+        self.mqtt_topic = None
 
         super(MQTTSettings, self).__init__(settings)
 
@@ -74,6 +81,7 @@ class MQTTSettings(Settings):
         """ Sets common settings for the MQTT client connection """
 
     def to_dict(self):
+        """ Returns the objects internal dictionary """
         return self.__dict__
 
     def __str__(self):

@@ -82,9 +82,8 @@ class MQTT(object):
                 self.ca_certs = ca_certs
             else:
                 self.logger.error(
-                    "Certificate path ({}) does not exist -> attempting host load".format(
-                        ca_certs
-                    )
+                    "Certificate path (%s) does not exist -> attempting host load",
+                    ca_certs,
                 )
 
         self.certfile = certfile
@@ -222,7 +221,6 @@ class MQTT(object):
 
     def on_close(self: "MQTT") -> None:
         """ Override for handling before closing events, like last will"""
-        pass
 
     def on_connect(
         self: "MQTT",
@@ -375,6 +373,16 @@ class MQTT(object):
         retain: bool = False,
         wait_for_publish: bool = False,
     ):
+        """
+        Send publishes a message to the MQTT broker
+
+        Args:
+            message (str): serialized message,
+            topic (str): where to publish the message
+            qos (int): the qos value
+            retain (bool): when True, the broker will retain the message
+            wait_for_publish (bool): when True, waits for the message to be published
+        """
         pubinfo = self.client.publish(
             "{0}".format(topic), message, qos=qos, retain=retain
         )

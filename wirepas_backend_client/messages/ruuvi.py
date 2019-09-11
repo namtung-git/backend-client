@@ -60,10 +60,9 @@ class RuuviMessage(GenericMessage):
 
     def __init__(self, *args, **kwargs) -> "RuuviMessage":
 
+        self.data_payload = None
         super(RuuviMessage, self).__init__(*args, **kwargs)
-
         self.type = ApplicationTypes.Ruuvi
-
         self.timestamp = self.rx_time_ms_epoch
         self.apdu_content = dict()
         self.decode_time = None
@@ -160,7 +159,7 @@ class RuuviMessage(GenericMessage):
         self.serialization = super().serialize()
 
         try:
-            for key in self.apdu_content.keys():
+            for key in self.apdu_content:
                 if ".raw" not in key:
                     self.serialization[key] = self.apdu_content[key]
         except KeyError:

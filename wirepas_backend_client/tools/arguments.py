@@ -162,6 +162,7 @@ class ParserHelper:
         return self._groups[name]
 
     def add_framework_settings(self):
+        """ Adds arguments regarding the backend client operation """
         self.framework.add_argument(
             "--version", action="version", version=self._version
         )
@@ -316,12 +317,13 @@ class ParserHelper:
             help=("When True the broker will skip the TLS handshake"),
         )
 
-        # TODO: drop this one
         self.mqtt.add_argument(
             "--mqtt_allow_untrusted",
             default=os.environ.get("WM_SERVICES_MQTT_ALLOW_UNTRUSTED", False),
             action="store_true",
-            help=("When true the client will skip the TLS check"),
+            help=(
+                "When true the client will skip the certificate name check."
+            ),
         )
 
         self.mqtt.add_argument(
@@ -404,9 +406,9 @@ class ParserHelper:
 
         self.test.add_argument(
             "--nodes",
-            default=os.environ.get("WM_BCLI_TEST_NODES", "range(0,100)"),
+            default=os.environ.get("WM_BCLI_TEST_NODES", "./nodes.txt"),
             type=str,
-            help="Where to fetch nodes",
+            help="File with list of nodes to observe",
         )
 
         self.test.add_argument(
@@ -630,6 +632,7 @@ class ParserHelper:
         )
 
     def add_influx(self):
+        """ Settings to configure influx access """
 
         self.influx.add_argument(
             "--influx_hostname",
@@ -690,5 +693,6 @@ class ParserHelper:
 
     def dump(self, path):
         """ dumps the arguments into a file """
+        serializer = JsonSerializer()
         with open(path, "w") as f:
-            f.write(JsonSerializer.serialize(vars(self._arguments)))
+            f.write(serializer.serialize(vars(self._arguments)))

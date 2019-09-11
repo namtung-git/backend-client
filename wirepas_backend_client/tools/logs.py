@@ -34,6 +34,7 @@ class ContextFilter(logging.Filter):
 
     @staticmethod
     def add_sequence(record):
+        """ If the record contains arguments, a sequence is field is added to the message """
         args = record.args
         if "sequence" in args:
             try:
@@ -86,6 +87,7 @@ class LoggerHelper:
 
     @property
     def logger(self):
+        """ Returns the inner logger object """
         return self._logger
 
     @property

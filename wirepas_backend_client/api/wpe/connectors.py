@@ -49,34 +49,43 @@ class Service(object):
 
     @property
     def service_definition(self):
+        """ Returns WPE service configuration """
         return self._service_definition
 
     @property
     def handler(self):
+        """ Returns the client handler from the service definition """
         return self._service_definition["client"]
 
     @property
     def address(self):
+        """ Returns the server address from the service definition """
         return self._service_definition["address"]
 
     @property
     def ssl_root_certificate(self):
+        """ Returns the ca certificate path from the service definition """
         return self._service_definition["root.crt"]
 
     @property
     def ssl_client_key(self):
+        """ Returns the client key path from the service definition """
         return self._service_definition["client.key"]
 
     @property
     def ssl_client_certificate(self):
+        """ Returns the client certificate path from the service definition """
         return self._service_definition["client.crt"]
 
     @property
     def ssl_host_cn_override(self):
+        """ Returns the comon name override string from the service definition """
         return self._service_definition["override_cn"]
 
     def dial(self, secure=True, cb=None):
-        """ dial establishes a grpc channel
+        """
+
+        Dial establishes a grpc channel
 
         Args:
             secure (bool): when false uses insecure connections

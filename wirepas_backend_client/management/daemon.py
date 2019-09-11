@@ -201,9 +201,8 @@ class Daemon(object):
 
                 register["runtime"]["object"].start()
                 self.logger.debug("started process: %s", name)
-            except KeyError:
-                raise
-            except TypeError:
+            except (KeyError, TypeError):
+                self.logger.exception("Failed to start services")
                 raise
 
         if set_start_signal:

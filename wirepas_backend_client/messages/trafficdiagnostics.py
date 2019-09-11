@@ -43,6 +43,8 @@ class TrafficDiagnosticsMessage(GenericMessage):
 
     def __init__(self, *args, **kwargs) -> "TrafficDiagnosticsMessage":
 
+        self.data_payload = None
+
         super(TrafficDiagnosticsMessage, self).__init__(*args, **kwargs)
         self.type = ApplicationTypes.TrafficDiagnosticsMessage
 

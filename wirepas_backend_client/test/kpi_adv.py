@@ -1,6 +1,15 @@
-# Copyright 2019 Wirepas Ltd
+"""
+    KPI ADV
+    =======
 
-import os
+    Script to execute an inventory and otap benchmark for the
+    advertiser feature.
+
+    .. Copyright:
+        Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
+        See file LICENSE for full license details.
+"""
+
 import queue
 import random
 import datetime
@@ -15,10 +24,6 @@ from wirepas_backend_client.api import MySQLSettings, MySQLObserver
 from wirepas_backend_client.api import MQTTObserver, MQTTSettings
 from wirepas_backend_client.management import Daemon
 from wirepas_backend_client.test import TestManager
-
-__MYSQL_ENABLED__ = importlib.util.find_spec("MySQLdb")
-__STORAGE_ENGINE__ = "mysql"
-__test_name__ = "test_advertiser"
 
 
 class AdvertiserManager(TestManager):
@@ -37,6 +42,7 @@ class AdvertiserManager(TestManager):
 
     """
 
+    # pylint: disable=locally-disabled, logging-format-interpolation, logging-too-many-args
     def __init__(
         self,
         tx_queue: multiprocessing.Queue,
@@ -194,7 +200,7 @@ class AdvertiserManager(TestManager):
         Returns a string with the gathered results.
         """
         msg = dict(
-            title="{}:{}".format(__test_name__, self._test_sequence_number),
+            title="{}:{}".format(__TEST_NAME__, self._test_sequence_number),
             start=self.inventory.start,
             end=self.inventory.finish(),
             elapsed=self.inventory.elapsed,
@@ -211,7 +217,7 @@ class AdvertiserManager(TestManager):
 
 
 def fetch_report(
-    args, rx_queue, timeout, report_output, number_of_runs, exit_signal
+    args, rx_queue, timeout, report_output, number_of_runs, exit_signal, logger
 ):
     """ Reporting loop executed between test runs """
     reports = {}
@@ -247,7 +253,7 @@ def main(args, logger):
     mqtt_settings = MQTTSettings(args)
 
     if mysql_settings.sanity():
-        __MYSQL_ENABLED__ = True
+        mysql_available = True
         daemon.build(
             __STORAGE_ENGINE__,
             MySQLObserver,
@@ -259,9 +265,8 @@ def main(args, logger):
             task_kwargs=dict(parallel=True),
             task_as_daemon=False,
         )
-
     else:
-        __MYSQL_ENABLED__ = False
+        mysql_available = False
         logger.info("Skipping Storage module")
 
     if mqtt_settings.sanity():
@@ -295,7 +300,7 @@ def main(args, logger):
                 duration=args.duration,
             ),
             receive_from="mqtt",
-            storage=__MYSQL_ENABLED__,
+            storage=mysql_available,
             storage_name=__STORAGE_ENGINE__,
         )
 
@@ -315,6 +320,7 @@ def main(args, logger):
                 report_output=args.output,
                 number_of_runs=args.number_of_runs,
                 exit_signal=daemon.exit_signal,
+                logger=logger,
             ),
         )
         daemon.start()
@@ -324,63 +330,45 @@ def main(args, logger):
 
 if __name__ == "__main__":
 
-    parse = ParserHelper(description="Default arguments")
+    __MYSQL_ENABLED__ = importlib.util.find_spec("MySQLdb")
+    __STORAGE_ENGINE__ = "mysql"
+    __TEST_NAME__ = "test_advertiser"
 
-    parse.add_mqtt()
-    parse.add_test()
-    parse.add_database()
-    parse.add_fluentd()
-    parse.add_file_settings()
+    PARSE = ParserHelper(description="KPI ADV arguments")
+    PARSE.add_mqtt()
+    PARSE.add_test()
+    PARSE.add_database()
+    PARSE.add_fluentd()
+    PARSE.add_file_settings()
+    SETTINGS = PARSE.settings()
 
-    settings = parse.settings()
+    LOGGER = LoggerHelper(
+        module_name=__TEST_NAME__, args=SETTINGS, level=SETTINGS.debug_level
+    ).setup()
 
-    debug_level = "debug"
+    if SETTINGS.delay is None:
+        SETTINGS.delay = random.randrange(0, 60)
+
+    # pylint: disable=locally-disabled, no-member
     try:
-        debug_level = os.environ["WM_DEBUG_LEVEL"]
-    except KeyError:
-        pass
+        nodes = set({int(line) for line in open(SETTINGS.nodes, "r")})
+    except FileNotFoundError:
+        LOGGER.warning("Could not find nodes file")
+        nodes = set()
 
-    my_log = LoggerHelper(
-        module_name=__test_name__, args=settings, level=debug_level
-    )
-    logger = my_log.setup()
+    SETTINGS.target_nodes = nodes
+    if SETTINGS.jitter_minimum > SETTINGS.jitter_maximum:
+        SETTINGS.jitter_maximum = SETTINGS.jitter_minimum
 
-    try:
-        inventory_target_otap = settings.target_otap
-    except AttributeError:
-        settings.target_otap = None
-
-    try:
-        inventory_target_frequency = settings.target_frequency
-    except AttributeError:
-        settings.target_frequency = None
-
-    if settings.delay is None:
-        settings.delay = random.randrange(0, 60)
-
-    try:
-        nodes = set(eval(settings.nodes))
-    except NameError:
-        settings.target_nodes = set(
-            [int(line) for line in open(settings.nodes, "r")]
-        )
-    except TypeError:
-        settings.target_nodes = set()
-    except Exception as err:
-        logger.warning("Could not interpret nodes parameter {}".format(err))
-        settings.target_nodes = set()
-
-    if settings.jitter_minimum > settings.jitter_maximum:
-        settings.jitter_maximum = settings.jitter_minimum
-
-    logger.info(
+    LOGGER.info(
         {
             "test_suite_start": datetime.datetime.utcnow().isoformat("T"),
-            "run_arguments": str(settings),
+            "run_arguments": str(SETTINGS),
         }
     )
+    # pylint: enable=no-member
 
-    main(settings, logger)
-    parse.dump(
+    main(SETTINGS, LOGGER)
+    PARSE.dump(
         "run_information_{}.txt".format(datetime.datetime.now().isoformat())
     )

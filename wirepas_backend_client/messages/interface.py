@@ -44,18 +44,22 @@ class MessageManager(object):
     _endpoint[254] = {255: BootDiagnosticsMessage}
 
     def __init__(self):
-
         super(MessageManager, self).__init__()
 
     @staticmethod
-    def type(name):
+    def type(name: str):
+        """ Provides the message type """
         try:
             return MessageManager._message_type[name.lower()]
         except KeyError:
             return GenericMessage
 
     @staticmethod
-    def map(source_endpoint=0, destination_endpoint=0):
+    def map(source_endpoint: int = 0, destination_endpoint: int = 0):
+        """
+        Provides the constructor to build the decoder for the given
+        source and destination endpoint pair
+        """
         try:
             return MessageManager._endpoint[int(source_endpoint)][
                 int(destination_endpoint)

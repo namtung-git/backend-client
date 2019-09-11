@@ -32,6 +32,8 @@ class TestNWMessage(GenericMessage):
     """
 
     def __init__(self, *args, **kwargs) -> "TestNWMessage":
+
+        self.data_payload = None
         super(TestNWMessage, self).__init__(*args, **kwargs)
         self.type = ApplicationTypes.TestNWMessage
 
@@ -67,7 +69,7 @@ class TestNWMessage(GenericMessage):
                 apdu_offset += 1
 
                 self.datafields.append([])
-                for i in range(self.number_of_fields[self.row_count]):
+                for _ in range(self.number_of_fields[self.row_count]):
                     value = 0
                     for j in range(self.bytes_per_field[self.row_count]):
                         value += self.data_payload[apdu_offset] << (j * 8)

@@ -73,6 +73,8 @@ class NodeDiagnosticsMessage(GenericMessage):
     """
 
     def __init__(self, *args, **kwargs) -> "NodeDiagnosticsMessage":
+
+        self.data_payload = None
         super(NodeDiagnosticsMessage, self).__init__(*args, **kwargs)
         self.type = ApplicationTypes.NodeDiagnosticsMessage
 

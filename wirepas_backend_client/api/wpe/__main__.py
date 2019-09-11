@@ -70,7 +70,7 @@ def main():
             logger.debug("subscription status: %s", status)
 
             if status.code == status.CODE.Value("SUCCESS"):
-
+                serializer = JsonSerializer()
                 subscription.subscriber_id = status.subscriber_id
                 logger.info("observation starting for: %s", subscription)
 
@@ -79,14 +79,13 @@ def main():
                         logger.info(
                             "%s | %s",
                             datetime.datetime.utcnow().isoformat("T"),
-                            JsonSerializer.serialize(message),
+                            serializer.serialize(message),
                         )
 
                 except KeyboardInterrupt:
                     pass
 
                 subscription = service.stub.unsubscribe(subscription)
-
                 logger.info("subscription termination: %s", subscription)
 
             else:

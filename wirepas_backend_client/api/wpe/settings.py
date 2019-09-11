@@ -7,6 +7,8 @@
         See file LICENSE for full license details.
 
 """
+# pylint: disable=locally-disabled, duplicate-code
+
 from ...tools import Settings
 
 

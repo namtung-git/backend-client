@@ -77,10 +77,11 @@ class Manager(object):
         self.socket.start()
 
     def close(self):
-        """ Stops the websocket """
+        """ Closes the websocket """
         self.socket.stop()
 
     def stop(self):
+        """ Stops the websocket """
         self.close()
 
     @property

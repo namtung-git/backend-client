@@ -19,6 +19,7 @@ import readline
 import select
 import subprocess
 import sys
+import ast
 
 from wirepas_messaging.gateway.api import GatewayState
 
@@ -186,12 +187,10 @@ class BackendShell(cmd.Cmd):
 
             cb(**cb_args)
 
-            i, o, e = select.select([sys.stdin], [], [], timeout)
+            i, _, _ = select.select([sys.stdin], [], [], timeout)
             if i:
                 sys.stdin.readline().strip()
                 return True
-            else:
-                continue
 
     def _set_target(self):
         """ utility method to call when either the gateway or sink are undefined"""
@@ -979,11 +978,11 @@ class BackendShell(cmd.Cmd):
                     continue
 
                 try:
-                    new_config[key] = eval(val)
+                    new_config[key] = ast.literal_eval(val)
                 except ValueError:
                     print("Cannot parse value for {} ".format(key))
 
-            if len(new_config) == 0:
+            if not new_config:
                 print("No key to set")
                 return
 

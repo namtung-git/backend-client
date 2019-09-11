@@ -35,6 +35,13 @@ def deferred_thread(fn):
 
 
 class JsonSerializer(json.JSONEncoder):
+    """
+    JsonSerializer
+
+    Extends the JSONEncoder base class with object handlers
+    for bytearrya, datetime and proto.
+
+    """
 
     proto_as_json = False
     sort_keys = True
@@ -51,7 +58,8 @@ class JsonSerializer(json.JSONEncoder):
             self.sort_keys = kwargs["sort_keys"]
 
     def default(self, obj) -> str:
-        """Lookup table for serializing objects
+        """
+        Lookup table for serializing objects
 
         Pylint complains about the method signature, but this is the
         recommended way of implementing a custom JSON serialization as
@@ -60,6 +68,7 @@ class JsonSerializer(json.JSONEncoder):
         https://docs.python.org/3/library/json.html#json.JSONEncoder
 
         """
+        # pylint: disable=locally-disabled, method-hidden, arguments-differ
 
         if isinstance(obj, (datetime.datetime, datetime.date)):
             return obj.isoformat()
@@ -85,8 +94,12 @@ class JsonSerializer(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
     def serialize(self, obj):
+        """ returns a json representation of the object """
         return json.dumps(
-            obj, cls=self, sort_keys=self.sort_keys, indent=self.indent
+            obj,
+            cls=JsonSerializer,
+            sort_keys=self.sort_keys,
+            indent=self.indent,
         )
 
 
@@ -102,6 +115,7 @@ class Signal:
         self.signal = signal
 
     def is_set(self) -> bool:
+        """ Returns the state of the inner event or boolean """
         try:
             ret = self.signal.is_set()
         except AttributeError:
@@ -110,6 +124,7 @@ class Signal:
         return ret
 
     def set(self) -> bool:
+        """ Sets the event or inner boolean """
         try:
             ret = self.signal.set()
         except AttributeError:

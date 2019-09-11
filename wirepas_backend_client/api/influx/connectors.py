@@ -11,7 +11,11 @@
 import logging
 import influxdb
 import pandas
+
+# pylint: disable=locally-disabled, unused-import
 import google
+
+# pylint: enable=unused-import
 import wirepas_messaging
 
 
@@ -251,28 +255,28 @@ class Influx(object):
         return df
 
     def traffic_diagnostics(self, last_n_seconds=1000):
-        """ """
+        """ Retrieves traffic diagnostic measurements (endpoint 251) """
         __measurement = "endpoint_251"
         df = self._query_last_n_seconds(__measurement, last_n_seconds)
 
         return df
 
     def neighbor_diagnostics(self, last_n_seconds=1000):
-        """ """
+        """ Retrieves neighbor diagnostic measurements (endpoint 252) """
         __measurement = "endpoint_252"
         df = self._query_last_n_seconds(__measurement, last_n_seconds)
 
         return df
 
     def node_diagnostics(self, last_n_seconds=1000):
-        """ """
+        """ Retrieves neighbor diagnostic measurements (endpoint 253) """
         __measurement = "endpoint_253"
         df = self._query_last_n_seconds(__measurement, last_n_seconds)
 
         return df
 
     def boot_diagnostics(self, last_n_seconds=1000):
-        """ """
+        """ Retrieves neighbor diagnostic measurements (endpoint 254) """
         __measurement = "endpoint_254"
         df = self._query_last_n_seconds(__measurement, last_n_seconds)
 

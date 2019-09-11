@@ -17,17 +17,17 @@ from ...tools import JsonSerializer
 
 
 class Backend(object):
-    def __init__(
-        self, settings, callback_queue=None, logger=None, **kwargs
-    ) -> None:
-        """
+    """
         Backend
 
         The Backend class aims to support a connection to a given WNT
         instance. It assumes default ports for the client websockets.
 
-        """
+    """
 
+    def __init__(
+        self, settings, callback_queue=None, logger=None, **kwargs
+    ) -> None:
         self.logger = logger or logging.getLogger(__name__)
         self.settings = settings
         self.session_id = None
@@ -53,7 +53,8 @@ class Backend(object):
         )
 
     def login(self) -> None:
-        """ login retrieves a session id from the authentication ws.
+        """
+        login retrieves a session id from the authentication ws.
 
         If the acquisition is successful, the token is stored under
         the objects's session_id attribute.
@@ -66,14 +67,19 @@ class Backend(object):
         try:
             self.session_id = message["session_id"]
         except KeyError:
+            self.logger.exception("Failed to find session id")
             raise
 
         self.realtime.rx_queue.put(dict(session_id=self.session_id))
         self.metadata.rx_queue.put(dict(session_id=self.session_id))
 
     def send_request(self) -> None:
-        """Send request """
-        pass
+        """
+        Send request
+
+        Placeholder to handle sending requests through the websocket
+        interface.
+        """
 
     def connect_all(self, exit_signal: bool) -> None:
         """
@@ -86,7 +92,7 @@ class Backend(object):
 
         self.realtime.start()
         self.metadata.start()
-
+        serializer = JsonSerializer()
         while not exit_signal:
             try:
                 message = self.realtime.tx_queue.get(block=True, timeout=10)
@@ -94,7 +100,7 @@ class Backend(object):
                     self.logger.info(
                         "%s | %s",
                         datetime.datetime.utcnow().isoformat("T"),
-                        JsonSerializer.serialize(message),
+                        serializer.serialize(message),
                     )
             except queue.Empty:
                 pass
