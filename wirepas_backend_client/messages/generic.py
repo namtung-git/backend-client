@@ -19,23 +19,36 @@ from .types import ApplicationTypes
 
 class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
     """
-    Generic Message server as a simple packet abstraction
+    Generic Message serves as a simple packet abstraction.
 
-    Attributes:
-        type (int): identifies the contents of the message (ApplicationTypes)
+    The base class is inherited from wirepas_messaging (ReceivedDataEvent).
+
+    This class offers a few common attributes such as:
+
+        rx_time (datetime): arrival time of the packet at the sink
+        tx_time (datetime): departure time of the message from the node
+        received_at (datetime): when the packet was received by the framework
+        transport_delay (int): amount of seconds the packet traveled over the network
+        serialization (str): representation of the packet for transport
 
     """
 
     def __init__(self, *args, **kwargs):
         super(GenericMessage, self).__init__(*args, **kwargs)
+
         self.type = ApplicationTypes.GenericMessage
 
-        # rx_time is the arrival time of the packet at the sink
+        # ensure data size is correct
+        if self.data_payload is None:
+            self.data_size = 0
+            self.data_payload = bytes()
+        else:
+            self.data_size = len(self.data_payload)
+
         self.rx_time = datetime.datetime.utcfromtimestamp(
             self.rx_time_ms_epoch / 1e3
         ) - datetime.timedelta(seconds=self.travel_time_ms / 1e3)
 
-        # tx_time is the departure time of the message from the node
         self.tx_time = self.rx_time - datetime.timedelta(
             seconds=self.travel_time_ms / 1e3
         )
