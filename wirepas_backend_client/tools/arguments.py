@@ -43,7 +43,6 @@ class Settings:
 
         By default, it assumes all settings are valid.
         """
-        print("Always true")
         return True
 
 
