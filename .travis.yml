@@ -5,26 +5,50 @@ python:
 services:
   - docker
 
-dist: "xenial"
+dist: "bionic"
 jobs:
+
 install:
   - "./.ci/install-devtools.sh"
+  - sudo gem install github_changelog_generator
   - pip3 install -r dev-requirements.txt
+  - pip3 install -r docs/requirements.txt
   - pip3 install -r requirements.txt
   - pip3 install .
 
 script:
   - "./.ci/style-check.sh"
   - "./.ci/build.sh"
-  - WM_BACKEND_CLI_CMD="python -m wirepas_backend_client.test.kpi_mesh" timeout --preserve-status 30 docker-compose -f tests/services/docker-compose.yml up
+  - WM_BACKEND_CLI_CMD="python -m wirepas_backend_client.test.kpi_mesh" timeout --preserve-status 120 docker-compose -f tests/services/docker-compose.yml up
+  - ./.ci/releases.sh
+  - source releases.env
 
 deploy:
-  provider: pypi
-  user: "wirepas"
-  server: https://test.pypi.org/legacy/
-  password:
-    secure: "JTfaa3FCh5l+uLVNwn2RAt7tbmoJ0A4b5E4uUx7alk1/D29ZM6CiXg0PhQs8MzT/MrUTkfuIgKQGhlDml3sUigaqBusoNjAfKd1yLtRRns53r54qztRPhCPJTkbR2M5+6GyRRY5Dhz4eTep3H35a4YFZqnmhPZX7cGnp9XzI6ykvXR0OX38RcqlaqOmVfn8GtTyKRdiXXa1sHTdHhBHTa+BFRoKU1NUHARuj/FPu5TD/cTjd7ZDsBGjSBtywveJZA2RFDaapqOI80Yj2HmwNirIgLoAODbZUAtVbESiz+NtXquX0zLQbUWHIwB6eKnqxNnXdF3VGbkeKHdRjRwxS6SIthMDruOOzKpWLij6KaIuubZ8gKP73T7qSu42l/Wp+voi6FrvJrUqLbXVMGw1W+XWrPqAu7LfBN3Crfv1JhTqwMz1bJeepuk2f8msGH8KpY7fnqbLN1CPTW5iLcst/9BjB3cZ7lKB/8adOPwNFZDf5onywHwsF/e7oNuBC10F54YMU5C1l2xI3ZJdot4rzVMqWBGfisAsZtrpVJ+x4ubXp15r4bcWUwVwvyN08PSjLMk9gFioPdEzFGCgYhp2LdMBJ6SDLjZOGrFEQv2z2UiqGyBeyJs9YSVL0R6s5HaFEpthv03MY0vTEcL2gI9IiaTSDv89CYGClK7AvZWHe+YI="
-  skip_existing: true
+- provider: releases
+  api_key: ${GH_TOKEN}
+  file_glob: true
+  file:
+    - "${TRAVIS_BUILD_DIR}/dist/*"
+    - "${TRAVIS_BUILD_DIR}/CHANGELOG.md"
+  skip_cleanup: true
+  draft: ${GH_RELEASE_DRAFT} = true
+  name: ${GH_RELEASE_NAME}
+  body: ${GH_RELEASE_BODY}
+  prerelease: ${GH_RELEASE_CANDIDATE}
+  on:
+    tags: true
+    branch: master
+
+- provider: script
+  script: bash .ci/deploy-pypi.sh ${TRAVIS_BUILD_DIR}/dist/${PYTHON_PKG_NAME}*
   skip_cleanup: true
   on:
-    branch: pypi-test
+    tags: true
+    branch: master
+
+env:
+  global:
+    - PIPENV_VENV_IN_PROJECT=1
+    - PIPENV_IGNORE_VIRTUALENVS=1
+    - PYTHON_PKG_PATH=.
+    - PYTHON_PKG_NAME=wirepas_backend_client
