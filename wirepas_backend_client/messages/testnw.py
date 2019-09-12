@@ -37,17 +37,19 @@ class TestNWMessage(GenericMessage):
         super(TestNWMessage, self).__init__(*args, **kwargs)
         self.type = ApplicationTypes.TestNWMessage
 
-        if isinstance(self.data_payload, str):
-            self.data_payload = bytes(self.data_payload, "utf8")
-
-        # Parse all rows from apdu.
         self.row_count = 0
+        self.testdata_id = list()
+        self.id_ctrl = list()
+        self.number_of_fields = list()
+        self.bytes_per_field = list()
+        self.datafields = list()
+
+        self.decode()
+
+    def decode(self):
+        """ Perform the payload decoding """
+
         apdu_offset = 0
-        self.testdata_id = []
-        self.id_ctrl = []
-        self.number_of_fields = []
-        self.bytes_per_field = []
-        self.datafields = []
 
         try:
             while apdu_offset < len(self.data_payload):

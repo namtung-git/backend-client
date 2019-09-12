@@ -44,6 +44,8 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
             self.data_payload = bytes()
         else:
             self.data_size = len(self.data_payload)
+            if isinstance(self.data_payload, str):
+                self.data_payload = bytes(self.data_payload, "utf8")
 
         self.rx_time = datetime.datetime.utcfromtimestamp(
             self.rx_time_ms_epoch / 1e3

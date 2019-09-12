@@ -77,9 +77,11 @@ class NodeDiagnosticsMessage(GenericMessage):
         self.data_payload = None
         super(NodeDiagnosticsMessage, self).__init__(*args, **kwargs)
         self.type = ApplicationTypes.NodeDiagnosticsMessage
+        self.apdu = None
+        self.decode()
 
-        if isinstance(self.data_payload, str):
-            self.data_payload = bytes(self.data_payload, "utf8")
+    def decode(self):
+        """ Perform the payload decoding """
 
         if len(self.data_payload) > 59:
             # Node Diagnostics with buffer statistics (4.2 and newer)

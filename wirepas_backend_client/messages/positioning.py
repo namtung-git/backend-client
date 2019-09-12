@@ -46,9 +46,6 @@ class PositioningMessage(GenericMessage):
 
         self.decode_time = datetime.datetime.utcnow().isoformat("T")
 
-        if isinstance(self.data_payload, str):
-            self.data_payload = bytes(self.data_payload, "utf8")
-
         format_header = struct.Struct("<H B B")
         format_meas = struct.Struct("<B B B B")
 

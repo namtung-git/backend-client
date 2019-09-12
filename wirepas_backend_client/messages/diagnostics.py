@@ -67,9 +67,6 @@ class Diagnostics(GenericMessage):
 
         self.decode_time = datetime.datetime.utcnow().isoformat("T")
 
-        if isinstance(self.data_payload, str):
-            self.data_payload = bytes(self.data_payload, "utf8")
-
         try:
             self.apdu_content = cbor2.loads(self.data_payload)
         except cbor2.decoder.CBORDecodeError as err:

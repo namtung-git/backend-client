@@ -35,11 +35,11 @@ class NeighborDiagnosticsMessage(GenericMessage):
         self.data_payload = None
         super(NeighborDiagnosticsMessage, self).__init__(*args, **kwargs)
         self.type = ApplicationTypes.NeighborDiagnosticsMessage
-
-        if isinstance(self.data_payload, str):
-            self.data_payload = bytes(self.data_payload, "utf8")
-
         self.neighbor = dict()
+        self.decode()
+
+    def decode(self):
+        """ Perform the payload decoding """
         s_address = struct.Struct("<I")
         i = 0
         j = 0

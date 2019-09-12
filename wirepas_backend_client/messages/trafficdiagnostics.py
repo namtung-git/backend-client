@@ -47,10 +47,11 @@ class TrafficDiagnosticsMessage(GenericMessage):
 
         super(TrafficDiagnosticsMessage, self).__init__(*args, **kwargs)
         self.type = ApplicationTypes.TrafficDiagnosticsMessage
+        self.apdu = None
+        self.decode()
 
-        if isinstance(self.data_payload, str):
-            self.data_payload = bytes(self.data_payload, "utf8")
-
+    def decode(self):
+        """ Perform the payload decoding """
         apdu_values = struct.unpack("<HBBHHBBBBBBBBBB", self.data_payload)
         apdu_names = (
             "access_cycles",

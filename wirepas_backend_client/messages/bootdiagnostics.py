@@ -43,10 +43,11 @@ class BootDiagnosticsMessage(GenericMessage):
         self.data_payload = None
         super(BootDiagnosticsMessage, self).__init__(*args, **kwargs)
         self.type = ApplicationTypes.BootDiagnosticsMessage
+        self.apdu = None
+        self.decode()
 
-        if isinstance(self.data_payload, str):
-            self.data_payload = bytes(self.data_payload, "utf8")
-
+    def decode(self):
+        """ Perform the payload decoding """
         apdu_values = struct.unpack("<BBBBBBHHHBHHIIIH", self.data_payload)
         apdu_names = (
             "boot_count",

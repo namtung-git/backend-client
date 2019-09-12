@@ -111,12 +111,8 @@ class RuuviMessage(GenericMessage):
 
         s_header = struct.Struct("<B B")
 
-        if isinstance(self.data_payload, str):
-            self.data_payload = bytes(self.data_payload, "utf8")
-
         _start = 0
         _end = 0
-        apdu_len = len(self.data_payload)
 
         try:
             while True:
@@ -125,7 +121,7 @@ class RuuviMessage(GenericMessage):
                 _start = _end
                 _end = _start + s_header.size
 
-                if _end > apdu_len:
+                if _end > self.data_size:
                     break
 
                 tlv_header = s_header.unpack(self.data_payload[_start:_end])
@@ -145,11 +141,10 @@ class RuuviMessage(GenericMessage):
                 self.apdu_content[tlv_name] = (
                     tlv_value * self.TYPES[tlv_id]["unit"]
                 )
-
                 self.apdu_content["{}.raw".format(tlv_name)] = tlv_value
 
         except KeyError:
-            pass
+            raise
 
         if self.data_payload:
             self.data_payload = self.data_payload.hex()

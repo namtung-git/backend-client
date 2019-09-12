@@ -456,9 +456,6 @@ class AdvertiserMessage(GenericMessage):
         s_header = struct.Struct("<B B")
         s_advertisement = struct.Struct("<B B B B")
 
-        if isinstance(self.data_payload, str):
-            self.data_payload = bytes(self.data_payload, "utf8")
-
         header = s_header.unpack(self.data_payload[0:2])
 
         self.apdu_message_type = header[0]
