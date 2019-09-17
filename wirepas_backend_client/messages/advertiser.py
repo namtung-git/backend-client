@@ -417,8 +417,8 @@ class AdvertiserMessage(GenericMessage):
 
     def __init__(self, *args, **kwargs) -> "AdvertiserMessage":
 
+        self.data_payload = None
         super(AdvertiserMessage, self).__init__(*args, **kwargs)
-
         self.timestamp = self.rx_time_ms_epoch
         self.type = ApplicationTypes.AdvertiserMessage
 
@@ -427,7 +427,6 @@ class AdvertiserMessage(GenericMessage):
         self.apdu_reserved_field = None
         self.index = None
         self.decode_time = None
-        self.data_payload = None
 
     def count(self):
         """ Increases the message counter """
