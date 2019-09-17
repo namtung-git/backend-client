@@ -14,6 +14,13 @@ from ...tools import Settings
 class MySQLSettings(Settings):
     """MySQL Settings"""
 
+    _MANDATORY_FIELDS = [
+        "db_username",
+        "db_password",
+        "db_hostname",
+        "db_port",
+    ]
+
     def __init__(self, settings: Settings) -> "MySQLSettings":
 
         self.db_username = None
@@ -32,14 +39,5 @@ class MySQLSettings(Settings):
         self.port = self.db_port
         self.connection_timeout = self.db_connection_timeout
 
-    def sanity(self) -> bool:
-        """ Checks if connection parameters are valid """
-
-        is_valid = (
-            self.username is not None
-            and self.password is not None
-            and self.hostname is not None
-            and self.port is not None
-        )
-
-        return is_valid
+    def __str__(self):
+        return super()._helper_str(key_filter="mysql")

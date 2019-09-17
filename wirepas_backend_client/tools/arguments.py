@@ -23,6 +23,8 @@ from ..__about__ import __version__
 class Settings:
     """Simple class to handle library settings"""
 
+    _MANDATORY_FIELDS = list()
+
     def __init__(self, settings: dict):
         super(Settings, self).__init__()
 
@@ -35,15 +37,44 @@ class Settings:
         """ returns the internal dictionary items """
         return self.__dict__.items()
 
-    @classmethod
-    def validity(cls) -> bool:
-        """ Validity serves as a mean to check if the settings are valid.
+    def sanity(self) -> bool:
+        """
+        Validity serves as a mean to check if the settings are valid.
         For example, for database settings it should ensure that the
         hostname, username and password are at least not None.
 
         By default, it assumes all settings are valid.
         """
-        return True
+
+        is_valid = True
+        for field in self._MANDATORY_FIELDS:
+            if getattr(self, field) is None:
+                is_valid = False
+                break
+        return is_valid
+
+    def to_dict(self):
+        """ Returns the objects internal dictionary """
+        return self.__dict__
+
+    def _helper_str(self, key_filter=None) -> str:
+        mystr = ""
+        for key, value in self.__dict__.items():
+            if "password" in "key":
+                if value is not None:
+                    value = "password_is_set"
+            if key_filter is not None:
+                if key_filter not in key:
+                    continue
+            hint = "optional"
+            if key in self._MANDATORY_FIELDS:
+                hint = "required"
+
+            mystr += "{}: {} ({})\n".format(key, value, hint)
+        return mystr
+
+    def __str__(self) -> str:
+        return self._helper_str(key_filter=None)
 
 
 class ParserHelper:
@@ -221,7 +252,7 @@ class ParserHelper:
 
         self.mqtt.add_argument(
             "--mqtt_port",
-            default=os.environ.get("WM_SERVICES_MQTT_PORT", 883),
+            default=os.environ.get("WM_SERVICES_MQTT_PORT", 8883),
             action="store",
             type=int,
             help="MQTT broker port",

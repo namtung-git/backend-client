@@ -15,6 +15,8 @@ from ...tools import Settings
 class WNTSettings(Settings):
     """WNT Settings"""
 
+    _MANDATORY_FIELDS = ["wnt_username", "wnt_password", "wnt_hostname"]
+
     def __init__(self, settings: Settings) -> "WNTSettings":
 
         self.wnt_username = None
@@ -23,12 +25,5 @@ class WNTSettings(Settings):
 
         super(WNTSettings, self).__init__(settings)
 
-    def sanity(self) -> bool:
-        """ Checks if connection parameters are valid """
-        is_valid = (
-            self.wnt_username is not None
-            and self.wnt_password is not None
-            and self.wnt_hostname is not None
-        )
-
-        return is_valid
+    def __str__(self):
+        return super()._helper_str(key_filter="wnt")

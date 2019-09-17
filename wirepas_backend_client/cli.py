@@ -1178,23 +1178,24 @@ def main():
     from .tools import ParserHelper, LoggerHelper
     from .api import MQTTSettings
 
-    parser = ParserHelper("Gateway client arguments")
-    parser.add_file_settings()
-    parser.add_mqtt()
-    parser.add_fluentd()
-    settings = parser.settings(settings_class=MQTTSettings)
+    PARSER = ParserHelper("Gateway client arguments")
+    PARSER.add_file_settings()
+    PARSER.add_mqtt()
+    PARSER.add_fluentd()
+    SETTINGS = PARSER.settings(settings_class=MQTTSettings)
 
-    if settings.debug_level is None:
-        settings.debug_level = "warning"
+    if SETTINGS.debug_level is None:
+        SETTINGS.debug_level = "warning"
 
-    logger = LoggerHelper(
-        module_name="gw-cli", args=settings, level=settings.debug_level
+    LOGGER = LoggerHelper(
+        module_name="gw-cli", args=SETTINGS, level=SETTINGS.debug_level
     ).setup()
 
-    if settings.sanity():
-        launch_cli(settings, logger)
+    if SETTINGS.sanity():
+        launch_cli(SETTINGS, LOGGER)
     else:
         print("Please review your connection settings")
+        print(SETTINGS)
 
 
 if __name__ == "__main__":

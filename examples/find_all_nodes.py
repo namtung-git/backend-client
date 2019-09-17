@@ -81,23 +81,22 @@ def main(settings, logger):
 
 if __name__ == "__main__":
 
-    parser = ParserHelper("Find all nodes arguments")
-    parser.add_file_settings()
-    parser.add_mqtt()
-    parser.add_fluentd()
-    settings = parser.settings(settings_class=MQTTSettings)
+    PARSER = ParserHelper("Find all nodes arguments")
+    PARSER.add_file_settings()
+    PARSER.add_mqtt()
+    PARSER.add_fluentd()
+    SETTINGS = PARSER.settings(settings_class=MQTTSettings)
 
-    if settings.debug_level is None:
-        settings.debug_level = "error"
+    if SETTINGS.debug_level is None:
+        SETTINGS.debug_level = "error"
 
-    if settings.sanity():
-        log = LoggerHelper(
+    if SETTINGS.sanity():
+        LOGGER = LoggerHelper(
             module_name="find all nodes",
-            args=settings,
-            level=settings.debug_level,
-        )
-        logger = log.setup()
-
-        main(settings, logger)
+            args=SETTINGS,
+            level=SETTINGS.debug_level,
+        ).setup()
+        main(SETTINGS, LOGGER)
     else:
-        print("Please review your MQTT connection settings")
+        print("Please review your connection settings:")
+        print(SETTINGS)

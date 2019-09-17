@@ -326,6 +326,7 @@ def main(args, logger):
         daemon.start()
     else:
         print("Please check you MQTT settings")
+        print(mqtt_settings)
 
 
 if __name__ == "__main__":
@@ -363,7 +364,7 @@ if __name__ == "__main__":
     LOGGER.info(
         {
             "test_suite_start": datetime.datetime.utcnow().isoformat("T"),
-            "run_arguments": str(SETTINGS),
+            "run_arguments": SETTINGS.to_dict(),
         }
     )
     # pylint: enable=no-member

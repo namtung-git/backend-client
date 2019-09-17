@@ -15,6 +15,13 @@ from ...tools import Settings
 class InfluxSettings(Settings):
     """Influx Settings"""
 
+    _MANDATORY_FIELDS = [
+        "influx_username",
+        "influx_password",
+        "influx_hostname",
+        "influx_port",
+    ]
+
     def __init__(self, settings: Settings) -> "InfluxSettings":
 
         # these are the settings expected from the cmd arguments
@@ -39,14 +46,5 @@ class InfluxSettings(Settings):
             if ".csv" not in self.write_csv:
                 self.write_csv += ".csv"
 
-    def sanity(self) -> bool:
-        """ Checks if connection parameters are valid """
-        is_valid = (
-            self.username is not None
-            and self.password is not None
-            and self.hostname is not None
-            and self.port is not None
-            and self.database is not None
-        )
-
-        return is_valid
+    def __str__(self):
+        return super()._helper_str(key_filter="influx")

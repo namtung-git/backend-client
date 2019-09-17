@@ -120,4 +120,4 @@ if __name__ == "__main__":
 
         main(SETTINGS, LOGGER)
     else:
-        print("Please check your connection settings")
+        print(SETTINGS)

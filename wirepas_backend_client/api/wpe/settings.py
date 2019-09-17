@@ -10,10 +10,13 @@
 # pylint: disable=locally-disabled, duplicate-code
 
 from ...tools import Settings
+from pathlib import Path
 
 
 class WPESettings(Settings):
     """WPE Settings"""
+
+    _MANDATORY_FIELDS = ["wpe_service_definition"]
 
     def __init__(self, settings: Settings) -> "WPESettings":
 
@@ -25,5 +28,13 @@ class WPESettings(Settings):
 
     def sanity(self) -> bool:
         """ Checks if connection parameters are valid """
-        is_valid = self.wpe_service_definition is not None
+        is_valid = super().sanity()
+
+        if self.wpe_service_definition is not None:
+            definition_file = Path(self.wpe_service_definition)
+            is_valid = definition_file.exists()
+
         return is_valid
+
+    def __str__(self):
+        return super()._helper_str(key_filter="wpe")

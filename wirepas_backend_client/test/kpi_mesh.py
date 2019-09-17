@@ -255,6 +255,8 @@ if __name__ == "__main__":
 
         DAEMON.start(set_start_signal=True)
     else:
-        LOGGER.error("Please check your MQTT and MySQL settings")
+        LOGGER.error("Please check your MQTT and MySQ settings:")
+        LOGGER.error("\n%s", MQTT_SETTINGS)
+        LOGGER.error("\n%s", HTTP_SETTINGS)
 
     LOGGER.debug("test_kpi exit!")

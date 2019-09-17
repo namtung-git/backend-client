@@ -90,32 +90,33 @@ def main(settings, logger):
 
 if __name__ == "__main__":
 
-    parser = ParserHelper("Gateway client arguments")
-    parser.add_file_settings()
-    parser.add_influx()
-    parser.add_fluentd()
-    parser.query.add_argument(
+    PARSER = ParserHelper("Gateway client arguments")
+    PARSER.add_file_settings()
+    PARSER.add_influx()
+    PARSER.add_fluentd()
+    PARSER.query.add_argument(
         "--last_n_seconds",
         default=6000,
         action="store",
         type=str,
         help="Amount of seconds to lookup in the past.",
     )
-    parser.query.add_argument(
+    PARSER.query.add_argument(
         "--write_csv",
         default="custom_query.csv",
         action="store",
         type=str,
         help="File where to write custom csv.",
     )
-    settings = parser.settings(settings_class=InfluxSettings)
+    SETTINGS = PARSER.settings(settings_class=InfluxSettings)
 
-    if settings.sanity():
+    if SETTINGS.sanity():
         logger = LoggerHelper(
             module_name="Influx viewer",
-            args=settings,
-            level=settings.debug_level,
+            args=SETTINGS,
+            level=SETTINGS.debug_level,
         ).setup()
-        results, influx = main(settings, logger)
+        results, influx = main(SETTINGS, logger)
     else:
-        print("Please check your connection settings")
+        print("Please review your connection settings:")
+        print(SETTINGS)

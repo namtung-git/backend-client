@@ -134,6 +134,8 @@ class SinkAndGatewayStatusObserver(Thread):
 class HTTPSettings(Settings):
     """HTTP Settings"""
 
+    _MANDATORY_FIELDS = ["http_host", "http_port"]
+
     def __init__(self, settings: Settings) -> "HTTPSettings":
 
         self.http_host = None
@@ -143,13 +145,6 @@ class HTTPSettings(Settings):
 
         self.hostname = self.http_host
         self.port = self.http_port
-
-    def sanity(self) -> bool:
-        """ Checks if connection parameters are valid """
-
-        is_valid = self.hostname is not None and self.port is not None
-
-        return is_valid
 
 
 class ConnectionServer(http.server.ThreadingHTTPServer):

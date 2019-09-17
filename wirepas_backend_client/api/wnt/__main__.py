@@ -19,21 +19,22 @@ from ...tools import ParserHelper, LoggerHelper
 def main():
     """ Main entrypoint to connect and talk to a WNT instance """
 
-    parser = ParserHelper(description="WNT client arguments")
-    parser.add_file_settings()
-    parser.add_wnt()
-    parser.add_fluentd()
+    PARSER = ParserHelper(description="WNT client arguments")
+    PARSER.add_file_settings()
+    PARSER.add_wnt()
+    PARSER.add_fluentd()
 
-    settings = parser.settings(settings_class=WNTSettings)
+    SETTINGS = PARSER.settings(settings_class=WNTSettings)
 
-    logger = LoggerHelper(
-        module_name="wm-wnt-viewer", args=settings, level=settings.debug_level
+    LOGGER = LoggerHelper(
+        module_name="wm-wnt-viewer", args=SETTINGS, level=SETTINGS.debug_level
     ).setup()
 
-    if settings.sanity():
-        Backend(settings=settings, logger=logger).run(False)
+    if SETTINGS.sanity():
+        Backend(settings=SETTINGS, logger=LOGGER).run(False)
     else:
-        logger.error("There is something wrong with your WNT arguments.")
+        print("There is something wrong with your WNT arguments.")
+        print(SETTINGS)
 
 
 if __name__ == "__main__":

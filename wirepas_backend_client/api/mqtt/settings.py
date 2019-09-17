@@ -8,7 +8,7 @@
 """
 # pylint: disable=locally-disabled, duplicate-code
 
-import json
+
 from ...tools import Settings
 
 
@@ -19,6 +19,14 @@ class MQTTSettings(Settings):
     Argument wrapper to translate inbound to internal properties.
 
     """
+
+    # username and password are not required to allow anonymous connections
+    _MANDATORY_FIELDS = [
+        "mqtt_username",
+        "mqtt_password",
+        "mqtt_hostname",
+        "mqtt_port",
+    ]
 
     def __init__(self, settings: Settings) -> "MQTTSettings":
 
@@ -65,24 +73,5 @@ class MQTTSettings(Settings):
         self.ciphers = self.mqtt_ciphers
         self.topic = self.mqtt_topic
 
-    def sanity(self) -> bool:
-        """ Checks if connection parameters are valid """
-
-        is_valid = (
-            self.username is not None
-            and self.password is not None
-            and self.hostname is not None
-            and self.port is not None
-        )
-
-        return is_valid
-
-    def set_defaults(self) -> None:
-        """ Sets common settings for the MQTT client connection """
-
-    def to_dict(self):
-        """ Returns the objects internal dictionary """
-        return self.__dict__
-
     def __str__(self):
-        return json.dumps(self.__dict__)
+        return super()._helper_str(key_filter="mqtt")
