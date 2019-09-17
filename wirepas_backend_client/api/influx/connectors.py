@@ -217,28 +217,50 @@ class Influx(object):
 
         return result
 
-    def _query_last_n_seconds(self, __measurement, last_n_seconds):
-        """ Retrieves results based on the previous last_n_seconds """
-        __table = "{}".format(__measurement)
-        __query = "SELECT * FROM {table} WHERE time > now() - {seconds}s".format(
-            table=__table, seconds=last_n_seconds
-        )
+    def query_by_time(
+        self, measurement, last_n_seconds, from_date=None, until_date=None
+    ):
+        """ Makes a query either based on last amount of seconds or a date"""
+        __table = "{}".format(measurement)
 
+        if from_date and until_date:
+            __query = "SELECT * FROM {table} WHERE time >= '{from_date}' AND time <= '{until_date}'".format(
+                table=__table, from_date=from_date, until_date=until_date
+            )
+
+        elif from_date:
+            __query = "SELECT * FROM {table} WHERE time >= '{from_date}'".format(
+                table=__table, from_date=from_date
+            )
+
+        elif until_date:
+            __query = "SELECT * FROM {table} WHERE time >= '{until_date}'".format(
+                table=__table, until_date=until_date
+            )
+        else:
+            __query = "SELECT * FROM {table} WHERE time > now() - {seconds}s".format(
+                table=__table, seconds=last_n_seconds
+            )
+        print(__query)
         try:
-            result = self.query(__query)[__measurement]
+            result = self.query(__query)[measurement]
         except KeyError:
             result = pandas.DataFrame()
 
         return result
 
-    def location_measurements(self, last_n_seconds=60):
+    def location_measurements(
+        self, last_n_seconds=60, from_date=None, until_date=None
+    ):
         """ Retrieves location measurements from the server """
         __measurement = "location_measurement"
         __elements = dict(
             type={"base": int}, value={"base": float}, target={"base": int}
         )
 
-        df = self._query_last_n_seconds(__measurement, last_n_seconds)
+        df = self.query_by_time(
+            __measurement, last_n_seconds, from_date, until_date
+        )
 
         if not df.empty:
             df["positioning_mesh_data/payload"] = df[
@@ -247,37 +269,57 @@ class Influx(object):
 
         return df
 
-    def location_updates(self, last_n_seconds=120):
+    def location_updates(
+        self, last_n_seconds=120, from_date=None, until_date=None
+    ):
         """ Retrieves location measurements from the server """
         __measurement = "location_update"
-        df = self._query_last_n_seconds(__measurement, last_n_seconds)
+        df = self.query_by_time(
+            __measurement, last_n_seconds, from_date, until_date
+        )
 
         return df
 
-    def traffic_diagnostics(self, last_n_seconds=1000):
+    def traffic_diagnostics(
+        self, last_n_seconds=1000, from_date=None, until_date=None
+    ):
         """ Retrieves traffic diagnostic measurements (endpoint 251) """
         __measurement = "endpoint_251"
-        df = self._query_last_n_seconds(__measurement, last_n_seconds)
+        df = self.query_by_time(
+            __measurement, last_n_seconds, from_date, until_date
+        )
 
         return df
 
-    def neighbor_diagnostics(self, last_n_seconds=1000):
+    def neighbor_diagnostics(
+        self, last_n_seconds=1000, from_date=None, until_date=None
+    ):
         """ Retrieves neighbor diagnostic measurements (endpoint 252) """
         __measurement = "endpoint_252"
-        df = self._query_last_n_seconds(__measurement, last_n_seconds)
+        df = self.query_by_time(
+            __measurement, last_n_seconds, from_date, until_date
+        )
 
         return df
 
-    def node_diagnostics(self, last_n_seconds=1000):
+    def node_diagnostics(
+        self, last_n_seconds=1000, from_date=None, until_date=None
+    ):
         """ Retrieves neighbor diagnostic measurements (endpoint 253) """
         __measurement = "endpoint_253"
-        df = self._query_last_n_seconds(__measurement, last_n_seconds)
+        df = self.query_by_time(
+            __measurement, last_n_seconds, from_date, until_date
+        )
 
         return df
 
-    def boot_diagnostics(self, last_n_seconds=1000):
+    def boot_diagnostics(
+        self, last_n_seconds=1000, from_date=None, until_date=None
+    ):
         """ Retrieves neighbor diagnostic measurements (endpoint 254) """
         __measurement = "endpoint_254"
-        df = self._query_last_n_seconds(__measurement, last_n_seconds)
+        df = self.query_by_time(
+            __measurement, last_n_seconds, from_date, until_date
+        )
 
         return df

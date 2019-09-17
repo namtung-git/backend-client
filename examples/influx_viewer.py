@@ -1,5 +1,6 @@
 # Copyright 2019 Wirepas Ltd
 
+import os
 import requests
 
 from wirepas_backend_client.api import Influx
@@ -40,46 +41,72 @@ def main(settings, logger):
                     )
 
         else:
+            if not os.path.exists(settings.write_path):
+                os.makedirs(settings.write_path)
             r = influx.traffic_diagnostics(
-                last_n_seconds=settings.last_n_seconds
+                last_n_seconds=settings.last_n_seconds,
+                from_date=settings.from_date,
+                until_date=settings.until_date,
             )
             if not r.empty:
                 results.append(r)
-                r.to_csv("./traffic_diagnostics.csv")
+                r.to_csv(
+                    "{}/traffic_diagnostics.csv".format(settings.write_path)
+                )
                 logger.info("Traffic diagnostics (251) {}".format(r))
 
             r = influx.neighbor_diagnostics(
-                last_n_seconds=settings.last_n_seconds
+                last_n_seconds=settings.last_n_seconds,
+                from_date=settings.from_date,
+                until_date=settings.until_date,
             )
             if not r.empty:
                 results.append(r)
-                r.to_csv("./neighbor_diagnostics.csv")
+                r.to_csv(
+                    "{}/neighbor_diagnostics.csv".format(settings.write_path)
+                )
                 logger.info("Neighbor diagnostics (252) {}".format(r))
 
-            r = influx.node_diagnostics(last_n_seconds=settings.last_n_seconds)
+            r = influx.node_diagnostics(
+                last_n_seconds=settings.last_n_seconds,
+                from_date=settings.from_date,
+                until_date=settings.until_date,
+            )
             if not r.empty:
                 results.append(r)
-                r.to_csv("./node_diagnostics.csv")
+                r.to_csv("{}/node_diagnostics.csv".format(settings.write_path))
                 logger.info("Node diagnostics (253) {}".format(r))
 
-            r = influx.boot_diagnostics(last_n_seconds=settings.last_n_seconds)
+            r = influx.boot_diagnostics(
+                last_n_seconds=settings.last_n_seconds,
+                from_date=settings.from_date,
+                until_date=settings.until_date,
+            )
             if not r.empty:
                 results.append(r)
-                r.to_csv("./boot_diagnostics.csv")
+                r.to_csv("{}/boot_diagnostics.csv".format(settings.write_path))
                 logger.info("Boot diagnostics (254) {}".format(r))
 
             r = influx.location_measurements(
-                last_n_seconds=settings.last_n_seconds
+                last_n_seconds=settings.last_n_seconds,
+                from_date=settings.from_date,
+                until_date=settings.until_date,
             )
             if not r.empty:
                 results.append(r)
-                r.to_csv("./location_measurements.csv")
+                r.to_csv(
+                    "{}/location_measurements.csv".format(settings.write_path)
+                )
                 logger.info("Location measurement {}".format(r))
 
-            r = influx.location_updates(last_n_seconds=settings.last_n_seconds)
+            r = influx.location_updates(
+                last_n_seconds=settings.last_n_seconds,
+                from_date=settings.from_date,
+                until_date=settings.until_date,
+            )
             if not r.empty:
                 results.append(r)
-                r.to_csv("./location_updates.csv")
+                r.to_csv("{}/location_updates.csv".format(settings.write_path))
                 logger.info("Location update {}".format(r))
 
     except requests.exceptions.ConnectionError:
@@ -108,6 +135,31 @@ if __name__ == "__main__":
         type=str,
         help="File where to write custom csv.",
     )
+
+    PARSER.query.add_argument(
+        "--write_path",
+        default="./week",
+        action="store",
+        type=str,
+        help="path where to store default queries.",
+    )
+
+    PARSER.query.add_argument(
+        "--from_date",
+        default=None,
+        action="store",
+        type=str,
+        help="Datetime where to point start of data time query, eg, 2019-01-07T10:00:00Z.",
+    )
+
+    PARSER.query.add_argument(
+        "--until_date",
+        default=None,
+        action="store",
+        type=str,
+        help="Datetime where to point start of data time query, eg, 2019-01-07T10:00:00Z.",
+    )
+
     SETTINGS = PARSER.settings(settings_class=InfluxSettings)
 
     if SETTINGS.sanity():
