@@ -168,27 +168,25 @@ class MQTT(object):
         """ Establishes a connection and service loop. """
 
         self.logger.info(
-            "connecting to %s:%s@%s:%s - %s",
-            self.username,
-            self.password,
-            self.hostname,
-            self.port,
-            self.ca_certs,
+            "connecting to %s@%s:%s", self.username, self.hostname, self.port
         )
 
         if self.force_unsecure is False:
+            self.client.tls_set(
+                ca_certs=self.ca_certs,
+                certfile=self.certfile,
+                keyfile=self.keyfile,
+                cert_reqs=self.cert_reqs,
+                tls_version=self.tls_version,
+                ciphers=self.ciphers,
+            )
+
             if self.allow_untrusted:
-                self.client.tls_set()
-                self.client.tls_insecure_set(self.allow_untrusted)
-            else:
-                self.client.tls_set(
-                    ca_certs=self.ca_certs,
-                    certfile=self.certfile,
-                    keyfile=self.keyfile,
-                    cert_reqs=self.cert_reqs,
-                    tls_version=self.tls_version,
-                    ciphers=self.ciphers,
+                self.logger.warning(
+                    "The MQTT client will skip the certificate name check, which means you might connect to a malicious third party impersonating your server through DNS spoofing."
+                    "Please use ALLOW_UNTRUSTED for development purposes only."
                 )
+                self.client.tls_insecure_set(self.allow_untrusted)
 
         self.client.connect(
             self.hostname, port=self.port, keepalive=self.keep_alive
