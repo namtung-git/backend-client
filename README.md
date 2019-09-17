@@ -1,7 +1,6 @@
 # Backend client
 
-[![Build Status](https://travis-ci.com/wirepas/backend-apis.svg?branch=master)](https://travis-ci.com/wirepas/backend-apis) [![PyPi](https://img.shields.io/pypi/v/wirepas-backend-client.svg)](https://pypi.org/project/wirepas-backend-client/) [![Documentation Status](https://readthedocs.org/projects/backend-client/badge/?version=latest)](https://backend-client.readthedocs.io/en/latest/?badge=latest)
-
+[![Build Status](https://travis-ci.com/wirepas/backend-apis.svg?branch=master)](https://travis-ci.com/wirepas/backend-apis) [![PyPi](https://img.shields.io/pypi/v/wirepas-backend-client.svg)](https://pypi.org/project/wirepas-backend-client/) [![Documentation Status](https://readthedocs.org/projects/backend-client/badge/?version=latest)](https://backend-client.readthedocs.io/en/latest/?badge=latest) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/bf0c23237cf04ea6ac48e98cf10b6a7b)](https://www.codacy.com/manual/wirepas/backend-client?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=wirepas/backend-client&amp;utm_campaign=Badge_Grade)
 
 Backend client is a tool to interface with Wirepas' WM-RM-128 API. The API
 consists of a set of MQTT topic to interact with a Wirepas Mesh network.
@@ -14,8 +13,8 @@ as interacting with other Wirepas' services, such as Wirepas Network Tool
 and the Wirepas Positioning Engine.
 
 Requirements:
-* Python 3.7 
-* Linux (for wm-gw-cli entrypoint)
+-   Python 3.7
+-   Linux (for wm-gw-cli entrypoint)
 
 ## Docker Hub builds
 
@@ -42,8 +41,8 @@ To run it with docker type:
 
 ### Running with docker compose
 
-To run the backend client using docker compose, drop or move the settings file in
-**container/.settings.yml** and start the service with:
+To run the backend client using docker compose, drop or move the settings
+file in **container/.settings.yml** and start the service with:
 
 ```shell
     docker-compose container/slim/docker-compose.yml up
@@ -218,4 +217,5 @@ names.
 
 ### License
 
-Licensed under the Apache License, Version 2.0. See LICENSE for the full license text.
+Licensed under the Apache License, Version 2.0. See LICENSE for the full
+license text.
