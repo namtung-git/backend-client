@@ -1,5 +1,7 @@
 # Backend-client
 
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/wirepas/backend-client)
+
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/bf0c23237cf04ea6ac48e98cf10b6a7b)](https://www.codacy.com/manual/wirepas/backend-client?utm_source=github.com&utm_medium=referral&utm_content=wirepas/backend-client&utm_campaign=Badge_Grade) [![Build Status](https://travis-ci.com/wirepas/backend-apis.svg?branch=master)](https://travis-ci.com/wirepas/backend-apis)  [![Documentation Status](https://readthedocs.org/projects/backend-client/badge/?version=latest)](https://backend-client.readthedocs.io/en/latest/?badge=latest) [![PyPi](https://img.shields.io/pypi/v/wirepas-backend-client.svg)](https://pypi.org/project/wirepas-backend-client/)
 
 <!-- MarkdownTOC -->
