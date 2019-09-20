@@ -862,7 +862,7 @@ Version 2.0 See file [LICENSE][here_license] for full license details.
 
 [backend_client_gh_projects]: https://github.com/wirepas/backend-client/projects
 
-[here_img_overview]: https://github.com/wirepas/backend-client/blob/update-docs/img/wm-backend-client-overview.png?raw=true
+[here_img_overview]: https://github.com/wirepas/backend-client/blob/master/img/wm-backend-client-overview.png?raw=true
 
 [here_container]: https://github.com/wirepas/backend-client/tree/master/container
 
