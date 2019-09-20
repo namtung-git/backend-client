@@ -4,7 +4,7 @@ version: '2'
 services:
     backend-client:
       restart: always
-      image: wirepas/backend-client:edge
+      image: wirepas/backend-client:v1.2.0
       build:
         dockerfile: container/slim/Dockerfile
         context: ../
