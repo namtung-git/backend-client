@@ -1,3 +1,9 @@
 m2r==0.2.1
 sphinxcontrib.apidoc==0.3.0
 grpcio-tools==1.22.0
+paho-mqtt==1.4.0
+cbor2==4.1.2
+influxdb==5.2.3
+websocket-client==0.48.0
+PyYAML==5.1.2
+fluent-logger==0.9.3

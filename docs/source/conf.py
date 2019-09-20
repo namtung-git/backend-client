@@ -14,8 +14,35 @@
 import os
 import sys
 
+
+def remove_text_block(filepath, start_delimiter, end_delimiter):
+    """ This function removes a delimited text block form the input file"""
+
+    with open(filepath, "r+") as f:
+        lines = f.readlines()
+        f.seek(0)
+
+        write = True
+        for line in lines:
+            if start_delimiter in line:
+                write = False
+                continue
+            if end_delimiter in line:
+                write = True
+                continue
+            if write:
+                f.write(line)
+
+
 _here = os.path.abspath(os.path.dirname(__file__))
 _library_root = os.path.abspath(os.path.join(_here, "../.."))
+
+remove_text_block(
+    "{}/README.md".format(_here),
+    "<!-- MarkdownTOC -->",
+    "<!-- /MarkdownTOC -->",
+)
+
 
 sys.path.insert(0, _library_root)
 
@@ -61,8 +88,6 @@ templates_path = ["_templates"]
 
 exclude_patterns = ["setup"]
 
-autodoc_mock_imports = ["mysqlclient", "pandas", "yaml"]
-
 # -- Options for apidoc output -------------------------------------------------
 apidoc_module_dir = os.path.join(_library_root, "wirepas_backend_client")
 apidoc_excluded_paths = ["tests", "setup"]
@@ -70,17 +95,64 @@ apidoc_separate_modules = False
 apidoc_module_first = True
 
 # -- Options for autodoc output -------------------------------------------------
-autodoc_mock_imports = ["setup"]
+autodoc_mock_imports = [
+    "mysqlclient",
+    "pandas",
+    "yaml",
+    "paho",
+    "wirepas_messaging",
+    "fluent",
+]
 
 # -- Options for HTML output -------------------------------------------------
 html_theme = "alabaster"
-html_theme_options = {"logo": "logo.png", "description": _description}
+html_theme_options = {
+    "logo": "logo.png",
+    "github_user": "wirepas",
+    "github_repo": "backend-client",
+    "travis_button": True,
+    "page_width": "1024px",
+    "description": _description,
+}
 html_static_path = ["_static"]
 html_favicon = "_static/favicon.png"
-html_sidebars = {"**": ["about.html", "relations.html", "searchbox.html"]}
+html_sidebars = {
+    "**": ["about.html", "navigation.html", "relations.html", "searchbox.html"]
+}
 
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = _name
+
+
+# -- Options for LaTeX output ------------------------------------------------
+
+latex_elements = {
+    # The paper size ('letterpaper' or 'a4paper').
+    #
+    "papersize": "a4paper",
+    # The font size ('10pt', '11pt' or '12pt').
+    #
+    "pointsize": "11pt",
+    # Additional stuff for the LaTeX preamble.
+    #
+    # 'preamble': '',
+    # Latex figure (float) alignment
+    #
+    # 'figure_align': 'htbp',
+}
+
+# Grouping the document tree into LaTeX files. List of tuples
+# (source start file, target name, title,
+#  author, documentclass [howto, manual, or own class]).
+latex_documents = [
+    (
+        master_doc,
+        "wirepasbackendclient.tex",
+        "Wirepas Backend Client Source Documentation",
+        "Wirepas Ltd.",
+        "manual",
+    )
+]
