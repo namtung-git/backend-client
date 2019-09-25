@@ -2,7 +2,7 @@
 name: Feature and task definition
 about: Use this issue to raise a feature request or define a task
 title: ''
-labels: enhancement, feature, for consideration
+labels: ''
 assignees: PFigs
 
 ---
