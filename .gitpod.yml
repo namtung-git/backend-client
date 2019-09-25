@@ -1,2 +1,1 @@
-image:
-  file: container/slim/Dockerfile
+image: wirepas/backend-client
