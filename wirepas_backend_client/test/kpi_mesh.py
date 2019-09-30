@@ -67,7 +67,9 @@ class MultiMessageMqttObserver(MQTTObserver):
             # handles cases where gw is online, but in offline case
             # receiver of gw_status_queue must be capable to handle
             # unfiltered gw_ids.
-            "gw-event/status/#": self.generate_gw_status_cb(),
+            "gw-event/status/{gw_id}".format(
+                gw_id=self.gateway_id
+            ): self.generate_gw_status_cb(),
             "gw-response/get_configs/{gw_id}/#".format(
                 gw_id=self.gateway_id
             ): self.generate_got_gw_configs_cb(),

@@ -153,9 +153,9 @@ class ConnectionServer(http.server.ThreadingHTTPServer):
     # pylint: disable=locally-disabled, too-many-arguments
 
     close_connection = False
-    request_queue_size = 10
+    request_queue_size = 100
     allow_reuse_address = True
-    timeout = 10
+    timeout = 120
     protocol_version = "HTTP/1.0"
 
     def __init__(
@@ -206,7 +206,7 @@ class HTTPObserver(StreamObserver):
         tx_queue: multiprocessing.Queue,
         rx_queue: multiprocessing.Queue,
         gw_status_queue: multiprocessing.Queue,
-        request_wait_timeout: int = 10,
+        request_wait_timeout: int = 120,
         close_connection: bool = False,
         request_queue_size: int = 100,
         allow_reuse_address: bool = True,
@@ -241,10 +241,16 @@ class HTTPObserver(StreamObserver):
                     http_tx_queue=self.http_tx_queue,
                     status_observer=self.status_observer,
                 )
+
+                self.httpd.request_wait_timeout = request_wait_timeout
+                self.httpd.close_connection = close_connection
+                self.httpd.request_queue_size = request_queue_size
+                self.httpd.allow_reuse_address = allow_reuse_address
                 self.logger.info(
                     "HTTP Server is serving at port: %s", self.port
                 )
                 break
+
             except Exception as ex:
                 self.logger.error(
                     "ERROR: Opening HTTP Server port %s failed. Reason: %s. Retrying after 10 seconds.",
