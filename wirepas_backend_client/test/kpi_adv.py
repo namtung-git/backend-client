@@ -105,7 +105,7 @@ class AdvertiserManager(TestManager):
             dict(sequence=self._test_sequence_number),
         )
 
-        AdvertiserMessage.MESSAGE_COUNTER = 0
+        AdvertiserMessage.message_counter = 0
         empty_counter = 0
 
         while not self.exit_signal.is_set():
@@ -277,7 +277,7 @@ def main(args, logger):
             dict(
                 mqtt_settings=mqtt_settings,
                 logger=logger,
-                allowed_endpoints=set([AdvertiserMessage.ADVERTISER_SRC_EP]),
+                allowed_endpoints=set([AdvertiserMessage.source_endpoint]),
             ),
         )
 

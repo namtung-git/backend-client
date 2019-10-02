@@ -52,8 +52,33 @@
         Copyright 2019 Wirepas Ltd under Apache License, Version 2.0
         See file LICENSE for full license details.
 """
-# flake8: noqa
 
-from .decoders import *
-from .interface import *
-from .types import *
+from .generic import GenericMessage
+
+# application/features
+from .advertiser import Inventory, AdvertiserMessage
+from .positioning import PositioningMessage
+from .ruuvi import RuuviMessage
+
+# mesh diagnostics and test messages
+from .diagnostics import DiagnosticsMessage
+from .bootdiagnostics import BootDiagnosticsMessage
+from .neighbordiagnostics import NeighborDiagnosticsMessage
+from .trafficdiagnostics import TrafficDiagnosticsMessage
+from .nodediagnostics import NodeDiagnosticsMessage
+from .testnw import TestNWMessage
+
+
+__all__ = [
+    "GenericMessage",
+    "Inventory",
+    "AdvertiserMessage",
+    "PositioningMessage",
+    "RuuviMessage",
+    "DiagnosticsMessage",
+    "BootDiagnosticsMessage",
+    "NeighborDiagnosticsMessage",
+    "TrafficDiagnosticsMessage",
+    "NodeDiagnosticsMessage",
+    "TestNWMessage",
+]

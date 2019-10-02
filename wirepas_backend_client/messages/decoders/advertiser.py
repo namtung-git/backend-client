@@ -19,8 +19,8 @@ import struct
 import time
 
 from .generic import GenericMessage
-from .types import ApplicationTypes
-from .. import tools
+from ..types import ApplicationTypes
+from ... import tools
 
 
 class Inventory(object):
@@ -28,11 +28,23 @@ class Inventory(object):
     Inventory
 
     This class serves as an helper to establish a count of devices based on
-    their appearence.
+    their appearance.
 
     Attributes:
         _nodes(set): contains a set of nodes
         _index(set): dictionary which stores all the node events
+        _target_nodes (set): which nodes to observe (None if not known)
+        _target_otap_sequence (int): scratchpad sequence to observe in all nodes
+        _target_frequency (int) : how many times a given node should be seen
+        _start_delay (float) : how long to delay the counting
+        _maximum_duration (float) : maximum duration of an inventory count
+        _sequence (int) : inventory round
+        _start (datetime): when to start
+        _deadline (datetime) : when to end the test
+        _finish (datetime) : when the test has finished
+        _elapsed (float) : how many seconds it took to execute the inventory
+        _otaped_nodes (set): which nodes have received an otap
+        _runtime (float): how long the inventory has been running for
         logger(logging.logger): the logger where debug is routed to
 
     """
@@ -79,17 +91,17 @@ class Inventory(object):
 
     @property
     def start(self) -> datetime.datetime:
-        """ Returs when the inventory has started """
+        """ Returns when the inventory has started """
         return self._start
 
     @property
     def deadline(self) -> datetime.datetime:
-        """ Returs the inventory deadline """
+        """ Returns the inventory deadline """
         return self._deadline
 
     @property
     def elapsed(self) -> int:
-        """ Returs how much time has elapsed since the start of the run """
+        """ Returns how much time has elapsed since the start of the run """
         runtime = datetime.datetime.utcnow()
         if self._finish:
             runtime = self._finish
@@ -98,7 +110,7 @@ class Inventory(object):
 
     @property
     def sequence(self) -> int:
-        """ Returs the current inventory sequence number """
+        """ Returns the current inventory sequence number """
         return self._sequence
 
     @sequence.setter
@@ -128,7 +140,7 @@ class Inventory(object):
         self._elapsed = None
 
     def wait(self):
-        """ waits until it the specifiec time """
+        """ waits until it the specified time """
 
         self.reset()
 
@@ -211,9 +223,7 @@ class Inventory(object):
         del self._index[node_address]
 
     def is_out_of_time(self):
-        """
-        Evaluates if the time has run out for the run
-        """
+        """ Evaluates if the time has run out for the run """
         time_left = self.until(self.deadline)
         self.logger.debug(
             "time left {}s ...".format(time_left), dict(sequence=self.sequence)
@@ -280,7 +290,7 @@ class Inventory(object):
         )
 
     def _filter_dict(self, d: dict):
-        """ Returns a dictionary that has keys occurying in _target_nodes """
+        """ Returns a dictionary that has keys occurring in _target_nodes """
         w = dict()
         for k, _ in d.items():
             if k in self._target_nodes:
@@ -294,7 +304,7 @@ class Inventory(object):
                     d[node] = 0
 
     def difference(self):
-        """ Returns the difference between seen nodes and targe nodes """
+        """ Returns the difference between seen nodes and target nodes """
         return self.nodes ^ self._target_nodes
 
     @property
@@ -393,27 +403,28 @@ class AdvertiserMessage(GenericMessage):
     Represents a message sent by advertiser devices.
 
     Attributes:
-        ADVERTISER_SRC_EP (int): Advertiser source endpoint
-        ADVERTISER_DST_EP (int): Advertiser destination endpoint
-        MESSAGE_TYPE_RSS (int): APDU's RSS message type
-        MESSAGE_TYPE_OTAP (int): APDU's OTAP message type
+        _source_endpoint (int): Advertiser source endpoint
+        _destination_endpoint (int): Advertiser destination endpoint
+        _message_type_rss (int): APDU's RSS message type
+        _message_type_otap (int): APDU's OTAP message type
+        _message_counter (int): How many messages have been seen so far
 
         timestamp (int): Message received time
-        type (int): Type of applicaiton message (ApplicationTypes)
+        type (int): Type of application message (ApplicationTypes)
         advertisers (dict): Dictionary containing the apdu contents
         apdu_message_type (int): APDU type
         apdu_reserved_field (int): APDU reserved field
+        index (int): Message sequence number (as observed from the client side)
     """
 
     # pylint: disable=locally-disabled, too-many-instance-attributes
 
-    ADVERTISER_SRC_EP = 200
-    ADVERTISER_DST_EP = 200
+    _source_endpoint = 200
+    _destination_endpoint = 200
 
-    MESSAGE_TYPE_RSS = 2
-    MESSAGE_TYPE_OTAP = 3
-
-    MESSAGE_COUNTER = 0
+    _message_counter = 0
+    _message_type_rss = 2
+    _message_type_otap = 3
 
     def __init__(self, *args, **kwargs) -> "AdvertiserMessage":
 
@@ -426,7 +437,14 @@ class AdvertiserMessage(GenericMessage):
         self.apdu_message_type = None
         self.apdu_reserved_field = None
         self.index = None
-        self.decode_time = None
+
+    @property
+    def message_counter(self):
+        return self._message_counter
+
+    @message_counter.setter
+    def message_count(self, value):
+        self._message_counter = value
 
     def count(self):
         """ Increases the message counter """
@@ -450,7 +468,7 @@ class AdvertiserMessage(GenericMessage):
             Value: 1 byte (eg, RSS or OTAP)
         """
 
-        self.decode_time = datetime.datetime.utcnow().isoformat("T")
+        super().decode()
 
         s_header = struct.Struct("<B B")
         s_advertisement = struct.Struct("<B B B B")

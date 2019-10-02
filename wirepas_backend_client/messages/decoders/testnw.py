@@ -11,7 +11,7 @@
 """
 
 from .generic import GenericMessage
-from .types import ApplicationTypes
+from ..types import ApplicationTypes
 
 
 class TestNWMessage(GenericMessage):
@@ -34,6 +34,7 @@ class TestNWMessage(GenericMessage):
     def __init__(self, *args, **kwargs) -> "TestNWMessage":
 
         self.data_payload = None
+        self.apdu = None
         super(TestNWMessage, self).__init__(*args, **kwargs)
         self.type = ApplicationTypes.TestNWMessage
 
@@ -43,12 +44,12 @@ class TestNWMessage(GenericMessage):
         self.number_of_fields = list()
         self.bytes_per_field = list()
         self.datafields = list()
-
         self.decode()
 
     def decode(self):
         """ Perform the payload decoding """
 
+        super().decode()
         apdu_offset = 0
 
         try:

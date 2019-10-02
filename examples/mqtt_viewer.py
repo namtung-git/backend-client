@@ -2,9 +2,9 @@
 #
 # See file LICENSE for full license details.
 
-import os
 import time
 import queue
+import json
 
 from wirepas_backend_client.api import MQTTSettings
 from wirepas_backend_client.tools import ParserHelper, LoggerHelper
@@ -14,7 +14,13 @@ from wirepas_backend_client.management import Daemon
 
 
 def loop(
-    exit_signal, logger, data_queue, event_queue, response_queue, sleep_for=100
+    exit_signal,
+    logger,
+    data_queue,
+    event_queue,
+    response_queue,
+    sleep_for=100,
+    logfile_path=None,
 ):
     """
     Client loop
@@ -27,14 +33,18 @@ def loop(
     def get_data(exit_signal, q, block=True, timeout=60):
 
         while not exit_signal.is_set():
+
             try:
                 message = q.get(block=block, timeout=timeout)
             except queue.Empty:
                 continue
-            try:
-                logger.info(message.serialize())
-            except AttributeError:
-                continue
+
+            logger.info(message.serialize())
+
+            if logfile_path:
+                with open(logfile_path, "a") as traffic_log:
+                    traffic_log.write(json.dumps(message.serialize()))
+                    traffic_log.write("\n")
 
     @deferred_thread
     def consume_queue(exit_signal, q, block=True, timeout=60):
@@ -64,7 +74,7 @@ def main(settings, logger):
     response_queue = daemon.create_queue()
 
     # create the process queues
-    net = daemon.build(
+    daemon.build(
         "discovery",
         NetworkDiscovery,
         dict(
@@ -75,8 +85,6 @@ def main(settings, logger):
         ),
     )
 
-    print("MAIN", net.message_subscribe_handlers)
-
     daemon.set_loop(
         loop,
         dict(
@@ -85,6 +93,7 @@ def main(settings, logger):
             data_queue=data_queue,
             event_queue=event_queue,
             response_queue=response_queue,
+            logfile_path=settings.logfile_path,
         ),
     )
     daemon.start()
@@ -92,30 +101,38 @@ def main(settings, logger):
 
 if __name__ == "__main__":
 
-    try:
-        DEBUG_LEVEL = os.environ["WM_DEBUG_LEVEL"]
-    except KeyError:
-        DEBUG_LEVEL = "info"
-
     PARSER = ParserHelper(description="Default arguments")
 
     PARSER.add_file_settings()
     PARSER.add_mqtt()
-    PARSER.add_test()
     PARSER.add_database()
     PARSER.add_fluentd()
+    PARSER.record.add_argument(
+        "--logfile_path",
+        default=None,
+        action="store",
+        type=str,
+        help="Amount of seconds to lookup in the past.",
+    )
 
     SETTINGS = PARSER.settings(settings_class=MQTTSettings)
 
+    if SETTINGS.debug_level is None:
+        SETTINGS.debug_level = "info"
+
     if SETTINGS.sanity():
         LOGGER = LoggerHelper(
-            module_name="MQTT viewer", args=SETTINGS, level=DEBUG_LEVEL
+            module_name="MQTT viewer",
+            args=SETTINGS,
+            level=SETTINGS.debug_level,
         ).setup()
 
         # sets up the message_decoding which is picked up by the
         # message decoders
         LoggerHelper(
-            module_name="message_decoding", args=SETTINGS, level=DEBUG_LEVEL
+            module_name="message_decoding",
+            args=SETTINGS,
+            level=SETTINGS.debug_level,
         ).setup()
 
         main(SETTINGS, LOGGER)

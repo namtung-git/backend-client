@@ -17,8 +17,9 @@ install:
   - pip3 install .
 
 script:
-  - "./.ci/style-check.sh"
-  - "./.ci/build.sh"
+  - ./.ci/style-check.sh
+  - pytest -s -v
+  - ./.ci/build.sh
   - WM_BACKEND_CLI_CMD="python -m wirepas_backend_client.test.kpi_mesh" timeout --preserve-status 120 docker-compose -f tests/services/docker-compose.yml up
   - ./.ci/releases.sh
   - source releases.env

@@ -13,12 +13,14 @@ import enum
 class ApplicationTypes(enum.Enum):
     """ ApplicationTypes defines the library's message types mapping """
 
-    GenericMessage = 0
-    AdvertiserMessage = 1
-    BootDiagnosticsMessage = 2
-    NeighborDiagnosticsMessage = 3
-    NeighborScanMessage = 4
-    NodeDiagnosticsMessage = 5
-    TestNWMessage = 6
-    TrafficDiagnosticsMessage = 7
-    Ruuvi = 100
+    GenericMessage = enum.auto()
+    AdvertiserMessage = enum.auto()
+    BootDiagnosticsMessage = enum.auto()
+    NeighborDiagnosticsMessage = enum.auto()
+    NeighborScanMessage = enum.auto()
+    NodeDiagnosticsMessage = enum.auto()
+    TestNWMessage = enum.auto()
+    TrafficDiagnosticsMessage = enum.auto()
+    DiagnosticsMessage = enum.auto()
+    PositioningMessage = enum.auto()
+    Ruuvi = enum.auto()

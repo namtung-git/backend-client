@@ -38,3 +38,4 @@ run_informatio*
 **/*services.json
 
 certs/*
+settings.yml

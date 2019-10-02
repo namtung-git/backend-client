@@ -12,7 +12,7 @@
 import struct
 
 from .generic import GenericMessage
-from .types import ApplicationTypes
+from ..types import ApplicationTypes
 
 
 class NeighborDiagnosticsMessage(GenericMessage):
@@ -40,6 +40,8 @@ class NeighborDiagnosticsMessage(GenericMessage):
 
     def decode(self):
         """ Perform the payload decoding """
+        super().decode()
+
         s_address = struct.Struct("<I")
         i = 0
         j = 0
@@ -58,3 +60,15 @@ class NeighborDiagnosticsMessage(GenericMessage):
                 j += 7
             else:
                 break
+
+    def _apdu_serialization(self):
+        """ Extends the packet serialization """
+
+        for neighbor, fields in self.neighbor.items():
+            self.serialization[neighbor] = dict()
+            for field in fields:
+                self.serialization[neighbor][field] = self.neighbor[neighbor][
+                    field
+                ]
+
+        return self.serialization

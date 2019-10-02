@@ -7,22 +7,36 @@
         See file LICENSE for full license details.
 """
 
-from .advertiser import AdvertiserMessage
-from .bootdiagnostics import BootDiagnosticsMessage
-from .diagnostics import Diagnostics
-from .generic import GenericMessage
-from .neighbordiagnostics import NeighborDiagnosticsMessage
-from .nodediagnostics import NodeDiagnosticsMessage
-from .positioning import PositioningMessage
-from .ruuvi import RuuviMessage
-from .testnw import TestNWMessage
-from .trafficdiagnostics import TrafficDiagnosticsMessage
+from .decoders import (
+    AdvertiserMessage,
+    BootDiagnosticsMessage,
+    DiagnosticsMessage,
+    GenericMessage,
+    NeighborDiagnosticsMessage,
+    NodeDiagnosticsMessage,
+    PositioningMessage,
+    RuuviMessage,
+    TestNWMessage,
+    TrafficDiagnosticsMessage,
+)
 from .types import ApplicationTypes
 
 
 class MessageManager(object):
     """
     MessageManager
+
+    Interface that contains the source and destination endpoint
+    mapping to a specific message decoder.
+
+    Attributes:
+
+    _message_type (dict): maps the decoder name to an internal message type
+
+    _endpoint (dict): dictionary with source endpoint as key. Each key
+                          contains a dictionary as a value. The value's
+                          dictionary key is the destination endpoint.
+
 
     """
 
@@ -37,7 +51,7 @@ class MessageManager(object):
     _endpoint[100] = {100: TestNWMessage}
     _endpoint[200] = {200: AdvertiserMessage}
     _endpoint[238] = {238: PositioningMessage}
-    _endpoint[247] = {247: Diagnostics}
+    _endpoint[247] = {247: DiagnosticsMessage}
     _endpoint[251] = {255: TrafficDiagnosticsMessage}
     _endpoint[252] = {255: NeighborDiagnosticsMessage}
     _endpoint[253] = {255: NodeDiagnosticsMessage}

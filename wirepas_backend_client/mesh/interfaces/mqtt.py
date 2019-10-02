@@ -207,7 +207,7 @@ class NetworkDiscovery(MQTTObserver):
         def on_gateway_status_event_cb(payload, topic: list):
             """ Decodes an incoming gateway status event """
 
-            self.logger.info("status event %s", payload)
+            self.logger.debug("status event %s", payload)
             message = self.mqtt_topics.constructor(
                 "event", "status"
             ).from_payload(payload)
@@ -223,7 +223,7 @@ class NetworkDiscovery(MQTTObserver):
         @decode_topic_message
         def on_gateway_data_event_cb(data_message, topic: list):
             """ Decodes an incoming data event callback """
-            self.logger.info("data event: %s", data_message)
+            self.logger.debug("data event: %s", data_message)
             self.device_manager.add_from_mqtt_topic(
                 topic, data_message.source_address
             )
@@ -238,7 +238,7 @@ class NetworkDiscovery(MQTTObserver):
         def on_gateway_get_configs_cb(payload, topic: list):
             """ Decodes and incoming configuration response """
 
-            self.logger.info("configs response: %s", payload)
+            self.logger.debug("configs response: %s", payload)
             message = self.mqtt_topics.constructor(
                 "response", "get_configs"
             ).from_payload(payload)
@@ -255,7 +255,7 @@ class NetworkDiscovery(MQTTObserver):
         @topic_message
         def on_gateway_otap_status_cb(payload, topic: list):
             """ Decodes an otap status response """
-            self.logger.info("otap status response: %s", payload)
+            self.logger.debug("otap status response: %s", payload)
             message = self.mqtt_topics.constructor(
                 "response", "otap_status"
             ).from_payload(payload)
@@ -269,7 +269,7 @@ class NetworkDiscovery(MQTTObserver):
         @topic_message
         def on_gateway_set_config_response_cb(payload, topic: list):
             """ Decodes a set config response """
-            self.logger.info("set config response: %s", payload)
+            self.logger.debug("set config response: %s", payload)
             message = self.mqtt_topics.constructor(
                 "response", "set_config"
             ).from_payload(payload)
@@ -283,7 +283,7 @@ class NetworkDiscovery(MQTTObserver):
         @topic_message
         def on_gateway_data_response_cb(payload, topic: list):
             """ Decodes a data response """
-            self.logger.info("send data response: %s", payload)
+            self.logger.debug("send data response: %s", payload)
             self.device_manager.add_from_mqtt_topic(topic)
             message = self.mqtt_topics.constructor(
                 "response", "send_data"
@@ -299,7 +299,7 @@ class NetworkDiscovery(MQTTObserver):
         @topic_message
         def on_gateway_load_scratchpad_response_cb(payload, topic: list):
             """ """
-            self.logger.info("load scratchpad response: %s", payload)
+            self.logger.debug("load scratchpad response: %s", payload)
             message = self.mqtt_topics.constructor(
                 "response", "otap_load_scratchpad"
             ).from_payload(payload)
@@ -313,7 +313,7 @@ class NetworkDiscovery(MQTTObserver):
         @topic_message
         def on_gateway_process_scratchpad_cb(payload, topic: list):
             """ """
-            self.logger.info("process scratchpad response: %s", payload)
+            self.logger.debug("process scratchpad response: %s", payload)
             message = self.mqtt_topics.constructor(
                 "response", "otap_process_scratchpad"
             ).from_payload(payload)

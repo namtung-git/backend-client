@@ -9,10 +9,11 @@
         Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 """
+
 import struct
 
 from .generic import GenericMessage
-from .types import ApplicationTypes
+from ..types import ApplicationTypes
 
 
 class BootDiagnosticsMessage(GenericMessage):
@@ -38,33 +39,36 @@ class BootDiagnosticsMessage(GenericMessage):
         cur_seq              uint16
     """
 
+    _apdu_format = "<BBBBBBHHHBHHIIIH"
+    _apdu_fields = (
+        "boot_count",
+        "node_role",
+        "sw_dev_version",
+        "sw_maint_version",
+        "sw_minor_version",
+        "sw_major_version",
+        "scratchpad_sequence",
+        "hw_magic",
+        "stack_profile",
+        "otap_enabled",
+        "boot_line_number",
+        "file_hash",
+        "stack_trace_0",
+        "stack_trace_1",
+        "stack_trace_2",
+        "cur_seq",
+    )
+
     def __init__(self, *args, **kwargs) -> "BootDiagnosticsMessage":
 
         self.data_payload = None
         super(BootDiagnosticsMessage, self).__init__(*args, **kwargs)
         self.type = ApplicationTypes.BootDiagnosticsMessage
-        self.apdu = None
         self.decode()
 
     def decode(self):
         """ Perform the payload decoding """
-        apdu_values = struct.unpack("<BBBBBBHHHBHHIIIH", self.data_payload)
-        apdu_names = (
-            "boot_count",
-            "node_role",
-            "sw_dev_version",
-            "sw_maint_version",
-            "sw_minor_version",
-            "sw_major_version",
-            "scratchpad_sequence",
-            "hw_magic",
-            "stack_profile",
-            "otap_enabled",
-            "boot_line_number",
-            "file_hash",
-            "stack_trace_0",
-            "stack_trace_1",
-            "stack_trace_2",
-            "cur_seq",
-        )
-        self.apdu = self.map_list_to_dict(apdu_names, apdu_values)
+
+        super().decode()
+        apdu_values = struct.unpack(self._apdu_format, self.data_payload)
+        self.apdu = self.map_list_to_dict(self._apdu_fields, apdu_values)

@@ -180,7 +180,7 @@ class LoggerHelper:
                 "Fluentd hostname not defined in settings. Skipping!"
             )
 
-    def setup(self, level: str = None):
+    def setup(self, level: str = None, propagate: bool = False):
         """
         Constructs the logger with the system arguments provided upon
         the object creation.
@@ -191,6 +191,7 @@ class LoggerHelper:
 
         self.add_stdout()
         self.add_fluentd()
+        self._logger.propagate = propagate
 
         return self._logger
 

@@ -21,9 +21,9 @@ def decode_topic_message(f):
         try:
             topic = message.topic
             topic_items = topic.split("/")
-            source_endpoint = topic_items[-2]
-            destination_endpoint = topic_items[-1]
-            network_id = topic_items[-3]
+            source_endpoint = int(topic_items[-2])
+            destination_endpoint = int(topic_items[-1])
+            network_id = int(topic_items[-3])
             data = MessageManager.map(
                 source_endpoint, destination_endpoint
             ).from_bus(message.payload)

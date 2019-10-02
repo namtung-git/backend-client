@@ -125,7 +125,7 @@ if __name__ == "__main__":
         "--last_n_seconds",
         default=6000,
         action="store",
-        type=str,
+        type=int,
         help="Amount of seconds to lookup in the past.",
     )
     PARSER.query.add_argument(

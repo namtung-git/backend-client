@@ -8,30 +8,24 @@
         Copyright 2019 Wirepas Ltd. All Rights Reserved.
         See file LICENSE.txt for full license details.
 """
-import datetime
-import struct
 
 from .generic import GenericMessage
-from .types import ApplicationTypes
+from ..types import ApplicationTypes
 
 
 class RuuviMessage(GenericMessage):
     """
     RuuviMessage
 
-    Represents a message sent by advertiser devices.
-
-    Attributes:
-        SOURCE_EP (int): Ruuvi source endpoint
-        DESTINATION_EP (int): Ruuvi destination endpoint
-        TYPES (dict): APDU's types
-        MESSAGE_COUNTER (int): number of decoded messages
+    Represents a message sent by the Ruuvi application.
     """
 
-    SOURCE_EP = 11
-    DESTINATION_EP = 11
+    _source_endpoint = 11
+    _destination_endpoint = 11
 
-    TYPES = {
+    _apdu_format = "tlv"
+    _tlv_header = "<B B"
+    _tlv_fields = {
         1: {"name": "counter", "unit": 1, "format": "< H", "type": "uint16"},
         2: {
             "name": "temperature",
@@ -56,16 +50,13 @@ class RuuviMessage(GenericMessage):
         7: {"name": "acc_z", "unit": 1e-03, "format": "< i", "type": "int32"},
     }
 
-    MESSAGE_COUNTER = 0
-
     def __init__(self, *args, **kwargs) -> "RuuviMessage":
 
         self.data_payload = None
+        self.apdu = dict()
         super(RuuviMessage, self).__init__(*args, **kwargs)
         self.type = ApplicationTypes.Ruuvi
-        self.timestamp = self.rx_time_ms_epoch
-        self.apdu_content = dict()
-        self.decode_time = None
+        self._apdu_fields = self._tlv_fields
         self.decode()
 
     def decode(self) -> None:
@@ -107,56 +98,21 @@ class RuuviMessage(GenericMessage):
 
         """
 
-        self.decode_time = datetime.datetime.utcnow().isoformat("T")
+        super().decode()
+        self.tlv_decoder(self.data_payload, self._tlv_header, self._tlv_fields)
 
-        s_header = struct.Struct("<B B")
+    def _tlv_value_decoder(
+        self, apdu, tlv_fields, tlv_id, tlv_name, tlv_value
+    ):
+        apdu[tlv_name] = tlv_value[0] * tlv_fields[tlv_id]["unit"]
+        return apdu
 
-        _start = 0
-        _end = 0
-
-        try:
-            while True:
-
-                # grab header
-                _start = _end
-                _end = _start + s_header.size
-
-                if _end > self.data_size:
-                    break
-
-                tlv_header = s_header.unpack(self.data_payload[_start:_end])
-
-                # switch on type and unpack
-                tlv_id = int(tlv_header[0])
-                tlv_name = self.TYPES[tlv_id]["name"]
-                tlv_field_format = struct.Struct(self.TYPES[tlv_id]["format"])
-
-                _start = _end
-                _end = _start + tlv_field_format.size
-
-                tlv_value = tlv_field_format.unpack(
-                    self.data_payload[_start:_end]
-                )[0]
-
-                self.apdu_content[tlv_name] = (
-                    tlv_value * self.TYPES[tlv_id]["unit"]
-                )
-                self.apdu_content["{}.raw".format(tlv_name)] = tlv_value
-
-        except KeyError:
-            raise
-
-        if self.data_payload:
-            self.data_payload = self.data_payload.hex()
-
-    def serialize(self):
-
-        self.serialization = super().serialize()
+    def _apdu_serialization(self):
 
         try:
-            for key in self.apdu_content:
+            for key in self.apdu:
                 if ".raw" not in key:
-                    self.serialization[key] = self.apdu_content[key]
+                    self.serialization[key] = self.apdu[key]
         except KeyError:
             pass
 

@@ -12,7 +12,7 @@
 import struct
 
 from .generic import GenericMessage
-from .types import ApplicationTypes
+from ..types import ApplicationTypes
 
 
 class TrafficDiagnosticsMessage(GenericMessage):
@@ -41,36 +41,42 @@ class TrafficDiagnosticsMessage(GenericMessage):
         max_aloha_slot_usage            uint8
     """
 
+    _apdu_format = "<HBBHHBBBBBBBBBB"
+    _apdu_fields = (
+        "access_cycles",
+        "cluster_channel",
+        "channel_reliability",
+        "rx_amount",
+        "tx_amount",
+        "aloha_rx_ratio",
+        "reserved_rx_success_ratio",
+        "data_rx_ratio",
+        "rx_duplicate_ratio",
+        "cca_success_ratio",
+        "broadcast_ratio",
+        "failed_unicast_ratio",
+        "max_reserved_slot_usage",
+        "average_reserved_slot_usage",
+        "max_aloha_slot_usage",
+    )
+
     def __init__(self, *args, **kwargs) -> "TrafficDiagnosticsMessage":
 
         self.data_payload = None
+        self.apdu = None
 
         super(TrafficDiagnosticsMessage, self).__init__(*args, **kwargs)
         self.type = ApplicationTypes.TrafficDiagnosticsMessage
-        self.apdu = None
         self.decode()
 
     def decode(self):
         """ Perform the payload decoding """
-        apdu_values = struct.unpack("<HBBHHBBBBBBBBBB", self.data_payload)
-        apdu_names = (
-            "access_cycles",
-            "cluster_channel",
-            "channel_reliability",
-            "rx_amount",
-            "tx_amount",
-            "aloha_rx_ratio",
-            "reserved_rx_success_ratio",
-            "data_rx_ratio",
-            "rx_duplicate_ratio",
-            "cca_success_ratio",
-            "broadcast_ratio",
-            "failed_unicast_ratio",
-            "max_reserved_slot_usage",
-            "average_reserved_slot_usage",
-            "max_aloha_slot_usage",
-        )
-        self.apdu = self.map_list_to_dict(apdu_names, apdu_values)
+
+        super().decode()
+
+        apdu_values = struct.unpack(self._apdu_format, self.data_payload)
+
+        self.apdu = self.map_list_to_dict(self._apdu_fields, apdu_values)
         # 4.0 interpretation of message fields:
         self.apdu["cluster_members"] = self.apdu["access_cycles"] & 0xFF
         self.apdu["cluster_headnode_members"] = self.apdu["access_cycles"] >> 8

@@ -60,16 +60,16 @@ setup(
     packages=find_packages(exclude=["contrib", "docs", "tests", "examples"]),
     install_requires=get_requirements(requirements_file),
     include_package_data=True,
+    package_dir={
+        "wirepas_backend_client.messages": "wirepas_backend_client/messages"
+    },
+    package_data={
+        "wirepas_backend_client.messages": ["decoders/diagnostics.json"]
+    },
     data_files=[
         (
             "./wirepas_backend_client-extras/package",
-            [
-                "LICENSE",
-                "README.md",
-                "requirements.txt",
-                "wirepas_backend_client/messages/diag_cbor_id.json",
-                "setup.py",
-            ],
+            ["LICENSE", "README.md", "requirements.txt", "setup.py"],
         ),
         (
             "./wirepas_backend_client-extras/examples",

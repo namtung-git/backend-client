@@ -12,7 +12,7 @@
 import struct
 
 from .generic import GenericMessage
-from .types import ApplicationTypes
+from ..types import ApplicationTypes
 
 
 class NodeDiagnosticsMessage(GenericMessage):
@@ -72,86 +72,95 @@ class NodeDiagnosticsMessage(GenericMessage):
         4.2: pending_reroute_packets  uint8
     """
 
+    _GT_42 = 59
+
+    _apdu_format = {
+        ">=4.2": "<HBBBBBBBBHHHHHHHHBBHBHBBBHBBBBBBBBBBBBBBBBBBHBBBBBBBBB",
+        "<=4.0": "<HBBBBBBBBHHHHHHHHBBHBHBBBHBBBBBBBBBBBBBBBBBBHB",
+    }
+
+    _apdu_fields = (
+        "access_cycle",
+        "role",
+        "voltage",
+        "max_buffer_usage",
+        "average_buffer_usage",
+        "mem_alloc_fails",
+        "normal_priority_buf_delay",
+        "high_priority_buf_delay",
+        "scans",
+        "dl_delay_avg_0",
+        "dl_delay_min_0",
+        "dl_delay_max_0",
+        "dl_delay_samples_0",
+        "dl_delay_avg_1",
+        "dl_delay_min_1",
+        "dl_delay_max_1",
+        "dl_delay_samples_1",
+        "dropped_packets_0",
+        "dropped_packets_1",
+        "route_address_lo",
+        "route_address_hi",
+        "cost_info_next_hop_0_lo",
+        "cost_info_next_hop_0_hi",
+        "cost_info_cost_0",
+        "cost_info_link_quality_0",
+        "cost_info_next_hop_1_lo",
+        "cost_info_next_hop_1_hi",
+        "cost_info_cost_1",
+        "cost_info_link_quality_1",
+        "events_0",
+        "events_1",
+        "events_2",
+        "events_3",
+        "events_4",
+        "events_5",
+        "events_6",
+        "events_7",
+        "events_8",
+        "events_9",
+        "events_10",
+        "events_11",
+        "events_12",
+        "events_13",
+        "events_14",
+        "duty_cycle",
+        "current_antenna",
+        "pending_ucast_cluster",
+        "pending_ucast_members",
+        "pending_bcast_le_members",
+        "pending_bcast_ll_members",
+        "pending_bcast_unack",
+        "pending_expire_queue",
+        "pending_bcast_next_hop",
+        "pending_reroute_packets",
+    )
+
     def __init__(self, *args, **kwargs) -> "NodeDiagnosticsMessage":
 
         self.data_payload = None
+        self.apdu = None
+
         super(NodeDiagnosticsMessage, self).__init__(*args, **kwargs)
         self.type = ApplicationTypes.NodeDiagnosticsMessage
-        self.apdu = None
         self.decode()
 
     def decode(self):
         """ Perform the payload decoding """
+        super().decode()
 
-        if len(self.data_payload) > 59:
+        if len(self.data_payload) > self._GT_42:
             # Node Diagnostics with buffer statistics (4.2 and newer)
             apdu_values = struct.unpack(
-                "<HBBBBBBBBHHHHHHHHBBHBHBBBHBBBBBBBBBBBBBBBBBBHBBBBBBBBB",
-                self.data_payload,
+                self._apdu_format[">=4.2"], self.data_payload
             )
         else:
             # Node Diagnostics without buffer statistics (4.0 and older)
             apdu_values = struct.unpack(
-                "<HBBBBBBBBHHHHHHHHBBHBHBBBHBBBBBBBBBBBBBBBBBBHB",
-                self.data_payload,
+                self._apdu_format["<=4.0"], self.data_payload
             )
-        apdu_names = (
-            "access_cycle",
-            "role",
-            "voltage",
-            "max_buffer_usage",
-            "average_buffer_usage",
-            "mem_alloc_fails",
-            "normal_priority_buf_delay",
-            "high_priority_buf_delay",
-            "scans",
-            "dl_delay_avg_0",
-            "dl_delay_min_0",
-            "dl_delay_max_0",
-            "dl_delay_samples_0",
-            "dl_delay_avg_1",
-            "dl_delay_min_1",
-            "dl_delay_max_1",
-            "dl_delay_samples_1",
-            "dropped_packets_0",
-            "dropped_packets_1",
-            "route_address_lo",
-            "route_address_hi",
-            "cost_info_next_hop_0_lo",
-            "cost_info_next_hop_0_hi",
-            "cost_info_cost_0",
-            "cost_info_link_quality_0",
-            "cost_info_next_hop_1_lo",
-            "cost_info_next_hop_1_hi",
-            "cost_info_cost_1",
-            "cost_info_link_quality_1",
-            "events_0",
-            "events_1",
-            "events_2",
-            "events_3",
-            "events_4",
-            "events_5",
-            "events_6",
-            "events_7",
-            "events_8",
-            "events_9",
-            "events_10",
-            "events_11",
-            "events_12",
-            "events_13",
-            "events_14",
-            "duty_cycle",
-            "current_antenna",
-            "pending_ucast_cluster",
-            "pending_ucast_members",
-            "pending_bcast_le_members",
-            "pending_bcast_ll_members",
-            "pending_bcast_unack",
-            "pending_expire_queue",
-            "pending_bcast_next_hop",
-            "pending_reroute_packets",
-        )
-        self.apdu = self.map_list_to_dict(apdu_names, apdu_values)
+
+        self.apdu = self.map_list_to_dict(self._apdu_fields, apdu_values)
 
         # Create 24bit fields from 16bit and 8bit parts.
         self.apdu["route_address"] = self.apdu["route_address_lo"] | (
