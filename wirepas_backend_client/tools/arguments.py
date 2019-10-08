@@ -705,11 +705,19 @@ class ParserHelper:
         )
 
         self.influx.add_argument(
-            "--no-influx_ssl",
-            action="store_false",
+            "--influx_skip_ssl",
+            action="store_true",
+            default=os.environ.get("WM_SERVICES_INFLUX_SKIP_SSL", False),
+            required=False,
+            help="When true it will not try to create a TLS handshake",
+        )
+
+        self.influx.add_argument(
+            "--influx_skip_ssl_check",
+            action="store_true",
             default=os.environ.get("WM_SERVICES_INFLUX_UNSECURE", False),
             required=False,
-            help="use https when talking to the API",
+            help="when true, allows unknown certificates to be used with the TLS connection.",
         )
 
         self.influx.add_argument(

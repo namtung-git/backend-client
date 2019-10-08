@@ -1,4 +1,32 @@
 # Copyright 2019 Wirepas Ltd
+#
+# Here's an example of a settings file that connects towards a secure
+# instance port.
+#
+# Pay attention to the port and ssl flags.
+#
+# ---
+# influx_username: user
+# influx_password: userpwd
+# influx_database: "wirepas"
+# influx_hostname: hostname or ip
+#
+# influx_port: "8886"
+# influx_skip_ssl: false #(default)
+# influx_skip_ssl_check: false #(default)
+#
+# In some special cases you might want to use ssl but ignore the
+# certificate validity (self hosted). For that, make sure you use:
+#
+# influx_skip_ssl: false
+# influx_skip_ssl_check: true
+#
+# If you want to use a fully non secure port, please update the port number
+# and set the flags accordingly:
+#
+# influx_skip_ssl: true
+# influx_skip_ssl_check: true
+
 
 import os
 import requests
@@ -25,7 +53,6 @@ def main(settings, logger):
 
     try:
         influx.connect()
-
         if settings.query_statement:
             result_set = influx.query(statement=settings.query_statement)
             if result_set:
@@ -111,6 +138,7 @@ def main(settings, logger):
 
     except requests.exceptions.ConnectionError:
         results = "Could not find host"
+        raise
 
     return results, influx
 

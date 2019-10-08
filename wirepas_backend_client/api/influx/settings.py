@@ -30,9 +30,11 @@ class InfluxSettings(Settings):
         self.influx_hostname = None
         self.influx_database = None
         self.influx_port = None
-        self.verify_ssl = True
-        self.ssl = True
+        self.verify_ssl = None
+        self.ssl = None
         self.write_csv = None
+        self.influx_skip_ssl = None
+        self.influx_skip_ssl_check = None
 
         super(InfluxSettings, self).__init__(settings)
 
@@ -41,6 +43,8 @@ class InfluxSettings(Settings):
         self.hostname = self.influx_hostname
         self.database = self.influx_database
         self.port = self.influx_port
+        self.verify_ssl = not self.influx_skip_ssl_check
+        self.ssl = not self.influx_skip_ssl
 
         if self.write_csv:
             if ".csv" not in self.write_csv:
