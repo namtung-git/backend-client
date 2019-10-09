@@ -1,7 +1,7 @@
 # flake8: noqa
 
 from wirepas_backend_client.mesh.interfaces.remote_api import *
-from wirepas_backend_client.mesh.interfaces import msap, csap
+from wirepas_backend_client.mesh.services import msap, csap
 
 
 def test_remote_api_commands():

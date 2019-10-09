@@ -4,7 +4,7 @@
         See file LICENSE for full license details.
 """
 
-from . import interfaces
-from . import services
+from . import msap
+from . import csap
 
-__all__ = ["interfaces", "services"]
+__all__ = ["msap", "csap"]
