@@ -16,7 +16,6 @@ from .remote_api import (
     End,
     Cancel,
     Update,
-    MeshServices,
     WriteMSAP,
     ReadMSAP,
     ScratchpadStatus,

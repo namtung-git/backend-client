@@ -34,6 +34,10 @@ class Attribute:
         return self._value
 
     @property
+    def format(self):
+        return self._format
+
+    @property
     def service_class(self):
         return self._service_class
 
@@ -47,4 +51,10 @@ class Attribute:
 
     @property
     def bytes(self):
-        return struct.pack(self._format, self._value)
+        return bytearray(
+            struct.pack(self._format, self.identifier, self._value)
+        )
+
+    def __str__(self):
+        identity = f"{self.name}{self._identifier, self._value}"
+        return identity

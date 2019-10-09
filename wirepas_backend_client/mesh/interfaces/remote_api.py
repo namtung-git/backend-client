@@ -12,6 +12,7 @@
 """
 
 import struct
+import logging
 
 
 class RemoteAPI:
@@ -40,14 +41,14 @@ class RemoteAPI:
 
     """
 
-    def __init__(self):
+    def __init__(self, logger=None):
         super().__init__()
         self._request = dict(
             source_endpoint=255,
             destination_endpoint=240,
             type=None,
             length=None,
-            pdu=list(),
+            pdu=bytearray(),
             pdu_format="< BB",
         )
         self._response = dict(
@@ -55,10 +56,11 @@ class RemoteAPI:
             destination_endpoint=250,
             type=None,
             length=None,
-            pdu=list(),
+            pdu=bytearray(),
             pdu_format="< BB",
         )
 
+        self.logger = logger or logging.getLogger(__name__)
         self._request["length"] = len(self._request["pdu_format"])
         self._response["length"] = len(self._response["pdu_format"])
 
@@ -101,6 +103,8 @@ class RemoteAPI:
     @request_pdu.setter
     def request_pdu(self, pdu):
         self._request["pdu"] = pdu
+        self._request["pdu_format"] += "{}s".format(len(pdu))
+        self._request["length"] = struct.calcsize(self._request["pdu_format"])
 
     @request_pdu_format.setter
     def request_pdu_format(self, pdu_format):
@@ -143,20 +147,16 @@ class RemoteAPI:
     def response_pdu(self, pdu):
         self._response["pdu"] = pdu
 
-    @response_pdu_format.setter
-    def response_pdu_format(self, pdu_format):
-        self._response["pdu_format"] = pdu_format
-        self._response["length"] = len(self._response["pdu_format"])
-
     def encode(self) -> bytes:
         """ returns a byte array with the command payload"""
-        if self.request_pdu:
+        self.logger.debug("Encoding request: %s", self._request)
 
+        if self.request_pdu:
             payload = struct.pack(
                 self.request_pdu_format,
                 self.request_type,
                 self.request_length,
-                *self.request_pdu,
+                self.request_pdu,
             )
 
         else:
@@ -170,11 +170,84 @@ class RemoteAPI:
         """ returns a dictionary with the decoded values"""
         raise NotImplementedError
 
+    @staticmethod
+    def pack(fmt, values, expand=False):
+        if expand:
+            return bytearray(struct.pack(fmt, *values))
+        return bytearray(struct.pack(fmt, values))
+
     def __str__(self):
 
         identity = f"RemoteAPI:{self.__class__.__name__}({self.request_type:02x},{self.response_type:02x})"
+        return identity
+
+
+class MeshServices(RemoteAPI):
+    """MeshServices"""
+
+    def __init__(self):
+        super().__init__()
+        self._attribute = None
+        self._service_class = None
+
+    @property
+    def attribute(self):
+        return self._attribute
+
+    @property
+    def service_class(self):
+        return self._service_class
+
+    @attribute.setter
+    def attribute(self, attribute):
+
+        if self.service_class != attribute.service_class:
+            raise ValueError("Unknown attribute for desired mesh service")
+
+        # add id which is H
+        self._attribute = attribute
+        self.request_pdu = attribute.bytes
+
+    def __str__(self):
+
+        identity = super().__str__()
+
+        if self._service_class is not None:
+            identity += f":{self.attribute}"
 
         return identity
+
+
+class QueueTime(RemoteAPI):
+    """QueueTimeWrite"""
+
+    def __init__(self):
+        super().__init__()
+        self.request_type = 0x4F
+        self.response_type = 0xCF
+        self._priority = None
+        self._queue_time = None
+
+    @property
+    def priority(self):
+        return self._priority
+
+    @property
+    def time(self):
+        return self._queue_time
+
+    @priority.setter
+    def priority(self, priority):
+        self._priority = priority
+
+    @time.setter
+    def time(self, queue_time):
+        if self._priority is None:
+            raise ValueError("priority must be set before time")
+        self._queue_time = queue_time
+        self.request_pdu = self.pack(
+            "<BH", [self._priority, self._queue_time], expand=True
+        )
 
 
 class Ping(RemoteAPI):
@@ -203,17 +276,12 @@ class BeginWithLock(RemoteAPI):
         self._feature_lock_key_size = 16
         if len(feature_lock_key) == 16:
             self._feature_lock_key = feature_lock_key
-            self.request_pdu = self._feature_lock_key
+            self.request_pdu = self.pack("16s", self._feature_lock_key)
         else:
             raise ValueError("Improper BEGIN lock key size")
 
         self.request_type = 0x02
         self.response_type = 0x82
-        self.request_pdu_format += self._feature_lock_key_format()
-
-    def _feature_lock_key_format(self):
-        """ Format for packing lock feature key"""
-        return "B" * self._feature_lock_key_size
 
     @property
     def feature_lock_key(self):
@@ -256,42 +324,16 @@ class Update(RemoteAPI):
         super().__init__()
         self.request_type = 0x05
         self.response_type = 0x85
-
-    def timer(self, value):
-        self.request_pdu_format += "H"
-        self.countdown = [value]
-        self.request_pdu = self.countdown
-
-
-class MeshServices(RemoteAPI):
-    """MeshServices"""
-
-    def __init__(self):
-        super().__init__()
-        self._attribute = None
-        self._service_class = None
+        self._countdown = 0
 
     @property
-    def attribute(self):
-        return self._attribute.identifier
+    def countdown(self):
+        return self._countdown
 
-    @property
-    def service_class(self):
-        return self._service_class
-
-    @attribute.setter
-    def attribute(self, attribute):
-
-        if self.service_class != attribute.service_class:
-            raise ValueError("Unknown attribute for desired mesh service")
-        # add id which is H
-        self._attribute = attribute
-        self.request_pdu_format += "H"
-        self.request_pdu = [attribute.identifier]
-
-        # add attribute value
-        self.request_pdu.append(attribute.bytes)
-        self.request_pdu_format += "{}s".format(len(self.request_pdu))
+    @countdown.setter
+    def countdown(self, countdown):
+        self._countdown = countdown
+        self.request_pdu = self.pack("<H", self._countdown)
 
 
 class WriteMSAP(MeshServices):
@@ -339,8 +381,7 @@ class ScratchpadUpdate(RemoteAPI):
     @sequence.setter
     def sequence(self, value: int):
         self._sequence = value
-        self.request_pdu = [self._sequence]
-        self.request_pdu_format += "B"
+        self.request_pdu = self.pack("<B", self._sequence)
 
 
 class WriteCSAP(MeshServices):
@@ -365,7 +406,7 @@ class ReadCSAP(MeshServices):
         self._service_class = "CSAP"
 
 
-class QueueTimeWrite(RemoteAPI):
+class QueueTimeWrite(QueueTime):
     """QueueTimeWrite"""
 
     def __init__(self):
@@ -374,7 +415,7 @@ class QueueTimeWrite(RemoteAPI):
         self.response_type = 0xCF
 
 
-class QueueTimeRead(RemoteAPI):
+class QueueTimeRead(QueueTime):
     """QueueTimeRead"""
 
     def __init__(self):
