@@ -48,8 +48,8 @@
 
 ## Introduction
 
-The Backend Client is a tool to, primarily, interact with
-a [gateway][wirepas_gateway] compliant with the Wirepas Backend to Gateway API.
+The Backend Client is a tool to serve as a decoder and a test framework where you can extend the existing interfaces to develop your own test cases. Interactions with
+a [gateway][wirepas_gateway] must be compliant with the Wirepas Backend to Gateway API.
 
 In addition to the interaction with the Backend to Gateway Public API,
 the Backend Client has also support for Wirepas Positioning Engine and Wirepas
@@ -750,7 +750,7 @@ To run the Backend Client using docker compose, drop or move the settings
 file in **container/.settings.yml** and start the service with:
 
 ```shell
-    docker-compose container/slim/docker-compose.yml up
+    docker-compose container/docker-compose.yml up
 ```
 
 By default this will start the [MQTT viewer example][examples_mqtt_viewer].
@@ -778,7 +778,7 @@ Alternatively you can also build using the docker-compose.yml present in
 the root of the directory:
 
 ```shell
-    docker-compose -f container/slim/docker-compose.yml  build
+    docker-compose -f container/docker-compose.yml  build
 ```
 
 ## Source documentation
