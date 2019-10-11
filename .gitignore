@@ -39,3 +39,5 @@ run_informatio*
 
 certs/*
 settings.yml
+tests/services/wait-for-it/*
+.*secret*

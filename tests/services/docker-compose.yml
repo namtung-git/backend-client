@@ -5,28 +5,26 @@ services:
         image: mysql/mysql-server:5.7
         env_file:
             - ./test-secrets
-
-        restart: always
+        restart: "no"
         expose:
             - 3306
-
         volumes:
             - storage:/var/lib/mysql/
 
     mosquitto:
         container_name: mosquitto
         image: wirepas/mosquitto
-        restart: always
-
-        env_file:
-            - ./test-secrets
+        restart: "no"
         expose:
             - 1883
+        env_file:
+            - ./test-secrets
 
     backend-client:
         restart: always
         container_name: backend-client
         image: wirepas/backend-client:dev
+        restart: "no"
         build:
             dockerfile: container/slim/Dockerfile
             context: ../..
@@ -35,11 +33,18 @@ services:
             - mosquitto
             - mysql
 
+        environment:
+            - WM_SERVICES_WNT_HOSTNAME=${WNT_HOSTNAME}
+            - WM_SERVICES_WNT_USERNAME=${WNT_ADMIN_USERNAME}
+            - WM_SERVICES_WNT_PASSWORD=${WNT_ADMIN_PASSWORD}
+            - WM_SERVICES_WNT_WS_PROTOCOL=3
+
         env_file:
             - ./test-secrets
 
         volumes:
             - ./.settings.yml:/home/wirepas/vars/settings.yml
+            - ./wait-for-it:/usr/bin/tools/wait-for-it
 
         command: ${WM_BACKEND_CLI_CMD}
 
