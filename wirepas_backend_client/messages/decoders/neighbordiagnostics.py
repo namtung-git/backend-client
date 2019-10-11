@@ -30,6 +30,9 @@ class NeighborDiagnosticsMessage(GenericMessage):
             rssi             uint8
     """
 
+    _source_endpoint = 252
+    _destination_endpoint = 255
+
     def __init__(self, *args, **kwargs) -> "NeighborDiagnosticsMessage":
 
         self.data_payload = None

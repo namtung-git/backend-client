@@ -876,20 +876,6 @@ class MySQL(object):
 
         # Put first to received packets to get the received packet id
         self.put_to_received_packets(message)
-
-        # Firmware version contains values of major.minor.maint.devel, all 8
-        # bytes
-        firmware_version = message.apdu["sw_major_version"]
-        firmware_version = (
-            firmware_version * 256 + message.apdu["sw_minor_version"]
-        )
-        firmware_version = (
-            firmware_version * 256 + message.apdu["sw_maint_version"]
-        )
-        firmware_version = (
-            firmware_version * 256 + message.apdu["sw_dev_version"]
-        )
-
         query = (
             "INSERT INTO diagnostic_boot "
             "(received_packet, boot_count, node_role, firmware_version, "
@@ -900,7 +886,7 @@ class MySQL(object):
             "{}, {}, {}, {}, {});".format(
                 message.apdu["boot_count"],
                 message.apdu["node_role"],
-                firmware_version,
+                message.apdu["firmware_version"],
                 message.apdu["scratchpad_sequence"],
                 message.apdu["hw_magic"],
                 message.apdu["stack_profile"],
@@ -925,8 +911,6 @@ class MySQL(object):
 
         # Remember the last received packet (that was received_packets)
         last_received_packet = self.cursor.lastrowid
-
-        voltage = float(message.apdu["voltage"]) / 100.0 + 2.0
 
         pending_ucast_cluster = "NULL"
         pending_ucast_members = "NULL"
@@ -996,7 +980,7 @@ class MySQL(object):
             "{},{},{},{},{},{},{},{},{});".format(
                 message.apdu["access_cycle"],
                 message.apdu["role"],
-                voltage,
+                message.apdu["voltage"],
                 message.apdu["max_buffer_usage"],
                 message.apdu["average_buffer_usage"],
                 message.apdu["mem_alloc_fails"],

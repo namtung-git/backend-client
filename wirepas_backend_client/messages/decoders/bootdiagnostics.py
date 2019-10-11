@@ -37,7 +37,13 @@ class BootDiagnosticsMessage(GenericMessage):
         file_hash            uint16
         stack_trace[0..2]    uint32
         cur_seq              uint16
+
+    Note:
+        stack_trace 1 and 2 are currently unused
     """
+
+    _source_endpoint = 254
+    _destination_endpoint = 255
 
     _apdu_format = "<BBBBBBHHHBHHIIIH"
     _apdu_fields = (
@@ -72,3 +78,14 @@ class BootDiagnosticsMessage(GenericMessage):
         super().decode()
         apdu_values = struct.unpack(self._apdu_format, self.data_payload)
         self.apdu = self.map_list_to_dict(self._apdu_fields, apdu_values)
+
+        firmware_version = self.apdu["sw_major_version"]
+        firmware_version = (
+            firmware_version * 256 + self.apdu["sw_minor_version"]
+        )
+        firmware_version = (
+            firmware_version * 256 + self.apdu["sw_maint_version"]
+        )
+        firmware_version = firmware_version * 256 + self.apdu["sw_dev_version"]
+
+        self.apdu["firmware_version"] = firmware_version

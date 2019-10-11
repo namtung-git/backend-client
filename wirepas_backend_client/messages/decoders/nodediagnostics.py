@@ -30,7 +30,7 @@ class NodeDiagnosticsMessage(GenericMessage):
         mem_alloc_fails               uint8
         normal_priority_buf_delay     uint8
         high_priority_buf_delay       uint8
-        scans                         uint8
+        network_scans                 uint8
         3.x: dl_delay_avg_0           uint16
           4.0: lltx_msg_w_ack         uint16
         3.x: dl_delay_min_0           uint16
@@ -72,6 +72,9 @@ class NodeDiagnosticsMessage(GenericMessage):
         4.2: pending_reroute_packets  uint8
     """
 
+    _source_endpoint = 253
+    _destination_endpoint = 255
+
     _GT_42 = 59
 
     _apdu_format = {
@@ -88,7 +91,7 @@ class NodeDiagnosticsMessage(GenericMessage):
         "mem_alloc_fails",
         "normal_priority_buf_delay",
         "high_priority_buf_delay",
-        "scans",
+        "network_scans",
         "dl_delay_avg_0",
         "dl_delay_min_0",
         "dl_delay_max_0",
@@ -161,6 +164,8 @@ class NodeDiagnosticsMessage(GenericMessage):
             )
 
         self.apdu = self.map_list_to_dict(self._apdu_fields, apdu_values)
+
+        self.apdu["voltage"] = float(self.apdu["voltage"]) / 100.0 + 2.0
 
         # Create 24bit fields from 16bit and 8bit parts.
         self.apdu["route_address"] = self.apdu["route_address_lo"] | (
