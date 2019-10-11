@@ -244,6 +244,7 @@ class Influx(object):
         print(__query)
         try:
             result = self.query(__query)[measurement]
+            result.index.name = "Timestamp"
         except KeyError:
             result = pandas.DataFrame()
 
@@ -263,9 +264,12 @@ class Influx(object):
         )
 
         if not df.empty:
-            df["positioning_mesh_data/payload"] = df[
-                "positioning_mesh_data/payload"
-            ].apply(lambda x: self._decode_array(x, __elements))
+            try:
+                df["positioning_mesh_data/payload"] = df[
+                    "positioning_mesh_data/payload"
+                ].apply(lambda x: self._decode_array(x, __elements))
+            except KeyError:
+                pass
 
         return df
 

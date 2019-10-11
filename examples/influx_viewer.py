@@ -166,7 +166,7 @@ if __name__ == "__main__":
 
     PARSER.query.add_argument(
         "--write_path",
-        default="./week",
+        default="./influx_data",
         action="store",
         type=str,
         help="path where to store default queries.",

@@ -26,7 +26,6 @@
 
 
 from .connectors import Influx
-from .handlers import InfluxObserver
 from .settings import InfluxSettings
 
-__all__ = ["InfluxSettings", "InfluxObserver", "Influx"]
+__all__ = ["InfluxSettings", "Influx"]
