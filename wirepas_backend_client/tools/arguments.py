@@ -228,7 +228,7 @@ class ParserHelper:
 
         self.mqtt.add_argument(
             "--mqtt_hostname",
-            default=os.environ.get("WM_SERVICES_MQTT_HOST", None),
+            default=os.environ.get("WM_SERVICES_MQTT_HOSTNAME", None),
             action="store",
             type=str,
             help="MQTT broker hostname ",
@@ -308,7 +308,7 @@ class ParserHelper:
         self.mqtt.add_argument(
             "--mqtt_tls_version",
             default=os.environ.get(
-                "WM_SERVICES_MQTT_CERT_REQS", ssl.PROTOCOL_TLSv1_2
+                "WM_SERVICES_MQTT_TLS_VERSION", ssl.PROTOCOL_TLSv1_2
             ),
             action="store",
             type=str,
@@ -319,7 +319,7 @@ class ParserHelper:
 
         self.mqtt.add_argument(
             "--mqtt_ciphers",
-            default=os.environ.get("WM_SERVICES_MQTT_CLIENT_KEY", None),
+            default=os.environ.get("WM_SERVICES_MQTT_CIPHERS", None),
             action="store",
             type=str,
             help=(
