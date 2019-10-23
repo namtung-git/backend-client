@@ -104,7 +104,10 @@ class RuuviMessage(GenericMessage):
     def _tlv_value_decoder(
         self, apdu, tlv_fields, tlv_id, tlv_name, tlv_value
     ):
-        apdu[tlv_name] = tlv_value[0] * tlv_fields[tlv_id]["unit"]
+        try:
+            apdu[tlv_name] = tlv_value[0] * tlv_fields[tlv_id]["unit"]
+        except KeyError:
+            pass
         return apdu
 
     def _apdu_serialization(self):

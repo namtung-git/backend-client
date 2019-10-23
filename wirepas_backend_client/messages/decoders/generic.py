@@ -260,38 +260,64 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
 
         tlv_header = struct.Struct(tlv_header)
 
-        try:
-            while True:
+        while True:
+            # grab header
+            start = end
+            end = start + tlv_header.size
 
-                # grab header
-                start = end
-                end = start + tlv_header.size
+            if end >= self.data_size:
+                break
 
-                if end >= self.data_size:
-                    break
-
+            try:
                 header = tlv_header.unpack(payload[start:end])
+            except KeyError:
+                self.logger.exception(
+                    "Not enough bytes to index payload at %s->%s", start, end
+                )
+                break
+            except struct.error as error:
+                self.logger.exception(
+                    "Could not decode tlv header: {}".format(error)
+                )
+                break
 
-                # switch on type and unpack
-                tlv_id = int(header[0])
-                tlv_len = int(header[1])
+            # switch on type and unpack
+            tlv_id = int(header[0])
+            tlv_len = int(header[1])
 
+            try:
                 tlv_name = tlv_fields[tlv_id]["name"]
+            except KeyError:
+                self.logger.exception("Unknown TLV ID in payload: %s", tlv_id)
+                continue
+
+            try:
                 tlv_field_format = struct.Struct(tlv_fields[tlv_id]["format"])
+            except KeyError:
+                self.logger.exception(
+                    "TLV ID (%s) missing decoding format. Check your parser definition.",
+                    tlv_id,
+                )
+                continue
 
-                for _ in range(0, int(tlv_len / tlv_field_format.size)):
+            for _ in range(0, int(tlv_len / tlv_field_format.size)):
 
-                    start = end
-                    end = start + tlv_field_format.size
+                start = end
+                end = start + tlv_field_format.size
 
+                try:
                     tlv_value = tlv_field_format.unpack(payload[start:end])
-                    self._tlv_value_decoder(
-                        apdu, tlv_fields, tlv_id, tlv_name, tlv_value
+                except struct.error:
+                    self.logger.exception(
+                        "Could not decode TLV value from payload at %s -> %s",
+                        start,
+                        end,
                     )
+                    continue
 
-        except KeyError:
-            self.logger.exception("TLV decoder")
-            return None
+                self._tlv_value_decoder(
+                    apdu, tlv_fields, tlv_id, tlv_name, tlv_value
+                )
 
         return apdu
 
