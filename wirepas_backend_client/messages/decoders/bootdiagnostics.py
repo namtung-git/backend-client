@@ -76,16 +76,23 @@ class BootDiagnosticsMessage(GenericMessage):
         """ Perform the payload decoding """
 
         super().decode()
-        apdu_values = struct.unpack(self._apdu_format, self.data_payload)
-        self.apdu = self.map_list_to_dict(self._apdu_fields, apdu_values)
+        try:
+            apdu_values = struct.unpack(self._apdu_format, self.data_payload)
+            self.apdu = self.map_list_to_dict(self._apdu_fields, apdu_values)
 
-        firmware_version = self.apdu["sw_major_version"]
-        firmware_version = (
-            firmware_version * 256 + self.apdu["sw_minor_version"]
-        )
-        firmware_version = (
-            firmware_version * 256 + self.apdu["sw_maint_version"]
-        )
-        firmware_version = firmware_version * 256 + self.apdu["sw_dev_version"]
+            firmware_version = self.apdu["sw_major_version"]
+            firmware_version = (
+                firmware_version * 256 + self.apdu["sw_minor_version"]
+            )
+            firmware_version = (
+                firmware_version * 256 + self.apdu["sw_maint_version"]
+            )
+            firmware_version = (
+                firmware_version * 256 + self.apdu["sw_dev_version"]
+            )
 
-        self.apdu["firmware_version"] = firmware_version
+            self.apdu["firmware_version"] = firmware_version
+        except struct.error as error:
+            self.logger.exception(
+                "Could not decode boot diagnostics message: %s", error
+            )

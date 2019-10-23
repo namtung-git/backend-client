@@ -152,42 +152,52 @@ class NodeDiagnosticsMessage(GenericMessage):
         """ Perform the payload decoding """
         super().decode()
 
-        if len(self.data_payload) > self._GT_42:
-            # Node Diagnostics with buffer statistics (4.2 and newer)
-            apdu_values = struct.unpack(
-                self._apdu_format[">=4.2"], self.data_payload
+        try:
+            if self.data_size > self._GT_42:
+                # Node Diagnostics with buffer statistics (4.2 and newer)
+                apdu_values = struct.unpack(
+                    self._apdu_format[">=4.2"], self.data_payload
+                )
+            else:
+                # Node Diagnostics without buffer statistics (4.0 and older)
+                apdu_values = struct.unpack(
+                    self._apdu_format["<=4.0"], self.data_payload
+                )
+
+            self.apdu = self.map_list_to_dict(self._apdu_fields, apdu_values)
+
+            self.apdu["voltage"] = float(self.apdu["voltage"]) / 100.0 + 2.0
+
+            # Create 24bit fields from 16bit and 8bit parts.
+            self.apdu["route_address"] = self.apdu["route_address_lo"] | (
+                self.apdu["route_address_hi"] << 16
             )
-        else:
-            # Node Diagnostics without buffer statistics (4.0 and older)
-            apdu_values = struct.unpack(
-                self._apdu_format["<=4.0"], self.data_payload
+            self.apdu["cost_info_next_hop_0"] = self.apdu[
+                "cost_info_next_hop_0_lo"
+            ] | (self.apdu["cost_info_next_hop_0_hi"] << 16)
+            self.apdu["cost_info_next_hop_1"] = self.apdu[
+                "cost_info_next_hop_1_lo"
+            ] | (self.apdu["cost_info_next_hop_1_hi"] << 16)
+            # 4.0 interpretation of message fields:
+            self.apdu["lltx_msg_w_ack"] = self.apdu["dl_delay_avg_0"]
+            self.apdu["lltx_msg_unack"] = self.apdu["dl_delay_min_0"]
+            self.apdu["llrx_w_unack_ok"] = self.apdu["dl_delay_max_0"]
+            self.apdu["llrx_ack_not_received"] = self.apdu[
+                "dl_delay_samples_0"
+            ]
+            self.apdu["lltx_cca_unack_fail"] = self.apdu["dl_delay_avg_1"]
+            self.apdu["lltx_cca_w_ack_fail"] = self.apdu["dl_delay_min_1"]
+            self.apdu["llrx_w_ack_ok"] = self.apdu["dl_delay_max_1"]
+            self.apdu["llrx_ack_otherreasons"] = self.apdu[
+                "dl_delay_samples_1"
+            ]
+            self.apdu["blacklistexceeded"] = (
+                self.apdu["cost_info_next_hop_1"]
+                | (self.apdu["cost_info_cost_1"] << 24)
+                | (self.apdu["cost_info_link_quality_1"] << 32)
             )
 
-        self.apdu = self.map_list_to_dict(self._apdu_fields, apdu_values)
-
-        self.apdu["voltage"] = float(self.apdu["voltage"]) / 100.0 + 2.0
-
-        # Create 24bit fields from 16bit and 8bit parts.
-        self.apdu["route_address"] = self.apdu["route_address_lo"] | (
-            self.apdu["route_address_hi"] << 16
-        )
-        self.apdu["cost_info_next_hop_0"] = self.apdu[
-            "cost_info_next_hop_0_lo"
-        ] | (self.apdu["cost_info_next_hop_0_hi"] << 16)
-        self.apdu["cost_info_next_hop_1"] = self.apdu[
-            "cost_info_next_hop_1_lo"
-        ] | (self.apdu["cost_info_next_hop_1_hi"] << 16)
-        # 4.0 interpretation of message fields:
-        self.apdu["lltx_msg_w_ack"] = self.apdu["dl_delay_avg_0"]
-        self.apdu["lltx_msg_unack"] = self.apdu["dl_delay_min_0"]
-        self.apdu["llrx_w_unack_ok"] = self.apdu["dl_delay_max_0"]
-        self.apdu["llrx_ack_not_received"] = self.apdu["dl_delay_samples_0"]
-        self.apdu["lltx_cca_unack_fail"] = self.apdu["dl_delay_avg_1"]
-        self.apdu["lltx_cca_w_ack_fail"] = self.apdu["dl_delay_min_1"]
-        self.apdu["llrx_w_ack_ok"] = self.apdu["dl_delay_max_1"]
-        self.apdu["llrx_ack_otherreasons"] = self.apdu["dl_delay_samples_1"]
-        self.apdu["blacklistexceeded"] = (
-            self.apdu["cost_info_next_hop_1"]
-            | (self.apdu["cost_info_cost_1"] << 24)
-            | (self.apdu["cost_info_link_quality_1"] << 32)
-        )
+        except struct.error as error:
+            self.logger.exception(
+                "Could not decode boot diagnostics message: %s", error
+            )

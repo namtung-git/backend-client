@@ -77,9 +77,17 @@ class TrafficDiagnosticsMessage(GenericMessage):
 
         super().decode()
 
-        apdu_values = struct.unpack(self._apdu_format, self.data_payload)
+        try:
+            apdu_values = struct.unpack(self._apdu_format, self.data_payload)
 
-        self.apdu = self.map_list_to_dict(self._apdu_fields, apdu_values)
-        # 4.0 interpretation of message fields:
-        self.apdu["cluster_members"] = self.apdu["access_cycles"] & 0xFF
-        self.apdu["cluster_headnode_members"] = self.apdu["access_cycles"] >> 8
+            self.apdu = self.map_list_to_dict(self._apdu_fields, apdu_values)
+            # 4.0 interpretation of message fields:
+            self.apdu["cluster_members"] = self.apdu["access_cycles"] & 0xFF
+            self.apdu["cluster_headnode_members"] = (
+                self.apdu["access_cycles"] >> 8
+            )
+
+        except struct.error as error:
+            self.logger.exception(
+                "Could not decode boot diagnostics message: %s", error
+            )

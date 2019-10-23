@@ -45,24 +45,33 @@ class NeighborDiagnosticsMessage(GenericMessage):
         """ Perform the payload decoding """
         super().decode()
 
-        s_address = struct.Struct("<I")
-        i = 0
-        j = 0
-        while j < len(self.data_payload):
-            address = s_address.unpack(self.data_payload[j : j + 3] + b"\x00")[
-                0
-            ]
-            if address != 0:
-                self.neighbor[i] = dict()
-                self.neighbor[i]["address"] = address
-                self.neighbor[i]["cluster_channel"] = self.data_payload[j + 3]
-                self.neighbor[i]["radio_power"] = self.data_payload[j + 4]
-                self.neighbor[i]["node_info"] = self.data_payload[j + 5]
-                self.neighbor[i]["rssi"] = self.data_payload[j + 6]
-                i += 1
-                j += 7
-            else:
-                break
+        try:
+            s_address = struct.Struct("<I")
+            i = 0
+            j = 0
+
+            while j < self.data_size:
+                address = s_address.unpack(
+                    self.data_payload[j : j + 3] + b"\x00"
+                )[0]
+                if address != 0:
+                    self.neighbor[i] = dict()
+                    self.neighbor[i]["address"] = address
+                    self.neighbor[i]["cluster_channel"] = self.data_payload[
+                        j + 3
+                    ]
+                    self.neighbor[i]["radio_power"] = self.data_payload[j + 4]
+                    self.neighbor[i]["node_info"] = self.data_payload[j + 5]
+                    self.neighbor[i]["rssi"] = self.data_payload[j + 6]
+                    i += 1
+                    j += 7
+                else:
+                    break
+
+        except struct.error as error:
+            self.logger.exception(
+                "Could not decode boot diagnostics message: %s", error
+            )
 
     def _apdu_serialization(self):
         """ Extends the packet serialization """

@@ -56,7 +56,7 @@ class TestNWMessage(GenericMessage):
         apdu_offset = 0
 
         try:
-            while apdu_offset < len(self.data_payload):
+            while apdu_offset < self.data_size:
                 if self.data_payload[apdu_offset] == 0:
                     break
                 # Test data ID is the 4 lowest bits from the first byte
@@ -83,4 +83,4 @@ class TestNWMessage(GenericMessage):
                     self.datafields[self.row_count].append(value)
                 self.row_count += 1
         except IndexError:
-            print("A broken testnw apdu")
+            self.logger.exception("A broken testnw apdu")
