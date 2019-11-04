@@ -4,7 +4,7 @@
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/bf0c23237cf04ea6ac48e98cf10b6a7b)](https://www.codacy.com/manual/wirepas/backend-client?utm_source=github.com&utm_medium=referral&utm_content=wirepas/backend-client&utm_campaign=Badge_Grade) [![Build Status](https://travis-ci.com/wirepas/backend-apis.svg?branch=master)](https://travis-ci.com/wirepas/backend-apis)  [![Documentation Status](https://readthedocs.org/projects/backend-client/badge/?version=latest)](https://backend-client.readthedocs.io/en/latest/?badge=latest) [![PyPi](https://img.shields.io/pypi/v/wirepas-backend-client.svg)](https://pypi.org/project/wirepas-backend-client/)
 
-<!-- MarkdownTOC -->
+<!-- MarkdownTOC levels="1,2,3" autolink="true"  -->
 
 1. [Introduction](#introduction)
 1. [Installation](#installation)
@@ -14,25 +14,10 @@
     1. [Installing from Github](#installing-from-github)
 1. [Entrypoints](#entrypoints)
     1. [Gateway command line interface](#gateway-command-line-interface)
-        1. [Connecting to the MQTT broker](#connecting-to-the-mqtt-broker)
-        1. [Commands](#commands)
-        1. [Viewing connected devices](#viewing-connected-devices)
-        1. [Device settings](#device-settings)
-            1. [Selecting the target gateway and sink](#selecting-the-target-gateway-and-sink)
-            1. [Set app config](#set-app-config)
-            1. [Viewing gateway configuration](#viewing-gateway-configuration)
-            1. [Upload and process a scratchpad](#upload-and-process-a-scratchpad)
     1. [WPE Viewer](#wpe-viewer)
     1. [WNT Viewer](#wnt-viewer)
 1. [Framework](#framework)
     1. [Structure](#structure)
-        1. [API submodule](#api-submodule)
-        1. [Management submodule](#management-submodule)
-        1. [Mesh submodule](#mesh-submodule)
-        1. [Messages submodule](#messages-submodule)
-        1. [Test submodule](#test-submodule)
-        1. [Tools submodule](#tools-submodule)
-        1. [Cli submodule](#cli-submodule)
     1. [Examples](#examples)
 1. [Logging to fluentd](#logging-to-fluentd)
 1. [Building and running over Docker](#building-and-running-over-docker)
@@ -141,7 +126,6 @@ The Backend Client is available from
 [PyPi][backend_client_pypi] and you can install the latest stable version
 with:
 
-
 ```shell
     pip install wirepas-backend-client
 ```
@@ -216,7 +200,7 @@ To do so, let's assume the following MQTT credentials are saved in
  # .settings.yml
  # Example on how to set the MQTT credentials towards a local broker
  # with basic authentication
- --
+ ---
  mqtt_hostname: 127.0.0.1
  mqtt_password: password
  mqtt_username: username
