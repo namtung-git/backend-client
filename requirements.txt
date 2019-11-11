@@ -3,7 +3,7 @@ wirepas_messaging==1.2.0
 cbor2==4.1.2
 
 # mqtt
-paho-mqtt==1.4.0
+paho-mqtt==1.5.0
 
 # dbs
 mysqlclient==1.4.4
