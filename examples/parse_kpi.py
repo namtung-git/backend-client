@@ -194,9 +194,10 @@ class KPI_Stats(KPI):
             )
         return df
 
-    def retrieve(self, start=None, end=None, remap_columns=True):
+    def retrieve(self, start=None, end=None, remap_columns=False):
 
         if start is None and end is None:
+            print(self._pointer)
             start = self._pointer["start"]
             end = self._pointer["end"]
             source = self._pointer["source"]
@@ -316,7 +317,8 @@ if __name__ == "__main__":
         schema_file="./examples/test_kpi_definitions.yaml",
     )
 
-    # section = kpi_stats.retrieve()
-    # df = section.apply(
-    #    lambda x: logger.info(json.loads(x.to_json(date_format="iso"))), axis=1
-    # )
+    name = "AvePerfSum"
+    section = kpi[name].retrieve()
+    df = section.apply(
+        lambda x: logger.info(json.loads(x.to_json(date_format="iso"))), axis=1
+    )
