@@ -132,3 +132,41 @@ def test_remote_api_commands():
     command.priority = 1
     payload = command.encode()
     print(f"{command} PAYLOAD: {payload.hex()}")
+
+    ### Errors
+
+    command = RemoteAPIError(payload=bytes.fromhex("F803000000"))
+    try:
+        payload = command.encode()
+    except TypeError:
+        pass
+    payload = command.decode()
+    print(f"{command} PAYLOAD: {payload}")
+
+    command = RemoteAPIError(payload=bytes.fromhex("F903000000"))
+    payload = command.decode()
+    print(f"{command} PAYLOAD: {payload}")
+
+    command = RemoteAPIError(payload=bytes.fromhex("FA03000000"))
+    payload = command.decode()
+    print(f"{command} PAYLOAD: {payload}")
+
+    command = RemoteAPIError(payload=bytes.fromhex("FB03000000"))
+    payload = command.decode()
+    print(f"{command} PAYLOAD: {payload}")
+
+    command = RemoteAPIError(payload=bytes.fromhex("FC03000000"))
+    payload = command.decode()
+    print(f"{command} PAYLOAD: {payload}")
+
+    command = RemoteAPIError(payload=bytes.fromhex("FD03000000"))
+    payload = command.decode()
+    print(f"{command} PAYLOAD: {payload}")
+
+    command = RemoteAPIError(payload=bytes.fromhex("FE03000000"))
+    payload = command.decode()
+    print(f"{command} PAYLOAD: {payload}")
+
+    command = RemoteAPIError(payload=bytes.fromhex("FF03000000"))
+    payload = command.decode()
+    print(f"{command} PAYLOAD: {payload}")
