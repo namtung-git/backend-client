@@ -9,9 +9,8 @@
 """
 
 import json
-import logging
 
-from wirepas_messaging.wnt import AuthenticationMessages
+from wirepas_messaging.wnt.ws_api import AuthenticationMessages
 
 from .manager import Manager
 from ..connectors import WNTSocket
@@ -49,7 +48,6 @@ class AuthenticationManager(Manager):
 
         self.username = username
         self.password = password
-        self.logger = logger or logging.getLogger(__name__)
         self.messages = AuthenticationMessages(self.logger, protocol_version)
 
     def on_open(self, websocket) -> None:
@@ -74,7 +72,6 @@ class AuthenticationManager(Manager):
             websocket (websocket): communication socket
             message (str): received message
         """
-        super().on_message(websocket, message)
         self.messages.parse_login(json.loads(message))
         self.session_id = self.messages.session_id
-        self.write(dict(session_id=self.session_id))
+        self._write(dict(session_id=self.session_id))

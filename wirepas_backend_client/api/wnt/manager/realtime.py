@@ -9,10 +9,9 @@
 """
 
 import json
-import logging
 
 import wirepas_messaging.wnt as wnt_proto
-from wirepas_messaging.wnt import RealtimeSituationMessages
+from wirepas_messaging.wnt.ws_api import RealtimeSituationMessages
 
 from .manager import Manager
 from ..connectors import WNTSocket
@@ -49,9 +48,6 @@ class RealtimeManager(Manager):
             logger=logger,
         )
 
-        self.logger = logger or logging.getLogger(__name__)
-        self.session_id = None
-        self._logged_in = None
         self.messages = RealtimeSituationMessages(
             self.logger, protocol_version
         )
@@ -72,23 +68,28 @@ class RealtimeManager(Manager):
         )
 
     def on_message(self, websocket, message) -> None:
-        """Websocket callback when a new authentication message arrives
+        """
+        Websocket callback when a new authentication message arrives
 
         Args:
             websocket (Websocket): communication socket
             message (str): received message
         """
-        # super().on_message(websocket, message)
-        if self._logged_in:
+
+        if self._is_ready.is_set():
             proto_message = wnt_proto.Message()
-            proto_message.ParseFromString(message)
-            # self.send(proto_message)
-            self.write(proto_message)
+            try:
+                proto_message.ParseFromString(message)
+            except TypeError:
+                message = json.loads(message)
+                if message["result"] != 1:
+                    raise ValueError("Could not login")
+
+            self._write(proto_message)
         else:
             if self.messages.parse_realtime_situation_login(
                 json.loads(message)
             ):
-                self._logged_in = True
                 super().on_open(websocket)
             else:
                 raise ValueError("Could not log in to realtime endpoint")

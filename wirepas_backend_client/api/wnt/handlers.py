@@ -31,6 +31,7 @@ class Backend(object):
         self.logger = logger or logging.getLogger(__name__)
         self.settings = settings
         self.session_id = None
+        self.serializer = JsonSerializer()
 
         self.authentication = AuthenticationManager(
             hostname=self.settings.wnt_hostname,
@@ -81,18 +82,14 @@ class Backend(object):
         interface.
         """
 
-    def connect_all(self, exit_signal: bool) -> None:
+    def tasks(self, exit_signal: bool) -> None:
         """
-        connect_all logins with the server instance and starts the
-        realtime and metadata websockets.
+        tasks defines the run loop's procedures.
 
-        It then prints all the messages sent by WNT.
+        Please overload this method if you wish to customize the workflow
+        against a Backend.
         """
-        self.login()
 
-        self.realtime.start()
-        self.metadata.start()
-        serializer = JsonSerializer()
         while not exit_signal:
             try:
                 message = self.realtime.tx_queue.get(block=True, timeout=10)
@@ -100,12 +97,10 @@ class Backend(object):
                     self.logger.info(
                         "%s | %s",
                         datetime.datetime.utcnow().isoformat("T"),
-                        serializer.serialize(message),
+                        self.serializer.serialize(message),
                     )
             except queue.Empty:
                 pass
-
-        self.close()
 
     def close(self):
         """ Terminates the websocket connections """
@@ -115,7 +110,11 @@ class Backend(object):
 
     def run(self, exit_signal: bool) -> None:
         """ Defines the object's main loop """
-        self.connect_all(exit_signal)
+        self.login()
+        self.metadata.start()
+        self.realtime.start()
+        self.tasks(exit_signal)
+        self.close()
 
 
 if __name__ == "__main__":

@@ -8,14 +8,12 @@
 
 """
 
-import logging
-
-from wirepas_messaging.wnt import ApplicationConfigurationMessages
-from wirepas_messaging.wnt import AreaMessages
-from wirepas_messaging.wnt import BuildingMessages
-from wirepas_messaging.wnt import FloorPlanMessages
-from wirepas_messaging.wnt import NetworkMessages
-from wirepas_messaging.wnt import NodeMessages
+from wirepas_messaging.wnt.ws_api import ApplicationConfigurationMessages
+from wirepas_messaging.wnt.ws_api import AreaMessages
+from wirepas_messaging.wnt.ws_api import BuildingMessages
+from wirepas_messaging.wnt.ws_api import FloorPlanMessages
+from wirepas_messaging.wnt.ws_api import NetworkMessages
+from wirepas_messaging.wnt.ws_api import NodeMessages
 
 from .manager import Manager
 from ..connectors import WNTSocket
@@ -49,8 +47,6 @@ class MetadataManager(Manager):
             kwargs=kwargs,
         )
 
-        self.logger = logger or logging.getLogger(__name__)
-
         self.messages = dict()
         self.messages["building"] = BuildingMessages(
             self.logger, protocol_version
@@ -70,6 +66,10 @@ class MetadataManager(Manager):
         )
         self.messages["node"] = NodeMessages(self.logger, protocol_version)
 
+    def set_session(self):
+        for stub in self.messages:
+            self.messages[stub].session_id = self.session_id
+
     def on_open(self, websocket) -> None:
         """Websocket callback when the authentication websocket has been opened
 
@@ -78,3 +78,8 @@ class MetadataManager(Manager):
         """
         super().on_open(websocket)
         self.wait_for_session()
+        self.set_session()
+
+    def __getattr__(self, item):
+        """ Returns the message builder object """
+        return self.messages[item]
