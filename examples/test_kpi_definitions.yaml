@@ -141,7 +141,6 @@ perf_stats:
             - nodes_active_15min
             - role_chngs_h
             - ble_bcon_miss_rate
-            - aa
     #NWstatus:
     #AvePerfSum:
     #SinksAnaSum:

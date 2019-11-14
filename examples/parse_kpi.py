@@ -184,7 +184,6 @@ class KPI_Stats(KPI):
                     ]
                     n += 1
 
-            df.columns = self._columns
             df = df.rename(columns=self._columns_mapping)
         except AssertionError:
             print(
@@ -194,7 +193,7 @@ class KPI_Stats(KPI):
             )
         return df
 
-    def retrieve(self, start=None, end=None, remap_columns=False):
+    def retrieve(self, start=None, end=None, remap_columns=True):
 
         if start is None and end is None:
             print(self._pointer)
@@ -210,7 +209,7 @@ class KPI_Stats(KPI):
         if remap_columns is True:
             section = self._map_columns(section)
 
-        return section
+        return section.iloc[:, 0 : self.schema["block_size_metadata"]]
 
     def __iter__(self):
         """ iterated through the node sections """
@@ -319,6 +318,7 @@ if __name__ == "__main__":
 
     name = "AvePerfSum"
     section = kpi[name].retrieve()
+    section.fillna("unset")
     df = section.apply(
         lambda x: logger.info(json.loads(x.to_json(date_format="iso"))), axis=1
     )
