@@ -53,7 +53,7 @@ def main():
             service_definition["flow"],
             service_handler=messaging.flow_managerStub,
         )
-        service.dial(secure=SETTINGS.wpe_unsecure)
+        service.dial(unsecure=SETTINGS.wpe_unsecure)
 
         # checks if the remote server is connected
         try:

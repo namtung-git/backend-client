@@ -649,7 +649,7 @@ class ParserHelper:
             "--wpe_unsecure",
             required=False,
             default=os.environ.get("WM_SERVICES_WPE_UNSECURE", False),
-            action="store_false",
+            action="store_true",
             help="forces the creation of insecure channels.",
         )
 

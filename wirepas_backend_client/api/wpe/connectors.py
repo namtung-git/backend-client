@@ -82,7 +82,7 @@ class Service(object):
         """ Returns the comon name override string from the service definition """
         return self._service_definition["override_cn"]
 
-    def dial(self, secure=True, cb=None):
+    def dial(self, unsecure=False, cb=None):
         """
 
         Dial establishes a grpc channel
@@ -93,7 +93,7 @@ class Service(object):
 
         """
 
-        if secure:
+        if not unsecure:
             try:
                 self._secure_connection(cb)
             except KeyError:
