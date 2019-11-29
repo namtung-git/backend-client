@@ -20,8 +20,8 @@ class RuuviMessage(GenericMessage):
     Represents a message sent by the Ruuvi application.
     """
 
-    _source_endpoint = 11
-    _destination_endpoint = 11
+    source_endpoint = 11
+    destination_endpoint = 11
 
     _apdu_format = "tlv"
     _tlv_header = "<B B"

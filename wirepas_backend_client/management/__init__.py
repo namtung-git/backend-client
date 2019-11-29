@@ -7,3 +7,4 @@
 # flake8: noqa
 
 from .daemon import Daemon
+from .inventory import Inventory

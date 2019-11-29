@@ -56,7 +56,7 @@
 from .generic import GenericMessage
 
 # application/features
-from .advertiser import Inventory, AdvertiserMessage
+from .advertiser import AdvertiserMessage
 from .positioning import PositioningMessage
 from .ruuvi import RuuviMessage
 
@@ -71,7 +71,6 @@ from .testnw import TestNWMessage
 
 __all__ = [
     "GenericMessage",
-    "Inventory",
     "AdvertiserMessage",
     "PositioningMessage",
     "RuuviMessage",

@@ -31,8 +31,8 @@ class TestNWMessage(GenericMessage):
             datafields[number_of_fields][bytes_per_field]
     """
 
-    _source_endpoint = 100
-    _destination_endpoint = 100
+    source_endpoint = 100
+    destination_endpoint = 100
 
     def __init__(self, *args, **kwargs) -> "TestNWMessage":
 

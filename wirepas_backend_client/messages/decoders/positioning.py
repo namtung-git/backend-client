@@ -22,8 +22,8 @@ class PositioningMessage(GenericMessage):
     Represents a message sent by the positioning application.
     """
 
-    _source_endpoint = 238
-    _destination_endpoint = 238
+    source_endpoint = 238
+    destination_endpoint = 238
 
     _apdu_format = "B B"
     _apdu_fields = {

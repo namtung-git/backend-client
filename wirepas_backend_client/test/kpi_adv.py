@@ -18,11 +18,11 @@ import multiprocessing
 
 import pandas
 
-from wirepas_backend_client.messages import Inventory, AdvertiserMessage
+from wirepas_backend_client.messages import AdvertiserMessage
 from wirepas_backend_client.tools import ParserHelper, LoggerHelper
 from wirepas_backend_client.api import MySQLSettings, MySQLObserver
 from wirepas_backend_client.api import MQTTObserver, MQTTSettings
-from wirepas_backend_client.management import Daemon
+from wirepas_backend_client.management import Daemon, Inventory
 from wirepas_backend_client.test import TestManager
 
 

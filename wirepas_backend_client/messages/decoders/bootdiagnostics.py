@@ -42,8 +42,8 @@ class BootDiagnosticsMessage(GenericMessage):
         stack_trace 1 and 2 are currently unused
     """
 
-    _source_endpoint = 254
-    _destination_endpoint = 255
+    source_endpoint = 254
+    destination_endpoint = 255
 
     _apdu_format = "<BBBBBBHHHBHHIIIH"
     _apdu_fields = (

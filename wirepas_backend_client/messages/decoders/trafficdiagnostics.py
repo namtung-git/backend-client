@@ -41,8 +41,8 @@ class TrafficDiagnosticsMessage(GenericMessage):
         max_aloha_slot_usage            uint8
     """
 
-    _source_endpoint = 251
-    _destination_endpoint = 255
+    source_endpoint = 251
+    destination_endpoint = 255
 
     _apdu_format = "<HBBHHBBBBBBBBBB"
     _apdu_fields = (

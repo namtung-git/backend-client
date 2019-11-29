@@ -72,8 +72,8 @@ class NodeDiagnosticsMessage(GenericMessage):
         4.2: pending_reroute_packets  uint8
     """
 
-    _source_endpoint = 253
-    _destination_endpoint = 255
+    source_endpoint = 253
+    destination_endpoint = 255
 
     _GT_42 = 59
 

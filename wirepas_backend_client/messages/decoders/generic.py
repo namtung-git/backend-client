@@ -74,8 +74,8 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
 
     """
 
-    _source_endpoint = None
-    _destination_endpoint = None
+    source_endpoint = None
+    destination_endpoint = None
 
     _apdu_format = None
     _apdu_fields = None
@@ -136,26 +136,6 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
             self.received_at - self.tx_time
         ).total_seconds()
         self.serialization = dict()
-
-    @property
-    def source_endpoint(self):
-        """ Returns the source endpoint """
-        return self._source_endpoint
-
-    @property
-    def destination_endpoint(self):
-        """ Returns the destination endpoint """
-        return self._destination_endpoint
-
-    @source_endpoint.setter
-    def source_endpoint(self, value):
-        """ Setter for the source_endpoint """
-        self._source_endpoint = value
-
-    @destination_endpoint.setter
-    def destination_endpoint(self, value):
-        """ Setter for the destination endpoint """
-        self._destination_endpoint = value
 
     @property
     def logger(self):
