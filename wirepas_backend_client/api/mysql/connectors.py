@@ -986,7 +986,7 @@ class MySQL(object):
                 message.apdu["mem_alloc_fails"],
                 message.apdu["normal_priority_buf_delay"],
                 message.apdu["high_priority_buf_delay"],
-                message.apdu["scans"],
+                message.apdu["network_scans"],
                 message.apdu["dl_delay_avg_0"],
                 message.apdu["dl_delay_min_0"],
                 message.apdu["dl_delay_max_0"],
