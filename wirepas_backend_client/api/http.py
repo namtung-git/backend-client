@@ -7,6 +7,21 @@
 
     Please use the MQTT api whenever possible.
 
+    gateways_and_sinks has following scheme:
+    { 'gw_id':
+        {'sink_id':
+            {# Following fields from item of
+             # gw-response/get_configs->configs[]
+             'started': True/False,
+             'app_config_seq': int,
+             'app_config_diag': int,
+             'app_config_data': bytes,
+             # Internal field for monitoring sink's presense
+             'present': True/False
+            }
+        }
+    }
+
     .. Copyright:
         Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
@@ -34,20 +49,6 @@ class SinkAndGatewayStatusObserver(Thread):
         self.gw_status_queue = gw_status_queue
         self.logger = logger
         self.gateways_and_sinks = {}
-        # gateways_and_sinks has following scheme:
-        # { 'gw_id':
-        #     {'sink_id':
-        #         {# Following fields from item of
-        #          # gw-response/get_configs->configs[]
-        #          'started': True/False,
-        #          'app_config_seq': int,
-        #          'app_config_diag': int,
-        #          'app_config_data': bytes,
-        #          # Internal field for monitoring sink's presense
-        #          'present': True/False
-        #         }
-        #     }
-        # }
 
     # pylint: disable=locally-disabled, too-many-nested-blocks, too-many-branches
     def run(self):
@@ -100,10 +101,12 @@ class SinkAndGatewayStatusObserver(Thread):
                                     status_msg
                                 )
                             )
+                            sink["present"] = False
                             if "started" in sink:
                                 # Sink has been present before, rely on old values
                                 # and keep this sink in the configuration.
                                 sink["present"] = True
+
                 # Remove those sinks that are not present in this gateway
                 # Cannot delete sink while iterating gateways_and_sinks dict,
                 # thus create separate list for sinks to be deleted.
@@ -153,10 +156,10 @@ class ConnectionServer(http.server.ThreadingHTTPServer):
     # pylint: disable=locally-disabled, too-many-arguments
 
     close_connection = False
-    request_queue_size = 100
+    request_queue_size = 1000
     allow_reuse_address = True
-    timeout = 120
-    protocol_version = "HTTP/1.0"
+    timeout = 600
+    protocol_version = "HTTP/1.1"
 
     def __init__(
         self,
