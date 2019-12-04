@@ -148,7 +148,7 @@ class MQTT(object):
         self.client.loop_start()
 
         while not self.exit_signal.is_set():
-            self.logger.debug("mqtt loop running")
+            self.logger.debug("mqtt loop running (timeout %s)", self.heartbeat)
             if self.publish_cb is None:
                 time.sleep(self.heartbeat)
             else:

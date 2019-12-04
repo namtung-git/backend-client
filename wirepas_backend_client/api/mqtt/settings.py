@@ -45,6 +45,12 @@ class MQTTSettings(Settings):
         self.mqtt_allow_untrusted = None
         self.mqtt_force_unsecure = None
         self.mqtt_topic = None
+        self.userdata = None
+        self.transport = "tcp"
+        self.reconnect_min_delay = 10
+        self.reconnect_max_delay = 120
+        self.heartbeat = 10
+        self.keep_alive = 60
 
         super(MQTTSettings, self).__init__(settings)
 
@@ -59,17 +65,8 @@ class MQTTSettings(Settings):
         self.source_endpoint = self.mqtt_subscribe_source_endpoint
         self.destination_endpoint = self.mqtt_subscribe_destination_endpoint
         self.ca_certs = self.mqtt_ca_certs
-
         self.allow_untrusted = self.mqtt_allow_untrusted
         self.force_unsecure = self.mqtt_force_unsecure
-
-        self.userdata = None
-        self.transport = "tcp"
-        self.reconnect_min_delay = 10
-        self.reconnect_max_delay = 120
-
-        self.heartbeat = 2
-        self.keep_alive = 60
         self.ciphers = self.mqtt_ciphers
         self.topic = self.mqtt_topic
 

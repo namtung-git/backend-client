@@ -44,7 +44,7 @@ class MySQLObserver(StreamObserver):
         exit_signal: multiprocessing.Event,
         tx_queue: multiprocessing.Queue,
         rx_queue: multiprocessing.Queue,
-        parallel: bool = False,
+        parallel: bool = True,
         n_workers: int = 4,
         timeout: int = 10,
         logger=None,
@@ -106,7 +106,7 @@ class MySQLObserver(StreamObserver):
     def pool_on_data_received(self, n_workers=4):
         """ Monitor inbound queue for messages to be stored in MySQL """
 
-        def work(storage_q, exit_signal, settings, logger):
+        def work(storage_q, exit_signal, settings, timeout, logger):
 
             mysql = MySQL(
                 username=settings.username,
@@ -125,7 +125,7 @@ class MySQLObserver(StreamObserver):
 
             while not exit_signal.is_set():
                 try:
-                    message = storage_q.get(block=True, timeout=2)
+                    message = storage_q.get(block=True, timeout=timeout)
                 except queue.Empty:
                     continue
                 except EOFError:
@@ -174,6 +174,7 @@ class MySQLObserver(StreamObserver):
                     self.rx_queue,
                     self.exit_signal,
                     self.settings,
+                    self.timeout,
                     self.logger,
                 ),
             ).start()
@@ -185,12 +186,12 @@ class MySQLObserver(StreamObserver):
         try:
             self.parallel = kwargs["parallel"]
         except KeyError:
-            self.parallel = False
+            pass
 
         try:
             self.n_workers = kwargs["n_workers"]
         except KeyError:
-            self.n_workers = 4
+            pass
 
         try:
             self.mysql.connect()
@@ -214,7 +215,9 @@ class MySQLObserver(StreamObserver):
     def _wait_for_exit(self, workers: dict = None):
         """ waits until the exit signal is set """
         while not self.exit_signal.is_set():
-            self.logger.debug("MySQL is running")
+            self.logger.debug(
+                "MySQL is running (waiting for %s)", self.timeout
+            )
             time.sleep(self.timeout)
             if workers:
                 for seq, worker in workers.items():

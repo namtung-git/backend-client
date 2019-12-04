@@ -192,9 +192,7 @@ if __name__ == "__main__":
             dict(mysql_settings=MySQLSettings(SETTINGS)),
         )
         DAEMON.set_run(
-            STORAGE_NAME,
-            task_kwargs={"parallel": True, "n_workers": 8},
-            task_as_daemon=False,
+            STORAGE_NAME, task_kwargs={"n_workers": 8}, task_as_daemon=False
         )
 
         DAEMON.build(
