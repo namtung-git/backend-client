@@ -76,13 +76,6 @@ class MultiMessageMqttObserver(MQTTObserver):
         }
         self.mqtt_topics = Topics()
 
-    def run(self):
-        # Disable KeyboardInterrupts in mqttl observer process
-        try:
-            super(MultiMessageMqttObserver, self).run()
-        except KeyboardInterrupt:
-            pass
-
     def generate_data_received_cb(self) -> callable:
         """ Returns a callback to process the incoming data """
 
@@ -156,36 +149,6 @@ class MultiMessageMqttObserver(MQTTObserver):
         return on_response_cb
 
 
-class MySqlStorage(MySQLObserver):
-    """
-    MySqlStorage
-
-    Wrapper around MySQLObserver to allow escaping keyboar interrupts
-    """
-
-    def run(self, **kwargs):
-        # Disable KeyboardInterrupts in mysql storage process
-        try:
-            super(MySqlStorage, self).run(**kwargs)
-        except KeyboardInterrupt:
-            pass
-
-
-class HttpControl(HTTPObserver):
-    """
-    HttpControl
-
-    Wrapper around HTTPObserver to allow escaping keyboar interrupts
-    """
-
-    def run(self):
-        # Disable KeyboardInterrupts in http control process
-        try:
-            super(HttpControl, self).run()
-        except KeyboardInterrupt:
-            pass
-
-
 if __name__ == "__main__":
 
     PARSER = ParserHelper("KPi test arguments")
@@ -225,7 +188,7 @@ if __name__ == "__main__":
 
         DAEMON.build(
             STORAGE_NAME,
-            MySqlStorage,
+            MySQLObserver,
             dict(mysql_settings=MySQLSettings(SETTINGS)),
         )
         DAEMON.set_run(
@@ -247,7 +210,7 @@ if __name__ == "__main__":
 
         DAEMON.build(
             CONTROL_NAME,
-            HttpControl,
+            HTTPObserver,
             dict(
                 gw_status_queue=GW_STATUS_FROM_MQTT_BROKER,
                 http_settings=HTTPSettings(SETTINGS),
