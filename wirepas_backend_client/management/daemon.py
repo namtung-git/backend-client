@@ -88,16 +88,23 @@ class Daemon(object):
 
     def wait_loop(self):
         """ Default loop. Waits until an exit signal is given or the processes are dead"""
-        while not self.exit_signal.is_set():
-            try:
+        try:
+            while not self.exit_signal.is_set():
+                self.logger.debug("daemon is watching %s", self.heartbeat)
                 for _, register in self.process.items():
-                    if not register["runtime"]["object"].is_alive():
-                        return
+                    try:
+                        if not register["object"].is_alive():
+                            if not self.exit_signal.is_set():
+                                self.exit_signal.set()
+                                break
+                    except (KeyError, AttributeError):
+                        pass
                 time.sleep(self.heartbeat)
-            except KeyError:
-                continue
-            except TypeError:
-                continue
+        except KeyboardInterrupt:
+            pass
+
+        if not self.exit_signal.is_set():
+            self.exit_signal.set()
 
     def init_process(self, name):
         """ Initialises a process entry """
@@ -209,6 +216,7 @@ class Daemon(object):
             self.start_signal.set()
 
         try:
+            self.logger.debug("entering daemon's wait loop: %s", self.loop_cb)
             self.loop_cb(**self.loop_kwargs)
         except KeyboardInterrupt:
             self.exit_signal.set()
