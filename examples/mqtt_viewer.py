@@ -39,7 +39,7 @@ def loop(
             except queue.Empty:
                 continue
 
-            logger.info(message.serialize())
+            logger.info(message.serialize(flat_keys=True))
 
             if logfile_path:
                 with open(logfile_path, "a") as traffic_log:
@@ -112,7 +112,7 @@ if __name__ == "__main__":
         default=None,
         action="store",
         type=str,
-        help="Amount of seconds to lookup in the past.",
+        help="Path where to store MQTT traffic to.",
     )
 
     SETTINGS = PARSER.settings(settings_class=MQTTSettings)

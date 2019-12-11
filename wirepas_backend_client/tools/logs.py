@@ -48,12 +48,13 @@ class ContextFilter(logging.Filter):
 class LoggerHelper:
     """LoggerHelper"""
 
-    def __init__(self, module_name, args, level: str = None):
+    def __init__(self, module_name, args=None, level: str = None):
         super(LoggerHelper, self).__init__()
 
-        for key, value in args.__dict__.items():
-            if value is not None or "fluent" in key:
-                self.__dict__[key] = value
+        if args:
+            for key, value in args.__dict__.items():
+                if value is not None or "fluent" in key:
+                    self.__dict__[key] = value
 
         if level is None:
             level = "debug"

@@ -16,6 +16,7 @@ import logging
 import wirepas_messaging
 
 from ..types import ApplicationTypes
+from ...tools import flatten
 
 
 class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
@@ -148,6 +149,10 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
         """
         return logging.getLogger("message_decoding")
 
+    @property
+    def header(self):
+        return self._serialization_common()
+
     @classmethod
     def from_bus(cls, d):
         """ Translates a bus message into a message object """
@@ -217,6 +222,12 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
         payload = bytes.fromhex(hexstr)
         return payload
 
+    def emit_message(self, logger_cb, message):
+        """ This method takes the logger level callback and emit a timed message"""
+        header = self._serialization_common()
+        header["message"] = message
+        logger_cb(header)
+
     def decode(self):
         """ This method should always be called from whoever inherits it """
         self.decode_time = datetime.datetime.utcnow().isoformat("T")
@@ -228,6 +239,7 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
             apdu = cbor2.loads(payload)
         except cbor2.decoder.CBORDecodeError as err:
             self.logger.exception(err)
+            self.emit_message(self.logger.error, str(err))
 
         return apdu
 
@@ -330,9 +342,10 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
                 except KeyError:
                     pass
 
-    def serialize(self):
-        """ Provides a generic serialization of the message"""
-        self.serialization = {
+    def _serialization_common(self):
+        """ Dictionary with common serialization header """
+
+        header = {
             "gw_id": self.gw_id,
             "sink_id": self.sink_id,
             "network_id": self.network_id,
@@ -351,7 +364,16 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
             "hop_count": self.hop_count,
         }
 
+        return header
+
+    def serialize(self, flat_keys=False, separator="/", prefix=""):
+        """ Provides a generic serialization of the message"""
+
+        self.serialization = self._serialization_common()
         self._apdu_serialization()
+
+        if flat_keys:
+            self.serialization = flatten(self.serialization, separator, prefix)
 
         return self.serialization
 

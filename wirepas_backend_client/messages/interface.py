@@ -51,7 +51,7 @@ class MessageManager(object):
     _endpoint[100] = {100: TestNWMessage}
     _endpoint[200] = {200: AdvertiserMessage}
     _endpoint[238] = {238: PositioningMessage}
-    _endpoint[247] = {247: DiagnosticsMessage}
+    _endpoint[247] = {255: DiagnosticsMessage}
     _endpoint[251] = {255: TrafficDiagnosticsMessage}
     _endpoint[252] = {255: NeighborDiagnosticsMessage}
     _endpoint[253] = {255: NodeDiagnosticsMessage}

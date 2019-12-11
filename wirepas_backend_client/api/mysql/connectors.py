@@ -11,11 +11,13 @@
 try:
     import MySQLdb
 except ImportError:
+    print("Failed to import MySQLdb")
     pass
 
 import binascii
 import datetime
 import logging
+import json
 
 
 class MySQL(object):
@@ -154,6 +156,15 @@ class MySQL(object):
             )
             self.cursor.execute(query)
             self.database.commit()
+
+        query = (
+            "CREATE TABLE IF NOT EXISTS diagnostics_json ("
+            "  received_packet BIGINT NOT NULL,"
+            "  FOREIGN KEY (received_packet) REFERENCES received_packets(id),"
+            "  apdu JSON NOT NULL"
+            ") ENGINE = MYISAM;"
+        )
+        self.cursor.execute(query)
 
         query = (
             "CREATE TABLE IF NOT EXISTS diagnostic_traffic ("
@@ -869,6 +880,17 @@ class MySQL(object):
         )
 
         self.cursor.execute(query)
+        self.database.commit()
+
+    def put_diagnostics(self, message):
+        self.put_to_received_packets(message)
+
+        statement = (
+            "INSERT INTO diagnostics_json (received_packet, apdu) "
+            "VALUES (LAST_INSERT_ID(), %s)"
+        )
+        values = json.dumps(message.serialize())
+        self.cursor.execute(statement, (values,))
         self.database.commit()
 
     def put_boot_diagnostics(self, message):

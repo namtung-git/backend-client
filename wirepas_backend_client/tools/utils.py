@@ -93,14 +93,56 @@ class JsonSerializer(json.JSONEncoder):
 
         return json.JSONEncoder.default(self, obj)
 
-    def serialize(self, obj):
+    def serialize(self, obj, flatten=False):
         """ returns a json representation of the object """
-        return json.dumps(
+
+        if flatten:
+            temp = dict()
+            for key, value in sorted(obj.items()):
+                if isinstance(value, dict):
+                    for child_key, child_value in value.items():
+                        temp[f"{key}.{child_key}"] = child_value
+            obj = temp
+
+        jobj = json.dumps(
             obj,
             cls=JsonSerializer,
             sort_keys=self.sort_keys,
             indent=self.indent,
         )
+
+        return jobj
+
+
+def flatten(input_dict, separator="/", prefix=""):
+    """ Flattens a dictionary with nested dictionaries and lists
+    into a single dictionary.
+
+    The key compression is done using the chosen separator.
+    """
+    output_dict = {}
+    for key, value in input_dict.items():
+
+        if isinstance(value, dict) and value:
+
+            deeper = flatten(value, separator, f"{prefix}{key}{separator}")
+            output_dict.update({key2: val2 for key2, val2 in deeper.items()})
+
+        elif isinstance(value, list) and value:
+            for _, sublist in enumerate(value, start=1):
+                if isinstance(sublist, dict) and sublist:
+                    deeper = flatten(
+                        sublist, separator, f"{prefix}{key}{separator}"
+                    )
+                    output_dict.update(
+                        {key2: val2 for key2, val2 in deeper.items()}
+                    )
+                else:
+                    output_dict[f"{prefix}{key}"] = value
+        else:
+            output_dict[f"{prefix}{key}"] = value
+
+    return output_dict
 
 
 class Signal:

@@ -28,6 +28,7 @@ from ...messages import NeighborDiagnosticsMessage
 from ...messages import NodeDiagnosticsMessage
 from ...messages import TestNWMessage
 from ...messages import TrafficDiagnosticsMessage
+from ...messages import DiagnosticsMessage
 from ...tools import Settings
 
 
@@ -88,18 +89,20 @@ class MySQLObserver(StreamObserver):
     @staticmethod
     def _map_message(mysql, message):
         """ Inserts the message according to its type """
-        if isinstance(message, AdvertiserMessage):
-            mysql.put_advertiser([message])
+        if isinstance(message, DiagnosticsMessage):
+            mysql.put_diagnostics(message)
+        elif isinstance(message, TestNWMessage):
+            mysql.put_testnw_measurements(message)
         elif isinstance(message, BootDiagnosticsMessage):
             mysql.put_boot_diagnostics(message)
         elif isinstance(message, NeighborDiagnosticsMessage):
             mysql.put_neighbor_diagnostics(message)
         elif isinstance(message, NodeDiagnosticsMessage):
             mysql.put_node_diagnostics(message)
-        elif isinstance(message, TestNWMessage):
-            mysql.put_testnw_measurements(message)
         elif isinstance(message, TrafficDiagnosticsMessage):
             mysql.put_traffic_diagnostics(message)
+        elif isinstance(message, AdvertiserMessage):
+            mysql.put_advertiser([message])
         elif isinstance(message, GenericMessage):
             mysql.put_to_received_packets(message)
 

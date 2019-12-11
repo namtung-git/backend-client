@@ -1,8 +1,11 @@
 import json
 import wirepas_messaging
 import datetime
+from wirepas_backend_client.tools import LoggerHelper
 
 from wirepas_backend_client.messages.interface import MessageManager
+
+LoggerHelper(module_name="message_decoding").setup()
 
 
 def get_traffic(filepath):
@@ -42,9 +45,14 @@ def parse_wire_message(message):
 def test_exception_handling():
     """ This test ensures that incorrect payloads do not crash the decoder """
 
-    messages = get_traffic("./tests/mqtt_incorrect_payload.json")
+    messages = get_traffic(
+        "./tests/files/received_messages_incorrect_apdu.json"
+    )
 
     for message in messages:
+        message = message.strip("\n")
+        if not message:
+            continue
         record = json.loads(message)
         wire_message = build_wire_message(record)
         parse_wire_message(wire_message)
@@ -58,13 +66,25 @@ def test_received_messages():
     """
 
     stats = dict()
-    messages = get_traffic("./tests/mqtt_traffic.json")
+    messages = get_traffic("./tests/files/received_messages.json")
 
     for message in messages:
+
+        message = message.strip("\n")
+        if not message:
+            continue
 
         record = json.loads(message)
         wire_message = build_wire_message(record)
         parsed_message = parse_wire_message(wire_message)
+
+        print(
+            "<<<<<<<<<",
+            wire_message.source_endpoint,
+            wire_message.destination_endpoint,
+        )
+        print(json.dumps(parsed_message.apdu, sort_keys=True, indent=4))
+        print("=========")
 
         for k in parsed_message.apdu:
 
@@ -76,8 +96,7 @@ def test_received_messages():
                         )
                     )
             except KeyError:
-                print("Key error: {} / {}".format(k, parsed_message.apdu))
-                raise
+                continue
 
         try:
             stats[
