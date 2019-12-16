@@ -281,8 +281,16 @@ def main(args, logger):
             ),
         )
 
+        topic = "gw-event/received_data/{gw_id}/{sink_id}/{network_id}/{source_endpoint}/{destination_endpoint}".format(
+            gw_id=args.mqtt_subscribe_gateway_id,
+            sink_id=args.mqtt_subscribe_sink_id,
+            network_id=args.mqtt_subscribe_network_id,
+            source_endpoint=args.mqtt_subscribe_source_endpoint,
+            destination_endpoint=args.mqtt_subscribe_destination_endpoint,
+        )
+
         mqtt_process.message_subscribe_handlers = {
-            "gw-event/received_data/#": mqtt_process.generate_data_received_cb()
+            topic: mqtt_process.generate_data_received_cb()
         }
 
         daemon.set_run("mqtt", task=mqtt_process.run)
