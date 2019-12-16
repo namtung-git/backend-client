@@ -48,6 +48,8 @@ class ContextFilter(logging.Filter):
 class LoggerHelper:
     """LoggerHelper"""
 
+    DEBUG_LEVEL_VALUE_MQTT = 2
+
     def __init__(self, module_name, args=None, level: str = None):
         super(LoggerHelper, self).__init__()
 
@@ -64,6 +66,9 @@ class LoggerHelper:
         self._level = level.upper()
         self._handlers = dict()
 
+        self.add_custom_level(
+            name="MQTT", logger=self.logger, value=self.DEBUG_LEVEL_VALUE_MQTT
+        )
         self._log_format = dict()
         self._log_format["stdout"] = logging.Formatter(
             "%(asctime)s | [%(levelname)s] %(name)s@%(filename)s:%(lineno)d: %(message)s"
@@ -85,6 +90,7 @@ class LoggerHelper:
         except Exception:
             self._logger.error("unrecognized log level %s", self._level)
             self._logger.setLevel(logging.DEBUG)
+            raise
 
     @property
     def logger(self):
@@ -105,6 +111,29 @@ class LoggerHelper:
             self._logger.setLevel(getattr(logging, self._level))
         except Exception:
             self._logger.setLevel(logging.DEBUG)
+
+    @staticmethod
+    def add_custom_level(name, value, logger, level_callback=None):
+        """ Add a custom logging level """
+
+        def level_handler(self, message, *args, **kwargs):
+            if self.isEnabledFor(value):
+                self.log(value, message, *args, **kwargs)
+
+        if hasattr(logging, name):
+            return
+
+        if level_callback:
+            callback = level_callback
+        else:
+            callback = level_handler
+
+        logging.addLevelName(value, name)
+        setattr(logging, name, value)
+        setattr(logging.Logger, name.lower(), callback)
+
+        if logging.getLevelName(value) != name.upper():
+            raise ValueError("Log name does not match")
 
     def format(self, name):
         """ Return the format for a known stream """
@@ -195,32 +224,6 @@ class LoggerHelper:
         self._logger.propagate = propagate
 
         return self._logger
-
-    def add_custom_level(self, debug_level_name, debug_level_number):
-        """ Add a custom debug level for log filtering purposes.
-            To set a logging level called sensitive please call
-
-            self.add_custom_level(debug_level_name='sensitive',
-                                  debug_level_number=100)
-
-            afterwards the method will be available to the logger as
-
-            logger.sensitive('my logging message')
-        """
-
-        logging.addLevelName(debug_level_number, debug_level_name.upper())
-
-        def cb(self, message, *pargs, **kws):
-            # Yes, logger takes its '*pargs' as 'args'.
-            if self.isEnabledFor(debug_level_number):
-                self._log(debug_level_number, message, pargs, **kws)
-
-        setattr(logging.Logger, debug_level_name, cb)
-
-        assert (
-            logging.getLevelName(debug_level_number)
-            == debug_level_name.upper()
-        )
 
     def close(self):
         """ Attempts to close log handlers """

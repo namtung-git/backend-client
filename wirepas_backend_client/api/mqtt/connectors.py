@@ -108,13 +108,13 @@ class MQTT(object):
         self.client.reconnect_delay_set(
             min_delay=reconnect_min_delay, max_delay=reconnect_max_delay
         )
-        self.client.enable_logger(self.logger)
 
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
         self.client.on_publish = self.on_publish
         self.client.on_disconnect = self.on_disconnect
         self.client.on_unsubscribe = self.on_unsubscribe
+        self.client.on_log = self.on_log
 
         self.keep_alive = keep_alive
         self.allow_untrusted = allow_untrusted
@@ -305,9 +305,7 @@ class MQTT(object):
         """
         Callback generated when the broker acknowledges a subscription event
         """
-        self.logger.debug(
-            "subscribed with mid: %s / qos: %s", mid, granted_qos
-        )
+        self.logger.mqtt("subscribed with mid: %s / qos: %s", mid, granted_qos)
 
     def on_unsubscribe(
         self: "MQTT", client: paho.mqtt.client, userdata: object, mid: int
@@ -315,7 +313,7 @@ class MQTT(object):
         """
         Callback generated when the broker acknowledges an unsubscribe event
         """
-        self.logger.debug("unsubscribed with mid:%s", mid)
+        self.logger.mqtt("unsubscribed with mid:%s", mid)
 
     def on_publish(
         self: "MQTT", client: paho.mqtt.client, userdata: object, mid: int
@@ -323,7 +321,7 @@ class MQTT(object):
         """
         Callback generated when the broker acknowledges a pubished message
         """
-        self.logger.debug("sent message %s", mid)
+        self.logger.mqtt("sent message %s", mid)
 
     def on_log(
         self: "MQTT",
@@ -335,7 +333,7 @@ class MQTT(object):
         """
         Internal mqtt logging where buf is the message being sent
         """
-        self.logger.debug("mqtt-log: %s", buf)
+        self.logger.mqtt("mqtt-log: %s", buf)
 
     def on_message(
         self: "MQTT", client: paho.mqtt.client, userdata: object, message: str
@@ -349,7 +347,7 @@ class MQTT(object):
             message (object): Incoming message.
         """
 
-        self.logger.debug(
+        self.logger.mqtt(
             "%s:%s:%s", message.topic, message.payload, message.qos
         )
 
