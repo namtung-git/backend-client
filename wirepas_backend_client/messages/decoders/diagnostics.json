@@ -140,6 +140,8 @@
   "40": "cfmac_reserved_upload_average",
   "41": "blacklisted_channel_amount",
   "42": "firmware_app",
+  "43": "cbmac_blacklisting_channels_min_to_40",
+  "44": "cbmac_blacklisting_channels_41_to_max",
   "5": "next_hop_quality",
   "50": "nexthop_details",
   "51": "buffer_usage",
@@ -155,7 +157,7 @@
     "0": "average",
     "1": "maximum"
   },
-  "build_date": "2019-12-10T09:50:19.698243",
+  "build_date": "2019-12-13T13:19:46.930951",
   "cbmac_cca_channels": {
     "0": "cbmac_cca_channel",
     "1": "cbmac_cca_failed"
@@ -163,18 +165,13 @@
   "cbmac_details": {
     "0": "cbmac_load",
     "1": "cbmac_rx_messages_ack",
-    "10": "blacklist_channel_group_2",
-    "11": "blacklist_channel_group_3",
-    "12": "blacklist_channel_group_4",
-    "13": "blacklist_channel_group_5",
     "2": "cbmac_rx_messages_unack",
     "3": "cbmac_rx_ack_other_reasons",
     "4": "cbmac_tx_ack_cca_fail",
     "5": "cbmac_tx_ack_not_received",
     "6": "cbmac_tx_messages_ack",
     "7": "cbmac_tx_messages_unack",
-    "8": "cbmac_tx_cca_unack_fail",
-    "9": "blacklist_channel_group_1"
+    "8": "cbmac_tx_cca_unack_fail"
   },
   "events": {
     "0": "event1",

@@ -11,7 +11,7 @@ LoggerHelper(module_name="message_decoding").setup()
 
 # these methods are to be migrated to the MESH interface
 def is_low_latency(role, definition):
-    mode = role & definition["mode_mask"]
+    mode = role & definition["ll"]
     return mode == definition["ll"]
 
 
@@ -165,7 +165,6 @@ def test_dreq_content():
 
             if is_low_latency(role, roles_map):
                 mode = "ll"
-
             else:
                 mode = "le"
 
