@@ -179,6 +179,7 @@
   "4": "network_scans_amount",
   "5": "scanstat_avg_routers",
   "6": "cfmac_access_cycle_interval",
+  "64": "trace_options",
   "65": "nexthop_details",
   "66": "buffer_usage",
   "69": "cbmac_details",
@@ -186,14 +187,13 @@
   "71": "ftdma_table",
   "72": "role_api",
   "73": "events",
-  "74": "trace_options",
   "8": "cluster_channel_reliability",
   "9": "cbmac_broadcast_ll_members_pending",
   "buffer_usage": {
     "0": "average",
     "1": "maximum"
   },
-  "build_date": "2019-12-19T15:46:50.225726",
+  "build_date": "2020-01-07T09:47:52.534638",
   "cbmac_cca_channels": {
     "0": "cbmac_cca_channel",
     "1": "cbmac_cca_failed"
