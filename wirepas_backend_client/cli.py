@@ -217,8 +217,11 @@ class BackendShell(cmd.Cmd):
             for k, v in reply.__dict__.items():
                 if isinstance(v, list):
                     for lv in v:
-                        for kk, vv in lv.items():
-                            _print(kk, vv, output_fmt="     {}: {}")
+                        try:
+                            for kk, vv in lv.items():
+                                _print(kk, vv, output_fmt="     {}: {}")
+                        except AttributeError:
+                            continue
                 elif isinstance(v, dict):
                     for kk, vv in v.items():
                         _print(kk, vv, output_fmt="     {}: {}")
