@@ -129,13 +129,15 @@ def flatten(input_dict, separator="/", prefix=""):
             output_dict.update({key2: val2 for key2, val2 in deeper.items()})
 
         elif isinstance(value, list) and value:
-            for _, sublist in enumerate(value, start=1):
+            for index, sublist in enumerate(value, start=0):
                 if isinstance(sublist, dict) and sublist:
                     deeper = flatten(
-                        sublist, separator, f"{prefix}{key}{separator}"
+                        sublist,
+                        separator,
+                        f"{prefix}{key}{separator}{index}{separator}",
                     )
                     output_dict.update(
-                        {key2: val2 for key2, val2 in deeper.items()}
+                        {f"{key2}": val2 for key2, val2 in deeper.items()}
                     )
                 else:
                     output_dict[f"{prefix}{key}"] = value

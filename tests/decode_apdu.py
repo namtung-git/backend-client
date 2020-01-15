@@ -62,7 +62,11 @@ def decode_apdu():
             f"payload: {wire_message.data_payload}\n",
         )
 
-        print(json.dumps(parsed_message.apdu, sort_keys=True, indent=4))
+        print("Print serialization")
+        print(json.dumps(parsed_message.serialize(flat_keys=False), indent=4))
+
+        print("Flatten keys")
+        print(json.dumps(parsed_message.serialize(flat_keys=True), indent=4))
         print("=========")
 
 

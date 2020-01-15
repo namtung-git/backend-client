@@ -50,6 +50,7 @@ class DiagnosticsMessage(GenericMessage):
 
         self.data_payload = None
         self.apdu = None
+        self.cbor_contents = None
         self.serialization = None
         super(DiagnosticsMessage, self).__init__(*args, **kwargs)
 
@@ -74,11 +75,11 @@ class DiagnosticsMessage(GenericMessage):
         """ Decodes the APDU content base on the application """
 
         super().decode()
-        contents = super().cbor_decode(self.data_payload)
-        if self._apdu_fields is not None and contents is not None:
-            try:
-                for cbor_id, value in contents.items():
+        self.cbor_contents = super().cbor_decode(self.data_payload)
 
+        if self._apdu_fields is not None and self.cbor_contents is not None:
+            try:
+                for cbor_id, value in self.cbor_contents.items():
                     try:
                         name = self._apdu_fields[str(cbor_id)]
                     except KeyError:
@@ -93,11 +94,19 @@ class DiagnosticsMessage(GenericMessage):
                         vector = self._apdu_fields[name]
                         value = self.cbor_vector_to_dict(vector, value)
 
-                    self.apdu[name] = value
+                    if name in self.apdu:
+                        try:
+                            self.apdu[name].append(value)
+                        except AttributeError:
+                            self.apdu[name] = [self.apdu[name], value]
+                    else:
+                        self.apdu[name] = value
 
             except AttributeError:
                 self.logger.exception(
-                    "apdu_content=%s<-%s", contents, self.data_payload
+                    "apdu_content=%s<-%s",
+                    self.cbor_contents,
+                    self.data_payload,
                 )
 
     def cbor_vector_to_dict(self, vector: dict, values: list) -> dict:
