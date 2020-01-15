@@ -1,5 +1,94 @@
 # Change Log
 
+## [v1.2.2](https://github.com/wirepas/backend-client/tree/v1.2.2) (2020-01-15)
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.2.2-rc.3...v1.2.2)
+
+**Merged pull requests:**
+
+- Release helper [\#206](https://github.com/wirepas/backend-client/pull/206) ([PFigs](https://github.com/PFigs))
+- cli: fix data tracking exception [\#203](https://github.com/wirepas/backend-client/pull/203) ([PFigs](https://github.com/PFigs))
+- Update travis [\#202](https://github.com/wirepas/backend-client/pull/202) ([PFigs](https://github.com/PFigs))
+- Diagnostics dashboard [\#201](https://github.com/wirepas/backend-client/pull/201) ([PFigs](https://github.com/PFigs))
+- Advertiser message: interface compliance [\#200](https://github.com/wirepas/backend-client/pull/200) ([PFigs](https://github.com/PFigs))
+- Mesh request example [\#197](https://github.com/wirepas/backend-client/pull/197) ([PFigs](https://github.com/PFigs))
+
+## [v1.2.2-rc.3](https://github.com/wirepas/backend-client/tree/v1.2.2-rc.3) (2020-01-07)
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.2.2-rc.2...v1.2.2-rc.3)
+
+**Merged pull requests:**
+
+- Update version to v1.2.2.rc3 [\#196](https://github.com/wirepas/backend-client/pull/196) ([PFigs](https://github.com/PFigs))
+- Diagnostics cbor ids [\#195](https://github.com/wirepas/backend-client/pull/195) ([PFigs](https://github.com/PFigs))
+
+## [v1.2.2-rc.2](https://github.com/wirepas/backend-client/tree/v1.2.2-rc.2) (2019-12-20)
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.2.2-rc.1...v1.2.2-rc.2)
+
+**Merged pull requests:**
+
+- RC2 for v1.2.2 [\#193](https://github.com/wirepas/backend-client/pull/193) ([PFigs](https://github.com/PFigs))
+- Update diagnostics [\#192](https://github.com/wirepas/backend-client/pull/192) ([PFigs](https://github.com/PFigs))
+
+## [v1.2.2-rc.1](https://github.com/wirepas/backend-client/tree/v1.2.2-rc.1) (2019-12-17)
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.2.1...v1.2.2-rc.1)
+
+**Closed issues:**
+
+- \[BUG\] High CPU usage when using the kpi\_mesh module [\#179](https://github.com/wirepas/backend-client/issues/179)
+- Change csv default output path  [\#157](https://github.com/wirepas/backend-client/issues/157)
+- Add header to timestamp output from influx\_viewer [\#156](https://github.com/wirepas/backend-client/issues/156)
+- Typo in documentation for docker-compose path [\#151](https://github.com/wirepas/backend-client/issues/151)
+- Cannot skip ssl check for influx interface [\#150](https://github.com/wirepas/backend-client/issues/150)
+- Check protocol version handling within WNT interfaces [\#145](https://github.com/wirepas/backend-client/issues/145)
+- Establish a property which the decode method will always set [\#124](https://github.com/wirepas/backend-client/issues/124)
+- \[BUG\] MQTT viewer consumes disk space [\#103](https://github.com/wirepas/backend-client/issues/103)
+- Positioning payload decoding [\#86](https://github.com/wirepas/backend-client/issues/86)
+- Interface unit test: entrypoint and basic connection smoke tests [\#30](https://github.com/wirepas/backend-client/issues/30)
+
+**Merged pull requests:**
+
+- Diagnostic's definition update [\#191](https://github.com/wirepas/backend-client/pull/191) ([PFigs](https://github.com/PFigs))
+- MQTT logging level [\#190](https://github.com/wirepas/backend-client/pull/190) ([PFigs](https://github.com/PFigs))
+- Adv test case: subscription topic [\#189](https://github.com/wirepas/backend-client/pull/189) ([PFigs](https://github.com/PFigs))
+- Release candidate 1 for v1.2.2 [\#188](https://github.com/wirepas/backend-client/pull/188) ([PFigs](https://github.com/PFigs))
+- KPI mesh: performance [\#187](https://github.com/wirepas/backend-client/pull/187) ([PFigs](https://github.com/PFigs))
+- WPE entrypoint security flag [\#185](https://github.com/wirepas/backend-client/pull/185) ([PFigs](https://github.com/PFigs))
+- Advertiser test case [\#184](https://github.com/wirepas/backend-client/pull/184) ([PFigs](https://github.com/PFigs))
+- Update dependency mysqlclient to v1.4.6 [\#183](https://github.com/wirepas/backend-client/pull/183) ([renovate[bot]](https://github.com/apps/renovate))
+- Diagnostic packets [\#182](https://github.com/wirepas/backend-client/pull/182) ([PFigs](https://github.com/PFigs))
+- Update README.md [\#180](https://github.com/wirepas/backend-client/pull/180) ([PFigs](https://github.com/PFigs))
+- Update dependency wirepas\_messaging to v1.3.0 [\#178](https://github.com/wirepas/backend-client/pull/178) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency mysqlclient to v1.4.5 [\#177](https://github.com/wirepas/backend-client/pull/177) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency pandas to v0.25.3 [\#175](https://github.com/wirepas/backend-client/pull/175) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency paho-mqtt to v1.5.0 [\#174](https://github.com/wirepas/backend-client/pull/174) ([renovate[bot]](https://github.com/apps/renovate))
+- Reduce TOC level [\#173](https://github.com/wirepas/backend-client/pull/173) ([PFigs](https://github.com/PFigs))
+- Fix mesh diagnostics exception handling [\#172](https://github.com/wirepas/backend-client/pull/172) ([PFigs](https://github.com/PFigs))
+- Decoder exception handling test [\#171](https://github.com/wirepas/backend-client/pull/171) ([PFigs](https://github.com/PFigs))
+- Update dependency pandas to v0.25.2 [\#169](https://github.com/wirepas/backend-client/pull/169) ([renovate[bot]](https://github.com/apps/renovate))
+- TLV decoder exception handling [\#168](https://github.com/wirepas/backend-client/pull/168) ([PFigs](https://github.com/PFigs))
+- Update dependency fluent-logger to v0.9.4 [\#165](https://github.com/wirepas/backend-client/pull/165) ([renovate[bot]](https://github.com/apps/renovate))
+- Environment keys [\#163](https://github.com/wirepas/backend-client/pull/163) ([PFigs](https://github.com/PFigs))
+- Update wnt interfaces [\#161](https://github.com/wirepas/backend-client/pull/161) ([PFigs](https://github.com/PFigs))
+- Travis service tests [\#160](https://github.com/wirepas/backend-client/pull/160) ([PFigs](https://github.com/PFigs))
+- Update wirepas messaging version and wnt manager imports [\#159](https://github.com/wirepas/backend-client/pull/159) ([JanneSiren](https://github.com/JanneSiren))
+- Influx queries index name [\#158](https://github.com/wirepas/backend-client/pull/158) ([PFigs](https://github.com/PFigs))
+- Update readme [\#155](https://github.com/wirepas/backend-client/pull/155) ([PFigs](https://github.com/PFigs))
+- Update README.md [\#154](https://github.com/wirepas/backend-client/pull/154) ([jou48](https://github.com/jou48))
+- Diagnostics decoding within MySQL interfaces [\#153](https://github.com/wirepas/backend-client/pull/153) ([PFigs](https://github.com/PFigs))
+- Propagation of ssl fields within influx interfaces [\#152](https://github.com/wirepas/backend-client/pull/152) ([PFigs](https://github.com/PFigs))
+- Fix apdu decoding [\#147](https://github.com/wirepas/backend-client/pull/147) ([PFigs](https://github.com/PFigs))
+
+## [v1.2.1](https://github.com/wirepas/backend-client/tree/v1.2.1) (2019-10-01)
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.2.0...v1.2.1)
+
+**Closed issues:**
+
+- 'InfluxSettings' object has no attribute 'sanity' [\#139](https://github.com/wirepas/backend-client/issues/139)
+
+**Merged pull requests:**
+
+- Version bump to v1.2.1 [\#148](https://github.com/wirepas/backend-client/pull/148) ([PFigs](https://github.com/PFigs))
+- V1.2.1 dev [\#146](https://github.com/wirepas/backend-client/pull/146) ([PFigs](https://github.com/PFigs))
+
 ## [v1.2.0](https://github.com/wirepas/backend-client/tree/v1.2.0) (2019-09-20)
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.2.0-rc.3...v1.2.0)
 
