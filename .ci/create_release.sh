@@ -3,7 +3,7 @@
 set -e
 
 GIT_TAG="${1}"
-GIT_MESSAGE="${2:-"release ${GIT_TAG}"}"
+GIT_MESSAGE="${2:-"Release ${GIT_TAG}"}"
 PY_VERSION_PATH="wirepas_backend_client/__about__.py"
 GH_TOKEN=${GH_TOKEN}
 
@@ -12,7 +12,7 @@ function update_version
 {
     echo "updating and creating commit for release ${GIT_TAG}..."
     sed -i "/__version__/d" "${PY_VERSION_PATH}"
-    echo "__version__=\"${GIT_TAG}\"" >> "${PY_VERSION_PATH}"
+    echo "__version__ = \"${GIT_TAG}\"" >> "${PY_VERSION_PATH}"
 
     git add "${PY_VERSION_PATH}"
     git commit -m "${GIT_MESSAGE}"
@@ -22,10 +22,10 @@ function update_version
 function update_changelog
 {
     echo "creating changelog..."
-    github_changelog_generator -t "${GH_TOKEN}" --no-unreleased
+    github_changelog_generator -t "${GH_TOKEN}" --future-release "${GIT_TAG}"
 
     git add CHANGELOG.md
-    git commit --amend
+    git commit --amend --no-verify
 }
 
 # creates the tag
@@ -40,8 +40,8 @@ function _main
     if [[ ! -z "${GH_TOKEN}" ]]
     then
         update_version
-        create_tag
         update_changelog
+        create_tag
         echo "done"
     else
         echo "please provide GH token for changelog generation"
