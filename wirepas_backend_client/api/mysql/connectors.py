@@ -729,7 +729,7 @@ class MySQL(object):
         values = list()
 
         for message in messages:
-            for node_address, fields in message.advertisers.items():
+            for node_address, fields in message.apdu["adv"].items():
                 self.logger.debug(
                     "inserting advertiser message in mysql: %s", message
                 )
@@ -746,8 +746,8 @@ class MySQL(object):
                             message.destination_endpoint,
                             message.travel_time_ms,
                             message.qos,
-                            message.apdu_message_type,
-                            message.apdu_reserved_field,
+                            message.apdu["adv_type"],
+                            message.apdu["reserved_field"],
                             node_address,
                             value,
                             str(binascii.hexlify(message.payload)),

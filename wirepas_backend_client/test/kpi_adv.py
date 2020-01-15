@@ -125,25 +125,15 @@ class AdvertiserManager(TestManager):
                 else:
                     continue
 
-            message.count()
-            message.decode()
-
-            self.logger.info(
-                "#{} sent@{} received@{} diff: {} ms".format(
-                    message.index,
-                    message.tx_time.isoformat(),
-                    message.received_at.isoformat(),
-                    round(message.transport_delay * 1e3, 2),
-                )
-            )
+            self.logger.info(message.serialize())
 
             if self.storage_queue:
                 self.storage_queue.put(message)
                 if self.storage_queue.qsize() > 100:
                     self.logger.critical("storage queue is too big")
 
-            # create map of advertisers
-            for node_address, details in message.advertisers.items():
+            # create map of apdu["adv"]
+            for node_address, details in message.apdu["adv"].items():
                 self.inventory.add(
                     node_address=node_address,
                     rss=details["rss"],
@@ -191,7 +181,6 @@ class AdvertiserManager(TestManager):
             difference=str(self.inventory.difference()),
             elapsed=report["elapsed"],
         )
-        record["@timestamp"] = record["inventory_start"]
 
         self.logger.info(record, dict(sequence=self._test_sequence_number))
 

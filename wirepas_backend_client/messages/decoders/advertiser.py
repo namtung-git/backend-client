@@ -33,9 +33,9 @@ class AdvertiserMessage(GenericMessage):
 
         timestamp (int): Message received time
         type (int): Type of application message (ApplicationTypes)
-        advertisers (dict): Dictionary containing the apdu contents
-        apdu_message_type (int): APDU type
-        apdu_reserved_field (int): APDU reserved field
+        apdu["adv"] (dict): Dictionary containing the apdu contents
+        apdu["adv_type"] (int): APDU type
+        apdu["adv_reserved_field"] (int): APDU reserved field
         index (int): Message sequence number (as observed from the client side)
     """
 
@@ -55,10 +55,12 @@ class AdvertiserMessage(GenericMessage):
         self.timestamp = self.rx_time_ms_epoch
         self.type = ApplicationTypes.AdvertiserMessage
 
-        self.advertisers = dict()
-        self.apdu_message_type = None
-        self.apdu_reserved_field = None
+        self.apdu["adv"] = dict()
+        self.apdu["adv_type"] = None
+        self.apdu["adv_reserved_field"] = None
         self.index = None
+        self.count()
+        self.decode()
 
     def count(self):
         """ Increases the message counter """
@@ -71,7 +73,7 @@ class AdvertiserMessage(GenericMessage):
     def decode(self) -> None:
         """
         Unpacks the advertiser data from the APDU to the inner
-        advertisers dict.
+        apdu["adv"] dict.
 
         The advertiser APDU contains
 
@@ -89,8 +91,8 @@ class AdvertiserMessage(GenericMessage):
 
         header = s_header.unpack(self.data_payload[0:2])
 
-        self.apdu_message_type = header[0]
-        self.apdu_reserved_field = header[1]
+        self.apdu["adv_type"] = header[0]
+        self.apdu["adv_reserved_field"] = header[1]
 
         # switch on type
         body = self.data_payload[2:]
@@ -105,11 +107,11 @@ class AdvertiserMessage(GenericMessage):
             address = address | (values[2] << 16)
 
             value_field = values[-1]
-            if self.apdu_message_type == AdvertiserMessage.message_type_rss:
+            if self.apdu["adv_type"] == AdvertiserMessage.message_type_rss:
                 rss = values[-1] / 2 - 127
                 otap = None
                 value_field = rss
-            elif self.apdu_message_type == AdvertiserMessage.message_type_otap:
+            elif self.apdu["adv_type"] == AdvertiserMessage.message_type_otap:
                 rss = None
                 otap = values[-1]
                 value_field = otap
@@ -117,13 +119,29 @@ class AdvertiserMessage(GenericMessage):
                 rss = None
                 otap = None
 
-            if address not in self.advertisers:
-                self.advertisers[address] = dict(
+            if address not in self.apdu["adv"]:
+                self.apdu["adv"][address] = dict(
                     time=None, rss=list(), otap=list(), value=list()
                 )
 
-            self.advertisers[address]["time"] = self.timestamp
-            self.advertisers[address]["rss"].append(rss)
+            self.apdu["adv"][address]["time"] = self.timestamp
+            self.apdu["adv"][address]["rss"].append(rss)
             if otap:
-                self.advertisers[address]["otap"].append(otap)
-            self.advertisers[address]["value"].append(value_field)
+                self.apdu["adv"][address]["otap"].append(otap)
+            self.apdu["adv"][address]["value"].append(value_field)
+
+    def _apdu_serialization(self):
+        """ Standard apdu serialization. """
+        if self.apdu:
+            for field in self.apdu:
+                if field in "advertisers":
+                    self.serialization[field] = str(
+                        sorted(list(self.apdu[field].keys()))
+                    )
+                    continue
+                try:
+                    self.serialization[field] = self.apdu[field]
+                except KeyError:
+                    pass
+
+            self.serialization["index"] = self.index

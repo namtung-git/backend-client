@@ -133,9 +133,9 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
             tzinfo=datetime.timezone.utc
         )
 
-        self.transport_delay = (
-            self.received_at - self.tx_time
-        ).total_seconds()
+        self.transport_delay = round(
+            (self.received_at - self.tx_time).total_seconds() * 1e3, 2
+        )
         self.serialization = dict()
 
     @property
@@ -362,6 +362,7 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
             "data_payload": self._payload_serialization(),
             "data_size": self.data_size,
             "hop_count": self.hop_count,
+            "transport_delay": self.transport_delay,
         }
 
         return header
