@@ -99,7 +99,9 @@ class RuuviMessage(GenericMessage):
         """
 
         super().decode()
-        self.tlv_decoder(self.data_payload, self._tlv_header, self._tlv_fields)
+        self.apdu = self.tlv_decoder(
+            self.data_payload, self._tlv_header, self._tlv_fields
+        )
 
     def _tlv_value_decoder(
         self, apdu, tlv_fields, tlv_id, tlv_name, tlv_value
