@@ -157,6 +157,9 @@ def test_dreq_content():
                 print(f"ignoring payload:{parsed_message.data_payload.hex()}")
                 continue
 
+            if "role" not in parsed_message.apdu:
+                continue
+
             role = parsed_message.apdu["role"]
 
             print(

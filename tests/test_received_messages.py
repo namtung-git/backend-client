@@ -17,19 +17,20 @@ def get_traffic(filepath):
 def build_wire_message(record):
 
     wire_message = wirepas_messaging.gateway.api.ReceivedDataEvent(
-        record["gw_id"],
-        record["sink_id"],
-        int(
+        gw_id=record["gw_id"],
+        sink_id=record["sink_id"],
+        rx_time_ms_epoch=int(
             datetime.datetime.fromisoformat(record["rx_time"]).timestamp()
             * 1e3
         ),
-        record["source_address"],
-        record["destination_address"],
-        record["source_endpoint"],
-        record["destination_endpoint"],
-        record["travel_time_ms"],
-        record["qos"],
-        bytes.fromhex(record["data_payload"]),
+        src=record["source_address"],
+        dst=record["destination_address"],
+        src_ep=record["source_endpoint"],
+        dst_ep=record["destination_endpoint"],
+        travel_time_ms=record["travel_time_ms"],
+        qos=record["qos"],
+        data=bytes.fromhex(record["data_payload"]),
+        data_size=record["data_size"],
         hop_count=record["hop_count"],
     )
     return wire_message
@@ -65,6 +66,8 @@ def test_received_messages():
     and that its decoding results in the same object
     """
 
+    ignore_keys = ["network_id", "event_id", "received_at", "transport_delay"]
+
     stats = dict()
     messages = get_traffic("./tests/files/received_messages.json")
 
@@ -77,25 +80,28 @@ def test_received_messages():
         record = json.loads(message)
         wire_message = build_wire_message(record)
         parsed_message = parse_wire_message(wire_message)
+        dmessage = parsed_message.serialize()
 
         print(
-            "<<<<<<<<<",
+            "<<<",
             wire_message.source_endpoint,
             wire_message.destination_endpoint,
         )
-        print(json.dumps(parsed_message.apdu, sort_keys=True, indent=4))
+        print(json.dumps(dmessage, indent=4))
         print("=========")
 
-        for k in parsed_message.apdu:
+        for key in record:
+
+            if key in ignore_keys:
+                continue
 
             try:
-                if record[k] != parsed_message.apdu[k]:
+                if record[key] != dmessage[key]:
                     raise ValueError(
-                        "{}: {} != {}".format(
-                            k, record[k], parsed_message.apdu[k]
-                        )
+                        "{}: {} != {}".format(key, record[key], dmessage[key])
                     )
             except KeyError:
+                print(f"missing key: {key}")
                 continue
 
         try:
