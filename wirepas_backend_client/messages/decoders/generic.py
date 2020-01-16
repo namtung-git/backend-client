@@ -119,8 +119,7 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
 
         self.rx_time = datetime.datetime.utcfromtimestamp(
             self.rx_time_ms_epoch / 1e3
-        ) - datetime.timedelta(seconds=self.travel_time_ms / 1e3)
-
+        )
         self.tx_time = self.rx_time - datetime.timedelta(
             seconds=self.travel_time_ms / 1e3
         )
