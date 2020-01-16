@@ -1,16 +1,27 @@
 # Change Log
 
+## [v1.2.3](https://github.com/wirepas/backend-client/tree/v1.2.3) (2020-01-16)
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.2.2...v1.2.3)
+
+**Merged pull requests:**
+
+- Update test vectors [\#213](https://github.com/wirepas/backend-client/pull/213) ([PFigs](https://github.com/PFigs))
+- Update ruuvi.py [\#212](https://github.com/wirepas/backend-client/pull/212) ([PFigs](https://github.com/PFigs))
+- Diagnostic decoder [\#209](https://github.com/wirepas/backend-client/pull/209) ([PFigs](https://github.com/PFigs))
+
 ## [v1.2.2](https://github.com/wirepas/backend-client/tree/v1.2.2) (2020-01-15)
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.2.2-rc.3...v1.2.2)
 
 **Merged pull requests:**
 
+- Update version [\#207](https://github.com/wirepas/backend-client/pull/207) ([PFigs](https://github.com/PFigs))
 - Release helper [\#206](https://github.com/wirepas/backend-client/pull/206) ([PFigs](https://github.com/PFigs))
 - cli: fix data tracking exception [\#203](https://github.com/wirepas/backend-client/pull/203) ([PFigs](https://github.com/PFigs))
 - Update travis [\#202](https://github.com/wirepas/backend-client/pull/202) ([PFigs](https://github.com/PFigs))
 - Diagnostics dashboard [\#201](https://github.com/wirepas/backend-client/pull/201) ([PFigs](https://github.com/PFigs))
 - Advertiser message: interface compliance [\#200](https://github.com/wirepas/backend-client/pull/200) ([PFigs](https://github.com/PFigs))
 - Mesh request example [\#197](https://github.com/wirepas/backend-client/pull/197) ([PFigs](https://github.com/PFigs))
+- MQTT logging level [\#190](https://github.com/wirepas/backend-client/pull/190) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.2-rc.3](https://github.com/wirepas/backend-client/tree/v1.2.2-rc.3) (2020-01-07)
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.2.2-rc.2...v1.2.2-rc.3)
@@ -47,7 +58,6 @@
 **Merged pull requests:**
 
 - Diagnostic's definition update [\#191](https://github.com/wirepas/backend-client/pull/191) ([PFigs](https://github.com/PFigs))
-- MQTT logging level [\#190](https://github.com/wirepas/backend-client/pull/190) ([PFigs](https://github.com/PFigs))
 - Adv test case: subscription topic [\#189](https://github.com/wirepas/backend-client/pull/189) ([PFigs](https://github.com/PFigs))
 - Release candidate 1 for v1.2.2 [\#188](https://github.com/wirepas/backend-client/pull/188) ([PFigs](https://github.com/PFigs))
 - KPI mesh: performance [\#187](https://github.com/wirepas/backend-client/pull/187) ([PFigs](https://github.com/PFigs))
@@ -88,6 +98,7 @@
 
 - Version bump to v1.2.1 [\#148](https://github.com/wirepas/backend-client/pull/148) ([PFigs](https://github.com/PFigs))
 - V1.2.1 dev [\#146](https://github.com/wirepas/backend-client/pull/146) ([PFigs](https://github.com/PFigs))
+- v1.2.0-rc.3 [\#135](https://github.com/wirepas/backend-client/pull/135) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.0](https://github.com/wirepas/backend-client/tree/v1.2.0) (2019-09-20)
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.2.0-rc.3...v1.2.0)
@@ -115,7 +126,6 @@
 
 **Merged pull requests:**
 
-- v1.2.0-rc.3 [\#135](https://github.com/wirepas/backend-client/pull/135) ([PFigs](https://github.com/PFigs))
 - Add codacy badge [\#134](https://github.com/wirepas/backend-client/pull/134) ([PFigs](https://github.com/PFigs))
 - Example: influx viewer [\#133](https://github.com/wirepas/backend-client/pull/133) ([PFigs](https://github.com/PFigs))
 - Clearer allow\_unsecure option [\#132](https://github.com/wirepas/backend-client/pull/132) ([PFigs](https://github.com/PFigs))
