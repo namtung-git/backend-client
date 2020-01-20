@@ -41,8 +41,8 @@ class DiagnosticsMessage(GenericMessage):
 
     """
 
-    _source_endpoint = 247
-    _destination_endpoint = 255
+    source_endpoint = 247
+    destination_endpoint = 255
     _apdu_format = "cbor"
     _apdu_fields = None
 

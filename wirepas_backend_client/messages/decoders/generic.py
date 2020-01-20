@@ -27,8 +27,8 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
 
     This class offers a few common attributes such as:
 
-        _source_endpoint (int): the source endpoint
-        _destination_endpoint (int): the destination endpoint
+        source_endpoint (int): the source endpoint
+        destination_endpoint (int): the destination endpoint
         _apdu_format (string): the Struct format or a descriptive field
         _apdu_fields (dict): a dictionary containing the apdu fields
 
