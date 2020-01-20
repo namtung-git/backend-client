@@ -3,27 +3,31 @@
 version: '2'
 services:
     backend-client:
-      restart: always
-      image: wirepas/backend-client:v1.2.0
-      build:
-        dockerfile: container/slim/Dockerfile
-        context: ../
+        restart: always
+        image: wirepas/backend-client:v1.2.0
+        build:
+            dockerfile: container/slim/Dockerfile
+            context: ../
 
-      network_mode: host
-      user: wirepas
-      working_dir: /home/wirepas/
+        network_mode: host
+        user: wirepas
+        working_dir: /home/wirepas/
+        stdin_open: true
+        tty: true
 
-      # from v1.2.0 you can define your settings under
-      # the environment key or under a env_file key.
-      # If you do that, you can drop the volumes
-      environment:
-        - WM_DEBUG_LEVEL=info
-        - PYTHONUNBUFFERED=true
 
-      # .settings.yml must be located next to this file
-      volumes:
-        - ./.settings.yml:/home/wirepas/vars/settings.yml
+        # from v1.2.0 you can define your settings under
+        # the environment key or under a env_file key.
+        # If you do that, you can drop the volumes
+        environment:
+            - WM_DEBUG_LEVEL=info
+            - PYTHONUNBUFFERED=true
 
-      command: ["python",
-                ".local/wirepas_backend_client-extras/examples/mqtt_viewer.py",
-                "--settings","/home/wirepas/vars/settings.yml"]
+        # .settings.yml must be located next to this file
+        volumes:
+            - ./.settings.yml:/home/wirepas/backend-client/vars/settings.yml
+
+        command: ["python",
+                  ".local/wirepas_backend_client-extras/examples/mqtt_viewer.py",
+                  "--settings",
+                  "/home/wirepas/backend-client/vars/settings.yml"]

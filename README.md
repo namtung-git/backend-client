@@ -4,7 +4,7 @@
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/bf0c23237cf04ea6ac48e98cf10b6a7b)](https://www.codacy.com/manual/wirepas/backend-client?utm_source=github.com&utm_medium=referral&utm_content=wirepas/backend-client&utm_campaign=Badge_Grade) [![Build Status](https://travis-ci.com/wirepas/backend-apis.svg?branch=master)](https://travis-ci.com/wirepas/backend-client)  [![Documentation Status](https://readthedocs.org/projects/backend-client/badge/?version=latest)](https://backend-client.readthedocs.io/en/latest/?badge=latest) [![PyPi](https://img.shields.io/pypi/v/wirepas-backend-client.svg)](https://pypi.org/project/wirepas-backend-client/)
 
-<!-- MarkdownTOC levels="1,2,3" autolink="true"  -->
+<!-- MarkdownTOC levels="1,2,3" autolink="true"  style="ordered"  -->
 
 1. [Introduction](#introduction)
 1. [Installation](#installation)
@@ -718,7 +718,7 @@ To run it with docker type
 
 ```shell
     docker run -it \
-               -v $(pwd)/.settings.yml:/home/wirepas/vars/settings.yml \
+               -v $(pwd)/.settings.yml:/home/wirepas/backend-client/vars/settings.yml \
                wirepas/backend-client
 ```
 
@@ -745,7 +745,7 @@ If you wish to run the gateway command client you can do so with:
     docker-compose -f container/docker-compose.yml \
                    run \
                    backend-client wm-gw-cli \
-                   --settings /home/wirepas/vars/settings.yml
+                   --settings /home/wirepas/backend-client/vars/settings.yml
 ```
 
 If you prefer alpine based images, please change *slim* to *alpine*.

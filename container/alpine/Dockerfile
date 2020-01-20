@@ -1,10 +1,5 @@
 # Wirepas Oy
 
-FROM python:3.7-alpine as builder
-WORKDIR /app_build
-COPY . .
-RUN ./utils/generate_wheel.sh
-
 FROM python:3.7-alpine as alpine-installer
 ENV PYTHONUNBUFFERED=true
 RUN apk update \
@@ -34,29 +29,26 @@ RUN addgroup --gid "${WM_GID}" "${WM_USER}" \
     --uid "${WM_UID}" \
     "${WM_USER}"
 
-WORKDIR ${WM_HOME}/backend-client
-RUN chown "${WM_USER}:${WM_USER}" -R ${WM_HOME}
+WORKDIR "${WM_HOME}/backend-client/install"
+RUN chown "${WM_USER}:${WM_USER}" -R "${WM_HOME}"
 USER "${WM_USER}"
-ENV PATH=${PATH}:${WM_HOME}/.local/bin
+ENV PATH=${PATH}:"${WM_HOME}/.local/bin"
+ENV SETTINGS_PATH=${SETTINGS_PATH:-"${WM_HOME}/backend-client/vars"}
 
-COPY --from=builder /app_build/requirements.txt .
+COPY requirements.txt .
 RUN pip install --user --no-cache-dir -r requirements.txt
 
+COPY . .
+RUN pip install --user --no-cache-dir . \
+    && cd "${WM_HOME}/backend-client/" \
+    && mkdir -p "${SETTINGS_PATH}"
+
 USER root
-RUN apk del .build-dependencies
+RUN apk del .build-dependencies \
+    && rm -rf "${WM_HOME}/backend-client/install"
 USER "${WM_USER}"
 
-FROM alpine-installer
-
-COPY --from=builder /app_build/dist/wirepas_backend_client*.whl .
-RUN pip install --user --no-cache-dir wirepas_backend_client*.whl
-
-ENV SETTINGS_PATH=${SETTINGS_PATH:-"${WM_HOME}/backend-client/vars"}
-RUN mkdir -p ${SETTINGS_PATH} \
-    && rm wirepas_backend_client*.whl \
-    && rm requirements.txt
-
-CMD wm-gw-cli --settings "${SETTINGS_PATH}"
+CMD wm-gw-cli --settings "${SETTINGS_PATH}/settings.yml"
 
 ARG VERSION=edge
 ARG IMAGE_NAME="wirepas/backend-client:${VERSION}"
@@ -70,4 +62,3 @@ LABEL org.opencontainers.image.title="Wirepas backend client"
 LABEL org.opencontainers.image.url="https://github.com/wirepas/backend-client"
 LABEL org.opencontainers.image.vendor="Wirepas Ltd"
 LABEL org.opencontainers.image.version="${VERSION}"
-

@@ -1,4 +1,4 @@
-.git*
+**/*.git
 .travis*
 .flake*
 pip-wheel-metadata*
@@ -10,4 +10,9 @@ docs*
 *.private
 **/*.private
 .settings.yml
-
+**/*.pem
+**/*.key
+**/*.csr
+**/*.crt
+tests/*
+.ci/*
