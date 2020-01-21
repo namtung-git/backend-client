@@ -55,6 +55,7 @@ class AdvertiserMessage(GenericMessage):
         self.timestamp = self.rx_time_ms_epoch
         self.type = ApplicationTypes.AdvertiserMessage
 
+        self.full_adv_serialization = False
         self.apdu["adv"] = dict()
         self.apdu["adv_type"] = None
         self.apdu["adv_reserved_field"] = None

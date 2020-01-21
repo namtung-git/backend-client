@@ -14,8 +14,6 @@ except ImportError:
     print("Failed to import MySQLdb")
     pass
 
-import binascii
-import datetime
 import logging
 import json
 
@@ -353,31 +351,13 @@ class MySQL(object):
         )
         self.cursor.execute(createtable)
 
-        # Create advertiser
         createtable = (
-            "CREATE TABLE IF NOT EXISTS advertiser (   "
-            "id BIGINT NOT NULL AUTO_INCREMENT UNIQUE,   "
-            "logged_time DATETIME(6) NULL,   "
-            "measured_time DATETIME(6) NULL,   "
-            "source_address DOUBLE NULL, "
-            "destination_address INT NULL, "
-            "source_endpoint INT NULL, "
-            "destination_endpoint INT NULL, "
-            "travel_time_ms BIGINT UNSIGNED NOT NULL,   "
-            "qos INT UNSIGNED NOT NULL,   "
-            "message_type BIGINT UNSIGNED NOT NULL,   "
-            "reserved BIGINT UNSIGNED NOT NULL,   "
-            "node_address INT UNSIGNED NOT NULL,   "
-            "value BIGINT SIGNED NOT NULL,   "
-            "payload BLOB, "
-            "PRIMARY KEY (id),   "
-            "INDEX (logged_time),  "
-            "INDEX (measured_time),   "
-            "INDEX (message_type), "
-            "INDEX (node_address) "
-            ") ENGINE=InnoDB; "
+            "CREATE TABLE IF NOT EXISTS advertiser_json ("
+            "  received_packet BIGINT NOT NULL,"
+            "  FOREIGN KEY (received_packet) REFERENCES received_packets(id),"
+            "  apdu JSON NOT NULL"
+            ") ENGINE = MYISAM;"
         )
-
         self.cursor.execute(createtable)
 
         # Create event codes
@@ -729,50 +709,15 @@ class MySQL(object):
         values = list()
 
         for message in messages:
-            for node_address, fields in message.apdu["adv"].items():
-                self.logger.debug(
-                    "inserting advertiser message in mysql: %s", message
-                )
-                for value in fields["value"]:
-                    values.append(
-                        (
-                            datetime.datetime.utcnow().isoformat(),
-                            datetime.datetime.utcfromtimestamp(
-                                message.timestamp / 1e3
-                            ).isoformat(),
-                            message.source_address,
-                            message.destination_address,
-                            message.source_endpoint,
-                            message.destination_endpoint,
-                            message.travel_time_ms,
-                            message.qos,
-                            message.apdu["adv_type"],
-                            message.apdu["adv_reserved_field"],
-                            node_address,
-                            value,
-                            str(binascii.hexlify(message.payload)),
-                        )
-                    )
+            statement = (
+                "INSERT INTO advertiser_json (received_packet, apdu) "
+                "VALUES (LAST_INSERT_ID(), %s)"
+            )
 
-        query = (
-            "INSERT INTO advertiser("
-            "logged_time,"
-            "measured_time,"
-            "source_address,"
-            "destination_address,"
-            "source_endpoint,"
-            "destination_endpoint,"
-            "travel_time_ms,"
-            "qos,"
-            "message_type,"
-            "reserved,"
-            "node_address,"
-            "value,"
-            "payload) "
-            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);"
-        )
+            message.full_adv_serialization = True
+            values = json.dumps(message.serialize())
+            self.cursor.execute(statement, (values,))
 
-        self.cursor.executemany(query, values)
         self.database.commit()
 
     def put_to_received_packets(self, message):
