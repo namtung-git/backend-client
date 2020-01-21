@@ -33,8 +33,11 @@
 
 ## Introduction
 
-The Backend Client is a tool to serve as a decoder and a test framework where you can extend the existing interfaces to develop your own test cases. Interactions with
-a [gateway][wirepas_gateway] must be compliant with the Wirepas Backend to Gateway API.
+The Backend Client is a tool to serve as a decoder and a test framework
+where you can extend the existing interfaces to develop your own test cases.
+Interactions with
+a [gateway][wirepas_gateway] must be compliant with the Wirepas
+Backend to Gateway API.
 
 In addition to the interaction with the Backend to Gateway Public API,
 the Backend Client has also support for Wirepas Positioning Engine and Wirepas
@@ -70,11 +73,13 @@ Certain Backend Client's dependencies must be
 compiled locally upon installation,
 thus require the installation of specific development headers.
 
-Under Debian, the extra requirements are:
+Under Debian, the extra requirements are met with:
 
--   gcc
--   python3-dev
--   default-libmysqlclient-dev
+```bash
+    sudo apt-get install default-libmysqlclient-dev \
+                         gcc \
+                         python3-dev
+```
 
 Please be advised that the name of such packages might change depending on your
 Linux system. Please refer to the Dockerfiles
@@ -173,7 +178,7 @@ meant to interact with a gateway and sink pair connected to a given
 MQTT broker.
 
 To start an interactive command line to interact with a broker located
-in your *localhost* environment type:
+in your _localhost_ environment type:
 
 ```shell
     wm-gw-cli
@@ -194,13 +199,12 @@ connection to the same MQTT broker where one or multiple gateways
 are connected to.
 
 To do so, let's assume the following MQTT credentials are saved in
-./.settings.yml:
+./examples/settings.yml:
 
 ```yaml
- # .settings.yml
+ # examples/settings.yml
  # Example on how to set the MQTT credentials towards a local broker
  # with basic authentication
- ---
  mqtt_hostname: 127.0.0.1
  mqtt_password: password
  mqtt_username: username
@@ -209,10 +213,10 @@ To do so, let's assume the following MQTT credentials are saved in
 ```
 
 To start the gateway against the MQTT broker specified in
-./.settings.yml, issue the following command:
+./examples/settings.yml, issue the following command:
 
 ```shell
-    wm-gw-cli --settings ./.settings.yml
+    wm-gw-cli --settings ./examples/settings.yml
 ```
 
 Once the client launches, you will be greeted with:
@@ -228,7 +232,6 @@ Once the client launches, you will be greeted with:
     Use CTRL-D or bye to exit
 
     09:50.17 | wm-gw-cli >
-
 ```
 
 #### Commands
@@ -316,8 +319,8 @@ make your choice, please type the following commands:
 ```
 
 When setting the gateway, the wm-gw-cli shows you the following information
-*object index : gateway id : state.* Similarly, for the sink, the wm-gw-cli
-presents the object *index : network : gateway id: sink id*.
+_object index : gateway id : state._ Similarly, for the sink, the wm-gw-cli
+presents the object _index : network : gateway id: sink id_.
 
 To make your selection, type the desired object index and press enter.
 
@@ -356,7 +359,7 @@ sink:
 
 The app config payload is given either as a set of binary data without
 trailing 0x or as a utf8 data. For example, to send the
-binary *0x10x40x5* you should type *010405*.
+binary _0x10x40x5_ you should type _010405_.
 If you simply want to have a text string on
 your app config, you can for example type "sink by the window".
 
@@ -479,8 +482,8 @@ The wm-gw-cli allows you to see the current gateway configuration by typing:
 ##### Upload and process a scratchpad
 
 The wm-gw-cli supports uploading a new scratchpad and asking the sink to take
-it into use. *A full network OTAP is not currently supported with the
-wm-gw-cli.* To initiate a network OTAP, you will have to send the
+it into use. _A full network OTAP is not currently supported with the
+wm-gw-cli._ To initiate a network OTAP, you will have to send the
 corresponding datagrams as mentioned in the remote API documentation.
 
 The scratchpad commands are available as:
@@ -496,19 +499,19 @@ permanently. Please use these commands with care.
 
 ### WPE Viewer
 
-The WPE viewer, *wm-wpe-viewer*, provides a simple way to check
+The WPE viewer, _wm-wpe-viewer_, provides a simple way to check
 if a WPE service and consume location updates for a given network.
 
 The WPE viewer entrypoint requires correct population of the following
 settings:
 
 ```yaml
-    #.settings.yml
+    #examples/settings.yml
     wpe_service_definition: ./mywpesettings.json
     wpe_network: 1092 #optional
 ```
 
-The *mywpesettings.json* consists of a standard WPE client configuration
+The _mywpesettings.json_ consists of a standard WPE client configuration
 file. Please refer to WPE's official documentation for more details
 on how to obtain and configure such file.
 
@@ -518,7 +521,7 @@ ping to the backend specified under the json file.
 
 ### WNT Viewer
 
-The WNT viewer, *wm-wnt-viewer*, provides a simple way to check
+The WNT viewer, _wm-wnt-viewer_, provides a simple way to check
 if a WNT service is reachable and to consume messages streamed by WNT on
 its realtime metadata websocket. These message contain network and node
 diagnostic information. Please refer to WNT's public API documentation
@@ -528,7 +531,7 @@ The WNT viewer entrypoint requires correct population of the following
 settings:
 
 ```yaml
-    #.settings.yml
+    #examples/settings.yml
     wnt_username: "wntuser"
     wnt_password: "98asuyd907171ehjmasd"
     wnt_hostname: "wnthost.com"
@@ -633,29 +636,29 @@ we recommend that you take a look at the examples
 we have available in the [examples folder][examples]:
 
 -   [mqtt_viewer.py][examples_mqtt_viewer]: connects to a MQTT broker and
-decodes on the fly any message that is known to the
-framework (see [cookbook][wirepas_cookbook_viz] for usage example)
+    decodes on the fly any message that is known to the
+    framework (see [cookbook][wirepas_cookbook_viz] for usage example)
 
 -   [find_all_nodes.py][examples_find_all_nodes]: simple interaction with
-the Gateway to Backend API that enumerates and prints outs discovered devices
+    the Gateway to Backend API that enumerates and prints outs discovered devices
 
 -   [influx_viewer.py][examples_influx_viewer]: run custom queries or
-export date ranges from an influx database where WNT is storing data
+    export date ranges from an influx database where WNT is storing data
 
 -   [settings.yml][example_settings]: an example of a yaml file that with
-commented out settings
+    commented out settings
 
 Backend Client's entrypoints also act as a good way to guide your development:
 
 -   [wm-gw-cli][wm_gw_cli]: code behind the gateway command line
-interface that exemplifies how to build requests to the sink,
-receive and send data packets
+    interface that exemplifies how to build requests to the sink,
+    receive and send data packets
 
 -   [wm-wnt-viewer][wm_wnt]: example on how to consume data streamed
-by a WNT backend
+    by a WNT backend
 
 -   [wm-wpe-viewer][wm_wpe]: example on how to consume data streamed
-by a WPE backend
+    by a WPE backend
 
 For an example on how to build use case test cases, please refer to
 the [kpi_adv.py][kpi_adv] script.
@@ -669,7 +672,7 @@ Routing data to a fluentd host requires that you define the target host
 when executing a Backend Client script.
 
 To configure the target host, tag and record for the stream, ensure that
-you configure the .settings.yml file with
+you configure the examples/settings.yml file with
 
 ```yaml
     # tags stream with app.mesh
@@ -709,29 +712,33 @@ To pull the Backend Client image from dockerhub use:
 
 As the container will have no access to your local environment, you will have
 to propagate the input parameters by mounting a local file inside the
-container,eg, *.settings.yml*.
+container,eg, _examples/settings.yml_.
 
 The default image command will launch the gateway client with the settings
-present under */home/wirepas/vars/settings.yml* (container path).
+present under _/home/wirepas/vars/settings.yml_ (container path).
 
 To run it with docker type
 
 ```shell
     docker run -it \
-               -v $(pwd)/.settings.yml:/home/wirepas/backend-client/vars/settings.yml \
-               wirepas/backend-client
+               -v $(pwd)/examples/settings.yml:/home/wirepas/backend-client/vars/settings.yml \
+               --net=host \
+               wirepas/backend-client \
+               wm-gw-cli \
+               --settings /home/wirepas/backend-client/vars/settings.yml \
+               --debug_level=critical
 ```
 
 :warning: **WARNING** :warning:
 
 If you want to run against a MQTT running in your host (localhost),
 you must overlay the container over your host's network.
-To do so, you must set the docker run parameter *--net=host.*
+To do so, you must set the docker run parameter _--net=host._
 
 ### Running with compose
 
 To run the Backend Client using docker compose, drop or move the settings
-file in **container/.settings.yml** and start the service with:
+file in **container/examples/settings.yml** and start the service with:
 
 ```shell
     docker-compose container/docker-compose.yml up
@@ -748,7 +755,7 @@ If you wish to run the gateway command client you can do so with:
                    --settings /home/wirepas/backend-client/vars/settings.yml
 ```
 
-If you prefer alpine based images, please change *slim* to *alpine*.
+If you prefer alpine based images, please change _slim_ to _alpine_.
 
 ### Building the image locally
 

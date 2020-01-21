@@ -77,7 +77,6 @@ setup(
                 "examples/find_all_nodes.py",
                 "examples/influx_viewer.py",
                 "examples/mqtt_viewer.py",
-                "examples/settings.yml",
             ],
         ),
     ],

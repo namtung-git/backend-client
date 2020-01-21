@@ -46,7 +46,6 @@ services:
             - ./test-secrets
 
         volumes:
-            - ./.settings.yml:/home/wirepas/vars/settings.yml
             - ./wait-for-it:/usr/bin/tools/wait-for-it
 
         command: ${WM_BACKEND_CLI_CMD}

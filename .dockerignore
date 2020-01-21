@@ -9,7 +9,8 @@ docs*
 .pre-commit*
 *.private
 **/*.private
-.settings.yml
+**/*.settings.yml
+examples/settings.yml
 **/*.pem
 **/*.key
 **/*.csr
