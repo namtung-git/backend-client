@@ -747,7 +747,7 @@ class MySQL(object):
                             message.travel_time_ms,
                             message.qos,
                             message.apdu["adv_type"],
-                            message.apdu["reserved_field"],
+                            message.apdu["adv_reserved_field"],
                             node_address,
                             value,
                             str(binascii.hexlify(message.payload)),
