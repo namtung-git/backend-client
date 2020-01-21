@@ -106,18 +106,16 @@ class AdvertiserMessage(GenericMessage):
             address = address | (values[1] << 8)
             address = address | (values[2] << 16)
 
-            value_field = values[-1]
+            rss = None
+            otap = None
+            value = values[-1]
+
             if self.apdu["adv_type"] == AdvertiserMessage.message_type_rss:
                 rss = values[-1] / 2 - 127
-                otap = None
-                value_field = rss
+                value = rss
             elif self.apdu["adv_type"] == AdvertiserMessage.message_type_otap:
-                rss = None
                 otap = values[-1]
-                value_field = otap
-            else:
-                rss = None
-                otap = None
+                value = otap
 
             if address not in self.apdu["adv"]:
                 self.apdu["adv"][address] = dict(
@@ -125,16 +123,22 @@ class AdvertiserMessage(GenericMessage):
                 )
 
             self.apdu["adv"][address]["time"] = self.timestamp
-            self.apdu["adv"][address]["rss"].append(rss)
-            if otap:
+
+            if rss:
+                self.apdu["adv"][address]["rss"].append(rss)
+            elif otap:
                 self.apdu["adv"][address]["otap"].append(otap)
-            self.apdu["adv"][address]["value"].append(value_field)
+            else:
+                self.apdu["adv"][address]["value"].append(value)
 
     def _apdu_serialization(self):
         """ Standard apdu serialization. """
         if self.apdu:
             for field in self.apdu:
-                if field in "advertisers":
+                if (
+                    field in "advertisers"
+                    and self.full_adv_serialization is False
+                ):
                     self.serialization[field] = str(
                         sorted(list(self.apdu[field].keys()))
                     )
