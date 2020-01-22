@@ -353,8 +353,6 @@ class MySQL(object):
 
         createtable = (
             "CREATE TABLE IF NOT EXISTS advertiser_json ("
-            "  received_packet BIGINT NOT NULL,"
-            "  FOREIGN KEY (received_packet) REFERENCES received_packets(id),"
             "  apdu JSON NOT NULL"
             ") ENGINE = MYISAM;"
         )
@@ -709,10 +707,7 @@ class MySQL(object):
         values = list()
 
         for message in messages:
-            statement = (
-                "INSERT INTO advertiser_json (received_packet, apdu) "
-                "VALUES (LAST_INSERT_ID(), %s)"
-            )
+            statement = "INSERT INTO advertiser_json (apdu) VALUES (%s)"
 
             message.full_adv_serialization = True
             values = json.dumps(message.serialize())
