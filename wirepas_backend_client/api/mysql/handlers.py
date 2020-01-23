@@ -21,7 +21,6 @@ import queue
 import time
 
 from ..stream import StreamObserver
-from ...messages import GenericMessage
 from ...messages import AdvertiserMessage
 from ...messages import BootDiagnosticsMessage
 from ...messages import NeighborDiagnosticsMessage
@@ -46,7 +45,7 @@ class MySQLObserver(StreamObserver):
         tx_queue: multiprocessing.Queue,
         rx_queue: multiprocessing.Queue,
         parallel: bool = True,
-        n_workers: int = 4,
+        n_workers: int = 10,
         timeout: int = 10,
         logger=None,
     ) -> "MySQLObserver":
@@ -89,8 +88,11 @@ class MySQLObserver(StreamObserver):
     @staticmethod
     def _map_message(mysql, message):
         """ Inserts the message according to its type """
+        mysql.put_to_received_packets(message)
         if isinstance(message, DiagnosticsMessage):
             mysql.put_diagnostics(message)
+        elif isinstance(message, AdvertiserMessage):
+            mysql.put_advertiser(message)
         elif isinstance(message, TestNWMessage):
             mysql.put_testnw_measurements(message)
         elif isinstance(message, BootDiagnosticsMessage):
@@ -101,12 +103,8 @@ class MySQLObserver(StreamObserver):
             mysql.put_node_diagnostics(message)
         elif isinstance(message, TrafficDiagnosticsMessage):
             mysql.put_traffic_diagnostics(message)
-        elif isinstance(message, AdvertiserMessage):
-            mysql.put_advertiser([message])
-        elif isinstance(message, GenericMessage):
-            mysql.put_to_received_packets(message)
 
-    def pool_on_data_received(self, n_workers=4):
+    def pool_on_data_received(self, n_workers=10):
         """ Monitor inbound queue for messages to be stored in MySQL """
 
         def work(storage_q, exit_signal, settings, timeout, logger):

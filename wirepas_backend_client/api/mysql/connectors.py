@@ -164,6 +164,29 @@ class MySQL(object):
         )
         self.cursor.execute(query)
 
+        createtable = (
+            "CREATE TABLE IF NOT EXISTS advertiser_json ("
+            "  received_packet BIGINT NOT NULL,"
+            "  FOREIGN KEY (received_packet) REFERENCES received_packets(id),"
+            "  apdu JSON NOT NULL"
+            ") ENGINE = MYISAM;"
+        )
+        self.cursor.execute(createtable)
+
+        query = "SHOW COLUMNS FROM advertiser_json;"
+        self.cursor.execute(query)
+        self.database.commit()
+        values = self.cursor.fetchall()
+        column_names = map(lambda x: x[0], values)
+        if "received_packet" not in column_names:
+            # hop_count was not in the table so add it.
+            query = (
+                "ALTER TABLE advertiser_json\n"
+                "ADD COLUMN received_packet BIGINT NOT NULL;"
+            )
+            self.cursor.execute(query)
+            self.database.commit()
+
         query = (
             "CREATE TABLE IF NOT EXISTS diagnostic_traffic ("
             "  received_packet BIGINT NOT NULL,"
@@ -353,6 +376,8 @@ class MySQL(object):
 
         createtable = (
             "CREATE TABLE IF NOT EXISTS advertiser_json ("
+            "  received_packet BIGINT NOT NULL,"
+            "  FOREIGN KEY (received_packet) REFERENCES received_packets(id),"
             "  apdu JSON NOT NULL"
             ") ENGINE = MYISAM;"
         )
@@ -702,19 +727,6 @@ class MySQL(object):
             self.cursor.execute(query)
             self.database.commit()
 
-    def put_advertiser(self, messages):
-        """ Writes the advertiser message to the table """
-        values = list()
-
-        for message in messages:
-            statement = "INSERT INTO advertiser_json (apdu) VALUES (%s)"
-
-            message.full_adv_serialization = True
-            values = json.dumps(message.serialize())
-            self.cursor.execute(statement, (values,))
-
-        self.database.commit()
-
     def put_to_received_packets(self, message):
         """ Insert received packet to the database """
         try:
@@ -742,11 +754,28 @@ class MySQL(object):
         self.cursor.execute(query)
         self.database.commit()
 
+    def put_diagnostics(self, message):
+        """ Dumps the diagnostic object into a table """
+
+        statement = (
+            "INSERT INTO diagnostics_json (received_packet, apdu) "
+            "VALUES (LAST_INSERT_ID(), %s)"
+        )
+        values = json.dumps(message.serialize())
+        self.cursor.execute(statement, (values,))
+        self.database.commit()
+
+    def put_advertiser(self, message):
+        """ Dumps the advertiser object into a table """
+
+        statement = "INSERT INTO advertiser_json (received_packet, apdu) VALUES (LAST_INSERT_ID(), %s)"
+        message.full_adv_serialization = True
+        values = json.dumps(message.serialize())
+        self.cursor.execute(statement, (values,))
+        self.database.commit()
+
     def put_traffic_diagnostics(self, message):
         """ Insert traffic diagnostic packets """
-
-        # Put first to received packets to get the received packet id
-        self.put_to_received_packets(message)
 
         query = (
             "INSERT INTO diagnostic_traffic "
@@ -783,7 +812,6 @@ class MySQL(object):
     def put_neighbor_diagnostics(self, message):
         """ Insert neighbor diagnostic packets """
 
-        self.put_to_received_packets(message)
         # See if any neighbors, do not do insert
         try:
             if message.neighbor[0]["address"] == 0:
@@ -822,22 +850,9 @@ class MySQL(object):
         self.cursor.execute(query)
         self.database.commit()
 
-    def put_diagnostics(self, message):
-        self.put_to_received_packets(message)
-
-        statement = (
-            "INSERT INTO diagnostics_json (received_packet, apdu) "
-            "VALUES (LAST_INSERT_ID(), %s)"
-        )
-        values = json.dumps(message.serialize())
-        self.cursor.execute(statement, (values,))
-        self.database.commit()
-
     def put_boot_diagnostics(self, message):
         """ Insert boot diagnostic packets """
 
-        # Put first to received packets to get the received packet id
-        self.put_to_received_packets(message)
         query = (
             "INSERT INTO diagnostic_boot "
             "(received_packet, boot_count, node_role, firmware_version, "
@@ -867,9 +882,6 @@ class MySQL(object):
     def put_node_diagnostics(self, message):
         """ Insert node diagnostic packets """
         # pylint: disable=locally-disabled, too-many-branches
-
-        # Put first to received packets to get the received packet id
-        self.put_to_received_packets(message)
 
         # Remember the last received packet (that was received_packets)
         last_received_packet = self.cursor.lastrowid
@@ -1009,7 +1021,6 @@ class MySQL(object):
 
     def put_testnw_measurements(self, message):
         """ Insert received test network application packets """
-        self.put_to_received_packets(message)
 
         for row in range(message.row_count):
             table_name = "TestData_ID_" + str(message.testdata_id[row])
