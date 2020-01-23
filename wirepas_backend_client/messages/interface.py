@@ -46,16 +46,36 @@ class MessageManager(object):
         _message_type[msg.name] = msg.value
 
     _endpoint = dict()
-    _endpoint[0] = {0: GenericMessage}
-    _endpoint[11] = {11: RuuviMessage}
-    _endpoint[100] = {100: TestNWMessage}
-    _endpoint[200] = {200: AdvertiserMessage}
-    _endpoint[238] = {238: PositioningMessage}
-    _endpoint[247] = {255: DiagnosticsMessage}
-    _endpoint[251] = {255: TrafficDiagnosticsMessage}
-    _endpoint[252] = {255: NeighborDiagnosticsMessage}
-    _endpoint[253] = {255: NodeDiagnosticsMessage}
-    _endpoint[254] = {255: BootDiagnosticsMessage}
+    _endpoint[GenericMessage.source_endpoint] = {
+        GenericMessage.destination_endpoint: GenericMessage
+    }
+    _endpoint[RuuviMessage.source_endpoint] = {
+        RuuviMessage.destination_endpoint: RuuviMessage
+    }
+    _endpoint[TestNWMessage.source_endpoint] = {
+        TestNWMessage.destination_endpoint: TestNWMessage
+    }
+    _endpoint[AdvertiserMessage.source_endpoint] = {
+        AdvertiserMessage.destination_endpoint: AdvertiserMessage
+    }
+    _endpoint[PositioningMessage.source_endpoint] = {
+        PositioningMessage.destination_endpoint: PositioningMessage
+    }
+    _endpoint[DiagnosticsMessage.source_endpoint] = {
+        DiagnosticsMessage.destination_endpoint: DiagnosticsMessage
+    }
+    _endpoint[TrafficDiagnosticsMessage.source_endpoint] = {
+        TrafficDiagnosticsMessage.destination_endpoint: TrafficDiagnosticsMessage
+    }
+    _endpoint[NeighborDiagnosticsMessage.source_endpoint] = {
+        NeighborDiagnosticsMessage.destination_endpoint: NeighborDiagnosticsMessage
+    }
+    _endpoint[NodeDiagnosticsMessage.source_endpoint] = {
+        NodeDiagnosticsMessage.destination_endpoint: NodeDiagnosticsMessage
+    }
+    _endpoint[BootDiagnosticsMessage.source_endpoint] = {
+        BootDiagnosticsMessage.destination_endpoint: BootDiagnosticsMessage
+    }
 
     def __init__(self):
         super(MessageManager, self).__init__()

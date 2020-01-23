@@ -75,8 +75,9 @@ class GenericMessage(wirepas_messaging.gateway.api.ReceivedDataEvent):
 
     """
 
-    source_endpoint = None
-    destination_endpoint = None
+    # dummy endpoints
+    source_endpoint = 0
+    destination_endpoint = 0
 
     _apdu_format = None
     _apdu_fields = None
