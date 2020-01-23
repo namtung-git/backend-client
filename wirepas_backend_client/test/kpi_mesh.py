@@ -149,77 +149,84 @@ class MultiMessageMqttObserver(MQTTObserver):
         return on_response_cb
 
 
-if __name__ == "__main__":
+def main():
 
-    PARSER = ParserHelper("KPi test arguments")
-    PARSER.add_file_settings()
-    PARSER.add_mqtt()
-    PARSER.add_test()
-    PARSER.add_database()
-    PARSER.add_fluentd()
-    PARSER.add_http()
+    parser = ParserHelper("KPI mesh arguments")
+    parser.add_file_settings()
+    parser.add_mqtt()
+    parser.add_database()
+    parser.add_fluentd()
+    parser.add_http()
 
-    SETTINGS = PARSER.settings()
+    settings = parser.settings()
 
-    DEBUG_LEVEL = "debug"
+    debug_level = "debug"
     try:
-        DEBUG_LEVEL = os.environ["WM_DEBUG_LEVEL"]
+        debug_level = os.environ["WM_DEBUG_LEVEL"]
     except KeyError:
         pass
 
-    LOG = LoggerHelper(
-        module_name=__test_name__, args=SETTINGS, level=DEBUG_LEVEL
+    if settings.debug_level is None:
+        settings.debug_level = debug_level
+
+    log = LoggerHelper(
+        module_name=__test_name__, args=settings, level=settings.debug_level
     )
-    LOG.add_stderr("warning")
-    LOGGER = LOG.setup()
+    log.add_stderr("warning")
+    logger = log.setup()
 
-    MQTT_SETTINGS = MQTTSettings(SETTINGS)
-    HTTP_SETTINGS = HTTPSettings(SETTINGS)
+    mqtt_settings = MQTTSettings(settings)
+    http_settings = HTTPSettings(settings)
 
-    if MQTT_SETTINGS.sanity() and HTTP_SETTINGS.sanity():
+    if mqtt_settings.sanity() and http_settings.sanity():
 
-        DAEMON = Daemon(logger=LOGGER)
+        daemon = Daemon(logger=logger)
 
-        GW_STATUS_FROM_MQTT_BROKER = DAEMON.create_queue()
+        gw_status_from_mqtt_broker = daemon.create_queue()
 
-        MQTT_NAME = "mqtt"
-        STORAGE_NAME = "mysql"
-        CONTROL_NAME = "http"
+        mqtt_name = "mqtt"
+        storage_name = "mysql"
+        control_name = "http"
 
-        DAEMON.build(
-            STORAGE_NAME,
+        daemon.build(
+            storage_name,
             MySQLObserver,
-            dict(mysql_settings=MySQLSettings(SETTINGS)),
+            dict(mysql_settings=MySQLSettings(settings)),
         )
-        DAEMON.set_run(
-            STORAGE_NAME, task_kwargs={"n_workers": 8}, task_as_daemon=False
+        daemon.set_run(
+            storage_name, task_kwargs={"n_workers": 8}, task_as_daemon=False
         )
 
-        DAEMON.build(
-            MQTT_NAME,
+        daemon.build(
+            mqtt_name,
             MultiMessageMqttObserver,
             dict(
-                gw_status_queue=GW_STATUS_FROM_MQTT_BROKER,
-                mqtt_settings=MQTTSettings(SETTINGS),
+                gw_status_queue=gw_status_from_mqtt_broker,
+                mqtt_settings=MQTTSettings(settings),
             ),
             storage=True,
-            storage_name=STORAGE_NAME,
+            storage_name=storage_name,
         )
 
-        DAEMON.build(
-            CONTROL_NAME,
+        daemon.build(
+            control_name,
             HTTPObserver,
             dict(
-                gw_status_queue=GW_STATUS_FROM_MQTT_BROKER,
-                http_settings=HTTPSettings(SETTINGS),
+                gw_status_queue=gw_status_from_mqtt_broker,
+                http_settings=HTTPSettings(settings),
             ),
-            send_to=MQTT_NAME,
+            send_to=mqtt_name,
         )
 
-        DAEMON.start(set_start_signal=True)
+        daemon.start(set_start_signal=True)
     else:
-        LOGGER.error("Please check your MQTT and MySQ settings:")
-        LOGGER.error("\n%s", MQTT_SETTINGS)
-        LOGGER.error("\n%s", HTTP_SETTINGS)
+        logger.error("Please check your MQTT and MySQL settings:")
+        logger.error("\n%s", mqtt_settings)
+        logger.error("\n%s", http_settings)
 
-    LOGGER.debug("test_kpi exit!")
+    logger.debug("test_kpi exit!")
+
+
+if __name__ == "__main__":
+
+    main()

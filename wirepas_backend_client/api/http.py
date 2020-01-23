@@ -156,7 +156,7 @@ class ConnectionServer(http.server.ThreadingHTTPServer):
     # pylint: disable=locally-disabled, too-many-arguments
 
     close_connection = False
-    request_queue_size = 1000
+    request_queue_size = 10000
     allow_reuse_address = True
     timeout = 600
     protocol_version = "HTTP/1.1"
@@ -209,9 +209,9 @@ class HTTPObserver(StreamObserver):
         tx_queue: multiprocessing.Queue,
         rx_queue: multiprocessing.Queue,
         gw_status_queue: multiprocessing.Queue,
-        request_wait_timeout: int = 120,
+        request_wait_timeout: int = 600,
         close_connection: bool = False,
-        request_queue_size: int = 100,
+        request_queue_size: int = 1000,
         allow_reuse_address: bool = True,
         logger=None,
     ) -> "HTTPObserver":
@@ -308,211 +308,242 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             request, client_address, server
         )
 
+    def end_headers(self):
+        self.send_my_headers()
+        super().end_headers()
+
+    def send_my_headers(self):
+        self.send_header(
+            "Cache-Control", "no-cache, no-store, must-revalidate"
+        )
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
+
+    def _process_request(self, verb):
+        """ Decodes an incoming http request regardless of its verb"""
+
+        __default_command = "info"
+
+        # Parse into commands and parameters
+        splitted = urllib.parse.urlsplit(self.path)
+        params = dict(
+            urllib.parse.parse_qsl(urllib.parse.urlsplit(self.path).query)
+        )
+        try:
+            command = splitted.path.split("/")[1]
+        except KeyError:
+            command = __default_command
+
+        if command == "":
+            command = __default_command
+
+        self.logger.info(
+            dict(
+                protocol="http",
+                verb=verb,
+                path=self.path,
+                params=str(params),
+                command=command,
+                gateways_and_sinks=str(
+                    self.status_observer.gateways_and_sinks
+                ),
+            )
+        )
+        self._mesh_control(command, params)
+
     # flake8: noqa
     def do_GET(self):
         """Process a single HTTP GET request.
         """
+        self._process_request("GET")
 
-        self.logger.info(
-            "HTTP GET request: {} while gateways_and_sinks: {}".format(
-                self.path, self.status_observer.gateways_and_sinks
-            )
+    def do_POST(self):
+        """Process a single HTTP POST request.
+        """
+        self._process_request("POST")
+
+    def _mesh_control(self, command, params):
+        """ Decodes an incoming payload and acts upon it """
+
+        # By default assume that gateway configuration does not need
+        # refreshing after command is executed
+        refresh = False
+
+        # default http request answer and code
+        error = None
+        response = dict()
+
+        response["path"] = self.path
+        response["params"] = str(params)
+        response["gateways_and_sinks"] = str(
+            self.status_observer.gateways_and_sinks
         )
+        response["command"] = command
+        response["text"] = f"{command} ok!"
+        response["code"] = 200
 
-        try:
-            # Parse into commands and parameters
-            splitted = urllib.parse.urlsplit(self.path)
-            command = splitted.path.split("/")[1]
+        # Go through all gateways and sinks that are currently known
+        gateways_and_sinks = self.status_observer.gateways_and_sinks
+        for gateway_id, sinks in gateways_and_sinks.items():
 
-            # in case command is not defined, default to info command
-            if command == "":
-                command = "info"
+            messages = list()
 
-            # Convert the parameter list into a dictionary.
-            params = dict(
-                urllib.parse.parse_qsl(urllib.parse.urlsplit(self.path).query)
-            )
+            # Sends the command towards all the discovered sinks
+            for sink_id, sink in sinks.items():
 
-            # By default assume that gateway configuration does not need
-            # refreshing after command is executed
-            refresh = False
+                if command == "datatx":
+                    try:
+                        dest_add = int(params["destination"])
+                        src_ep = int(params["source_ep"])
+                        dst_ep = int(params["dest_ep"])
+                        qos = int(params["qos"])
+                        payload = binascii.unhexlify(params["payload"])
+                    except KeyError as error:
+                        response["code"] = 500
+                        response["text"] = f"Missing field: {error}"
+                        break
+                    except Exception as error:
+                        response["code"] = 500
+                        response["text"] = f"Unkonwn error: {error}"
+                        break
 
-            # By default assume good from people and their code
-            http_response_code = 200
+                    try:
+                        is_unack_csma_ca = params["fast"] in [
+                            "true",
+                            "1",
+                            "yes",
+                            "y",
+                        ]
+                    except KeyError:
+                        is_unack_csma_ca = False
 
-            if command == "info":
-                http_response_text = "<html><head><title>INFO</title></head>"
-                http_response_text += "<body><h1>INFO</h1>"
-            else:
-                http_response_text = None
+                    try:
+                        hop_limit = int(params["hoplimit"])
+                    except KeyError:
+                        hop_limit = 0
 
-            # Go through all gateways and sinks that are currently known
-            gateways_and_sinks = self.status_observer.gateways_and_sinks
-            for gateway_id, sinks in gateways_and_sinks.items():
-                for sink_id, sink in sinks.items():
+                    try:
+                        count = int(params["count"])
+                    except KeyError:
+                        count = 1
 
-                    if command == "datatx":
-
-                        try:
-                            dest_add = int(params["destination"])
-                            src_ep = int(params["source_ep"])
-                            dst_ep = int(params["dest_ep"])
-                            qos = int(params["qos"])
-                            payload = binascii.unhexlify(params["payload"])
-                            try:
-                                is_unack_csma_ca = params["fast"] in [
-                                    "true",
-                                    "1",
-                                    "yes",
-                                    "y",
-                                ]
-                            except KeyError:
-                                is_unack_csma_ca = False
-                            try:
-                                hop_limit = int(params["hoplimit"])
-                            except KeyError:
-                                hop_limit = 0
-                            try:
-                                count = int(params["count"])
-                            except KeyError:
-                                count = 1
-
-                            while count:
-                                count -= 1
-
-                                # Create sendable message.
-                                message = self.mqtt_topics.request_message(
-                                    "send_data",
-                                    **dict(
-                                        sink_id=sink_id,
-                                        gw_id=gateway_id,
-                                        dest_add=dest_add,
-                                        src_ep=src_ep,
-                                        dst_ep=dst_ep,
-                                        qos=qos,
-                                        payload=payload,
-                                        is_unack_csma_ca=is_unack_csma_ca,
-                                        hop_limit=hop_limit,
-                                    ),
-                                )
-                                # Insert the message(s) tx queue
-                                self.http_tx_queue.put(message)
-
-                        except Exception as err:
-                            self.logger.error(
-                                "Malformed data tx request {}".format(err)
-                            )
-                            http_response_code = 500
-
-                    elif command == "start":
-
-                        new_config = {"started": True}
+                    # sends a or multiple messages according to the count
+                    # parameter in the request
+                    while count:
+                        count -= 1
                         message = self.mqtt_topics.request_message(
-                            "set_config",
+                            "send_data",
                             **dict(
                                 sink_id=sink_id,
                                 gw_id=gateway_id,
-                                new_config=new_config,
+                                dest_add=dest_add,
+                                src_ep=src_ep,
+                                dst_ep=dst_ep,
+                                qos=qos,
+                                payload=payload,
+                                is_unack_csma_ca=is_unack_csma_ca,
+                                hop_limit=hop_limit,
                             ),
                         )
-                        self.http_tx_queue.put(message)
-                        refresh = True
+                        messages.append(message)
 
-                    elif command == "stop":
+                elif command == "start":
 
-                        new_config = {"started": False}
-                        message = self.mqtt_topics.request_message(
-                            "set_config",
-                            **dict(
-                                sink_id=sink_id,
-                                gw_id=gateway_id,
-                                new_config=new_config,
-                            ),
-                        )
-                        self.http_tx_queue.put(message)
-                        refresh = True
+                    new_config = dict(started=True)
+                    message = self.mqtt_topics.request_message(
+                        "set_config",
+                        **dict(
+                            sink_id=sink_id,
+                            gw_id=gateway_id,
+                            new_config=new_config,
+                        ),
+                    )
+                    messages.append(message)
+                    refresh = True
 
-                    elif command == "setconfig":
+                elif command == "stop":
 
-                        try:
-                            seq = int(params["seq"])
-                        except KeyError:
-                            if sink["app_config_seq"] == 254:
-                                seq = 1
-                            else:
-                                seq = sink["app_config_seq"] + 1
-                        try:
-                            diag = int(params["diag"])
-                        except KeyError:
-                            diag = sink["app_config_diag"]
-                        try:
-                            data = bytes.fromhex(params["data"])
-                        except KeyError:
-                            data = sink["app_config_data"]
-                        new_config = {
-                            "app_config_diag": diag,
-                            "app_config_data": data,
-                            "app_config_seq": seq,
-                        }
-                        message = self.mqtt_topics.request_message(
-                            "set_config",
-                            **dict(
-                                sink_id=sink_id,
-                                gw_id=gateway_id,
-                                new_config=new_config,
-                            ),
-                        )
-                        self.http_tx_queue.put(message)
-                        refresh = True
+                    new_config = dict(started=False)
+                    message = self.mqtt_topics.request_message(
+                        "set_config",
+                        **dict(
+                            sink_id=sink_id,
+                            gw_id=gateway_id,
+                            new_config=new_config,
+                        ),
+                    )
+                    messages.append(message)
+                    refresh = True
 
-                    elif command == "info":
+                elif command == "setconfig":
 
-                        self.logger.info(
-                            "HTTP INFO: gateway: {} sink: {}".format(
-                                gateway_id, sink_id
-                            )
-                        )
-                        http_response_text += "<br>gateway: {}".format(
-                            gateway_id
-                        )
-                        http_response_text += "<br>sink: {}".format(sink_id)
-                        http_response_text += "<br>started: {}".format(
-                            sink["started"]
-                        )
-                        http_response_text += "<br>app_config_seq: {}".format(
-                            sink["app_config_seq"]
-                        )
-                        http_response_text += "<br>app_config_diag: {}".format(
-                            sink["app_config_diag"]
-                        )
-                        http_response_text += "<br>app_config_data: {}".format(
-                            sink["app_config_data"]
-                        )
-                        http_response_text += "<p>"
-                        refresh = True
+                    try:
+                        seq = int(params["seq"])
+                    except KeyError:
+                        if sink["app_config_seq"] == 254:
+                            seq = 1
+                        else:
+                            seq = sink["app_config_seq"] + 1
+                    try:
+                        diag = int(params["diag"])
+                    except KeyError:
+                        diag = sink["app_config_diag"]
 
-                    else:
-                        self.logger.error(
-                            "HTTP invalid command: {}".format(command)
-                        )
-                        http_response_code = 500
+                    try:
+                        data = bytes.fromhex(params["data"])
+                    except KeyError:
+                        data = sink["app_config_data"]
+
+                    new_config = dict(
+                        app_config_diag=diag,
+                        app_config_data=data,
+                        app_config_seq=seq,
+                    )
+                    message = self.mqtt_topics.request_message(
+                        "set_config",
+                        **dict(
+                            sink_id=sink_id,
+                            gw_id=gateway_id,
+                            new_config=new_config,
+                        ),
+                    )
+                    messages.append(message)
+                    refresh = True
+
+                elif command == "info":
+
+                    response["command"] = command
+                    response["gateway"] = gateway_id
+                    response["sink"] = sink_id
+                    response["started"] = sink["started"]
+                    response["app_config_seq"] = str(sink["app_config_seq"])
+                    response["app_config_diag"] = str(sink["app_config_diag"])
+                    response["app_config_data"] = str(sink["app_config_data"])
+                    refresh = True
+
+                else:
+
+                    response["code"] = 500
+                    response["text"] = "Unknown command"
+                    break
+
+                # Renews information about remote gateways
                 if refresh:
-                    # Initiate refreshing of gateway's configuration
-                    # to gateways_and_sinks dict
+                    refresh = False
                     message = self.mqtt_topics.request_message(
                         "get_configs", **dict(gw_id=gateway_id)
                     )
-                    self.http_tx_queue.put(message)
-        except Exception as err:
-            self.logger.error("HTTP error: {}".format(err))
+                    messages.append(message)
 
-        # Respond to front-end
-        self.send_response(http_response_code)
+                # sends all messages
+                for message in messages:
+                    self.logger.info({message["topic"]: str(message["data"])})
+                    self.http_tx_queue.put(message)
+
+        if response["code"] != 200:
+            self.logger.error(response)
+
+        # send code and response message
+        self.send_response(code=response["code"], message=response["text"])
         self.end_headers()
-        if http_response_text:
-            http_response_text += "</body></html>"
-            self.wfile.write(http_response_text.encode("latin1"))
-            self.wfile.flush()
-            self.logger.info(
-                "HTTP response text: {}".format(http_response_text)
-            )
+        self.logger.info(response)
