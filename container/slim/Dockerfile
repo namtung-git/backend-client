@@ -44,6 +44,7 @@ RUN pip install --user --no-cache-dir . \
     && cd "${WM_HOME}/backend-client/" \
     && mkdir -p "${SETTINGS_PATH}"
 
+WORKDIR "${WM_HOME}/backend-client"
 USER root
 RUN rm -rf "${WM_HOME}/backend-client/install"
 USER "${WM_USER}"
