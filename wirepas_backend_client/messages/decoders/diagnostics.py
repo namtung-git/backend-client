@@ -137,11 +137,16 @@ class DiagnosticsMessage(GenericMessage):
 
         return named_vector
 
-    def int_to_version(self, version_int):
+    @staticmethod
+    def int_to_version(version_int):
         """
             This function takes the value from the apdu dictionary,
             and convert the value to the version number
-        :return: the version with the correct format x.x.x.x
+            Args
+                The version in int
+
+            Returns
+                The version with the correct format x.x.x.x
         """
         version_length = 4
         version_list = []
