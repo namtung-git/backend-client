@@ -45,6 +45,7 @@ class DiagnosticsMessage(GenericMessage):
     destination_endpoint = 255
     _apdu_format = "cbor"
     _apdu_fields = None
+    _version_field = ["firmware_app", "firmware_stack"]
 
     def __init__(self, *args, **kwargs) -> "DiagnosticsMessage":
 
@@ -102,6 +103,11 @@ class DiagnosticsMessage(GenericMessage):
                     else:
                         self.apdu[name] = value
 
+                    # if it is version, convert
+                    if name in self._version_field:
+                        value = self.int_to_version(value)
+                        self.apdu[name] = value
+
             except AttributeError:
                 self.logger.exception(
                     "apdu_content=%s<-%s",
@@ -130,3 +136,17 @@ class DiagnosticsMessage(GenericMessage):
             self.emit_message(self.logger.error, message)
 
         return named_vector
+
+    def int_to_version(self, version_int):
+        """
+            This function takes the value from the apdu dictionary,
+            and convert the value to the version number
+        :return: the version with the correct format x.x.x.x
+        """
+        version_length = 4
+        version_list = []
+        version_hex = version_int.to_bytes(version_length, byteorder="big")
+        for i in range(0, version_length):
+            version_list.append(ord(version_hex[i : i + 1]))
+        version_final = ".".join([str(i) for i in version_list])
+        return version_final
