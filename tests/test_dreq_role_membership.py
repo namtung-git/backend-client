@@ -153,6 +153,12 @@ def test_dreq_content():
             parsed_message.source_endpoint == 247
             and parsed_message.destination_endpoint == 255
         ):
+            if "trace_options" not in parsed_message.apdu:
+                continue
+
+            if parsed_message.apdu["trace_options"]["trace_type"] != 2:
+                continue
+
             if not parsed_message.apdu:
                 print(f"ignoring payload:{parsed_message.data_payload.hex()}")
                 continue
