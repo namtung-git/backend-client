@@ -100,7 +100,7 @@ class MySQL(object):
             "CREATE TABLE IF NOT EXISTS known_nodes ("
             "  network_address BIGINT UNSIGNED NOT NULL,"
             "  node_address INT UNSIGNED NOT NULL,"
-            "  last_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+            "  last_time TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),"
             "  voltage DOUBLE NULL,"
             "  node_role SMALLINT UNSIGNED NULL,"
             "  firmware_version INT UNSIGNED NULL,"
@@ -111,15 +111,15 @@ class MySQL(object):
             "  file_line_num INT UNSIGNED NULL,"
             "  file_name_hash INT UNSIGNED NULL,"
             "  UNIQUE INDEX node (network_address, node_address)"
-            ") ENGINE = MYISAM;"
+            ") ENGINE = InnoDB;"
         )
         self.cursor.execute(query)
 
         query = (
             "CREATE TABLE IF NOT EXISTS received_packets ("
             "  id BIGINT NOT NULL AUTO_INCREMENT UNIQUE,"
-            "  logged_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
-            "  launch_time TIMESTAMP NULL,"
+            "  logged_time TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),"
+            "  launch_time TIMESTAMP(6) NULL,"
             "  path_delay_ms BIGINT UNSIGNED NOT NULL,"
             "  network_address BIGINT UNSIGNED NOT NULL,"
             "  sink_address INT UNSIGNED NOT NULL,"
@@ -135,7 +135,7 @@ class MySQL(object):
             "  INDEX (launch_time),"
             "  INDEX (source_address),"
             "  INDEX packets_from_node (network_address, source_address)"
-            ") ENGINE = MYISAM;"
+            ") ENGINE = InnoDB;"
         )
         self.cursor.execute(query)
 
@@ -160,7 +160,7 @@ class MySQL(object):
             "  received_packet BIGINT NOT NULL,"
             "  FOREIGN KEY (received_packet) REFERENCES received_packets(id),"
             "  apdu JSON NOT NULL"
-            ") ENGINE = MYISAM;"
+            ") ENGINE = InnoDB;"
         )
         self.cursor.execute(query)
 
@@ -169,7 +169,7 @@ class MySQL(object):
             "  received_packet BIGINT NOT NULL,"
             "  FOREIGN KEY (received_packet) REFERENCES received_packets(id),"
             "  apdu JSON NOT NULL"
-            ") ENGINE = MYISAM;"
+            ") ENGINE = InnoDB;"
         )
         self.cursor.execute(createtable)
 
@@ -184,6 +184,37 @@ class MySQL(object):
                 "ALTER TABLE advertiser_json\n"
                 "ADD COLUMN received_packet BIGINT NOT NULL;"
             )
+            self.cursor.execute(query)
+            self.database.commit()
+
+        # Create test nw app database
+        default_test_ids = 10
+        default_column_count = 30
+
+        for test_data_id in range(1, default_test_ids):
+            table_name = f"TestData_ID_{test_data_id}"
+
+            query = """
+                    CREATE TABLE IF NOT EXISTS `{}` (
+                    received_packet BIGINT NOT NULL,
+                    `logged_time` DOUBLE DEFAULT NULL,
+                    `launch_time` DOUBLE DEFAULT NULL,
+                    `ID_ctrl` INT UNSIGNED DEFAULT NULL,
+                    `field_count` int DEFAULT 0,
+                    """.format(
+                table_name
+            )
+
+            for i in range(1, default_column_count + 1):
+                query += "`DataCol_{}` INT UNSIGNED DEFAULT NULL,".format(i)
+            query += "INDEX (logged_time),"
+            query += "INDEX (launch_time),"
+            query += "INDEX (ID_ctrl),"
+            query += (
+                "FOREIGN KEY (received_packet) REFERENCES received_packets(id)"
+            )
+            query += ") ENGINE=InnoDB;"
+
             self.cursor.execute(query)
             self.database.commit()
 
@@ -206,7 +237,7 @@ class MySQL(object):
             "  resv_usage_avg SMALLINT UNSIGNED NOT NULL,"
             "  aloha_usage_max SMALLINT UNSIGNED NOT NULL,"
             "  FOREIGN KEY (received_packet) REFERENCES received_packets(id)"
-            ") ENGINE = MYISAM;"
+            ") ENGINE = InnoDB;"
         )
         self.cursor.execute(query)
 
@@ -243,7 +274,7 @@ class MySQL(object):
             "  device_info SMALLINT UNSIGNED NOT NULL,"
             "  norm_rssi SMALLINT UNSIGNED NOT NULL,"
             "  FOREIGN KEY (received_packet) REFERENCES received_packets(id)"
-            ") ENGINE = MYISAM;"
+            ") ENGINE = InnoDB;"
         )
         self.cursor.execute(query)
 
@@ -277,7 +308,7 @@ class MySQL(object):
             "  cost_1 SMALLINT UNSIGNED NOT NULL,"
             "  quality_1 SMALLINT UNSIGNED NOT NULL,"
             "  FOREIGN KEY (received_packet) REFERENCES received_packets(id)"
-            ") ENGINE = MYISAM;"
+            ") ENGINE = InnoDB;"
         )
         self.cursor.execute(query)
 
@@ -291,7 +322,7 @@ class MySQL(object):
             "  event SMALLINT NOT NULL,"
             "  FOREIGN KEY (received_packet) REFERENCES received_packets(id),"
             "  UNIQUE INDEX event_id (received_packet, position)"
-            ") ENGINE = MYISAM;"
+            ") ENGINE = InnoDB;"
         )
         self.cursor.execute(query)
 
@@ -312,7 +343,7 @@ class MySQL(object):
             "  stack_trace_2 INT UNSIGNED NOT NULL,"
             "  current_seq INT UNSIGNED DEFAULT NULL,"
             "  FOREIGN KEY (received_packet) REFERENCES received_packets(id)"
-            ") ENGINE = MYISAM;"
+            ") ENGINE = InnoDB;"
         )
         self.cursor.execute(query)
 
@@ -337,12 +368,12 @@ class MySQL(object):
             "address INT UNSIGNED NOT NULL, "
             "command varchar(255), "
             "param LONGBLOB, "
-            "launch_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, "
+            "launch_time TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), "
             "ready_time TIMESTAMP NULL, "
             "result INT UNSIGNED, "
             "PRIMARY KEY (id), "
             "INDEX(address) "
-            ") ENGINE = MYISAM;"
+            ") ENGINE = InnoDB;"
         )
         self.cursor.execute(query)
 
@@ -352,7 +383,7 @@ class MySQL(object):
             "id BIGINT NOT NULL AUTO_INCREMENT UNIQUE, "
             "address INT UNSIGNED NOT NULL, "
             "sink_address INT UNSIGNED NOT NULL, "
-            "reception_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, "
+            "reception_time TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), "
             "crc INT UNSIGNED, "
             "otap_seq INT UNSIGNED NOT NULL, "
             "scratchpad_type INT UNSIGNED, "
@@ -370,7 +401,7 @@ class MySQL(object):
             "PRIMARY KEY (id), "
             "INDEX(address), "
             "INDEX(sink_address) "
-            ") ENGINE = MYISAM;"
+            ") ENGINE = InnoDB;"
         )
         self.cursor.execute(createtable)
 
@@ -379,7 +410,7 @@ class MySQL(object):
             "  received_packet BIGINT NOT NULL,"
             "  FOREIGN KEY (received_packet) REFERENCES received_packets(id),"
             "  apdu JSON NOT NULL"
-            ") ENGINE = MYISAM;"
+            ") ENGINE = InnoDB;"
         )
         self.cursor.execute(createtable)
 
@@ -390,7 +421,7 @@ class MySQL(object):
             "name TEXT, "
             "description TEXT, "
             "PRIMARY KEY (code) "
-            ") ENGINE = MYISAM;"
+            ") ENGINE = InnoDB;"
         )
         self.cursor.execute(createtable)
 
@@ -486,7 +517,7 @@ class MySQL(object):
             "id SMALLINT UNSIGNED NOT NULL UNIQUE,"
             "name TEXT,"
             "PRIMARY KEY (id)"
-            ") ENGINE = MYISAM;"
+            ") ENGINE = InnoDB;"
         )
 
         self.cursor.execute(createtable)
@@ -503,8 +534,8 @@ class MySQL(object):
                        FOR EACH ROW BEGIN
                            INSERT INTO known_nodes (network_address, node_address, last_time)
                            VALUES
-                           (new.network_address,new.source_address, CURRENT_TIMESTAMP)
-                           ON DUPLICATE KEY UPDATE last_time=CURRENT_TIMESTAMP;
+                           (new.network_address,new.source_address, CURRENT_TIMESTAMP(6))
+                           ON DUPLICATE KEY UPDATE last_time=CURRENT_TIMESTAMP(6);
                        END;"""
         self.cursor.execute(trigger)
 
@@ -572,7 +603,7 @@ class MySQL(object):
             "CREATE TABLE IF NOT EXISTS log("
             "  recordtime text,"
             "  debuglog text"
-            "  ) ENGINE = MYISAM;"
+            "  ) ENGINE = InnoDB;"
         )
         self.cursor.execute(createtable)
 
@@ -1022,21 +1053,19 @@ class MySQL(object):
     def put_testnw_measurements(self, message):
         """ Insert received test network application packets """
 
-        for row in range(message.row_count):
-            table_name = "TestData_ID_" + str(message.testdata_id[row])
-
-            self._create_testnw_mysql_table(
-                self.cursor, self.database, table_name
-            )
+        for row in range(message.apdu["row_count"]):
+            table_name = "TestData_ID_" + str(message.apdu["testdata_id"][row])
 
             data_column_names = ",".join(
                 map(
                     lambda x: "DataCol_" + str(x),
-                    range(1, message.number_of_fields[row] + 1),
+                    range(1, message.apdu["number_of_fields"][row] + 1),
                 )
             )
 
-            data_column_values = ",".join(map(str, message.datafields[row]))
+            data_column_values = ",".join(
+                map(str, message.apdu["datafields"][row])
+            )
 
             query = (
                 "INSERT INTO "
@@ -1051,15 +1080,13 @@ class MySQL(object):
                 + ")"
                 + " VALUES ("
                 + "LAST_INSERT_ID(),"
-                + "{0:.32f}".format(message.rx_time_ms_epoch / 1000)
-                + ","
-                + "{0:.32f}".format(
+                + "{0:.32f},".format(message.rx_time_ms_epoch / 1000)
+                + "{0:.32f},".format(
                     (message.rx_time_ms_epoch - message.travel_time_ms) / 1000
                 )
+                + str(message.apdu["number_of_fields"][row])
                 + ","
-                + str(message.number_of_fields[row])
-                + ","
-                + str(message.id_ctrl[row])
+                + str(message.apdu["id_ctrl"][row])
                 + ","
                 + data_column_values
                 + ")"
@@ -1067,30 +1094,3 @@ class MySQL(object):
 
             self.cursor.execute(query)
             self.database.commit()
-
-    @staticmethod
-    def _create_testnw_mysql_table(cursor, database, table_name):
-        """ Creates a table for the test network application """
-        default_column_count = 30
-
-        query = """
-                CREATE TABLE IF NOT EXISTS `{}` (
-                `received_packet` int(11) DEFAULT NULL,
-                `logged_time` double DEFAULT NULL,
-                `launch_time` double DEFAULT NULL,
-                `ID_ctrl` INT UNSIGNED DEFAULT NULL,
-                `field_count` int DEFAULT 0""".format(
-            table_name
-        )
-
-        for i in range(1, default_column_count + 1):
-            query += ",\n`DataCol_{}` INT UNSIGNED DEFAULT NULL".format(i)
-
-        query += (
-            ",\nFOREIGN KEY (received_packet) REFERENCES received_packets(id)"
-        )
-
-        query += "\n) ENGINE=MyISAM DEFAULT CHARSET=utf8;"
-
-        cursor.execute(query)
-        database.commit()
