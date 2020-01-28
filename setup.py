@@ -85,6 +85,7 @@ setup(
             "wm-gw-cli=wirepas_backend_client.__main__:gw_cli",
             "wm-wnt-viewer=wirepas_backend_client.__main__:wnt_client",
             "wm-wpe-viewer=wirepas_backend_client.__main__:wpe_client",
+            "wm-wps=wirepas_backend_client.__main__:provisioning_server",
         ]
     },
 )

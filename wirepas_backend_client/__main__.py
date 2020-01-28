@@ -12,6 +12,7 @@
 from .api.wnt import wnt_main
 from .api.wpe import wpe_main
 from .cli import main as cli_main
+from .provisioning import prov_main
 
 
 def wnt_client():
@@ -27,6 +28,11 @@ def gw_cli():
 def wpe_client():
     """ launches the wpe client """
     wpe_main()
+
+
+def provisioning_server():
+    """ launches the provisioing server """
+    prov_main()
 
 
 if __name__ == "__main__":

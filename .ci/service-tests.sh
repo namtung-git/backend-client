@@ -18,7 +18,12 @@ function pull_dependencies()
     then
         git clone https://github.com/vishnubob/wait-for-it.git "${WAIT_FOR_IT_PATH}"
     fi
+
+    docker-compose -f tests/services/docker-compose.yml pull
+    docker-compose -f tests/services/docker-compose.yml build
 }
+
+
 
 function run_test()
 {
@@ -43,3 +48,4 @@ run_test "python /home/wirepas/.local/wirepas_backend_client-extras/examples/fin
 
 run_test "wm-gw-cli" "5"
 run_test "wm-wnt-viewer"  "5"
+run_test "wm-wps --provisioning_config  /home/wirepas/provisioning_config.yml"  "5"

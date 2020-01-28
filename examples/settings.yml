@@ -35,3 +35,6 @@ mqtt_port: 8883
 # influx_database: "influx_database"
 # influx_hostname: "influx_host"
 # influx_port: "influx_port"
+
+# provisioning
+# provisioning_config: "./myprovisioningconfig.yml"

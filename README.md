@@ -16,6 +16,7 @@
     1. [Gateway command line interface](#gateway-command-line-interface)
     1. [WPE Viewer](#wpe-viewer)
     1. [WNT Viewer](#wnt-viewer)
+    1. [Provisioning server](#provisioning-server)
 1. [Framework](#framework)
     1. [Structure](#structure)
     1. [Examples](#examples)
@@ -537,6 +538,28 @@ settings:
     wnt_hostname: "wnthost.com"
 ```
 
+### Provisioning server
+The provisioning server, _wm-provisioning-server_, provides an example
+implementation of the server side of the provisioning protocol. It must be used
+with the _provisioning_joining_node_ application of the SDK. Please refer to
+the provisioning reference manual for further information.
+
+The Provisioning server entrypoint requires correct population of the following settings:
+
+```yaml
+    #examples/settings.yml
+    mqtt_hostname: mqtt_broker_address_or_ip
+    mqtt_password: password
+    mqtt_username: username
+    mqtt_port: 1883 # defaults to 8883 (secure port)
+    mqtt_force_unsecure: True  # defaults to False (secure)
+
+    provisioning_config: "./myprovisioningconfig.yml"
+```
+
+The _myprovisioningconfig.yml_ consists of a list of authorized nodes and their
+associated provisioning data.
+
 ## Framework
 
 Besides the useful entrypoints to interact with Wirepas services, the goal of
@@ -648,6 +671,9 @@ we have available in the [examples folder][examples]:
 -   [settings.yml][example_settings]: an example of a yaml file that with
     commented out settings
 
+-   [provisioning_config.yml][example_provisioning]: an example of a yaml file
+    for the provisioning server
+
 Backend Client's entrypoints also act as a good way to guide your development:
 
 -   [wm-gw-cli][wm_gw_cli]: code behind the gateway command line
@@ -659,6 +685,9 @@ Backend Client's entrypoints also act as a good way to guide your development:
 
 -   [wm-wpe-viewer][wm_wpe]: example on how to consume data streamed
     by a WPE backend
+
+-   [wm-provisioning-server][provisioning_server]: an example implementation
+    of the server side of the wirepas provisioning protocol
 
 For an example on how to build use case test cases, please refer to
 the [kpi_adv.py][kpi_adv] script.
@@ -833,6 +862,8 @@ Version 2.0 See file [LICENSE][here_license] for full license details.
 
 [example_settings]: https://github.com/wirepas/backend-client/blob/master/examples/settings.yml
 
+[example_provisioning]: https://github.com/wirepas/backend-client/blob/master/examples/provisioning_config.yml
+
 [kpi_adv]: https://github.com/wirepas/backend-client/blob/master/wirepas_backend_client/test/kpi_adv.py
 
 [wm_gw_cli]: https://github.com/wirepas/backend-client/blob/master/wirepas_backend_client/cli.py
@@ -840,6 +871,8 @@ Version 2.0 See file [LICENSE][here_license] for full license details.
 [wm_wnt]: https://github.com/wirepas/backend-client/blob/master/wirepas_backend_client/api/wnt/__main__.py
 
 [wm_wpe]: https://github.com/wirepas/backend-client/blob/master/wirepas_backend_client/api/wpe/__main__.py
+
+[provisioning_server]: https://github.com/wirepas/backend-client/blob/master/wirepas_backend_client/provisioning/provisioning_server.py
 
 [backend_client_dockerhub]: https://hub.docker.com/r/wirepas/backend-client
 

@@ -47,6 +47,7 @@ services:
 
         volumes:
             - ./wait-for-it:/usr/bin/tools/wait-for-it
+            - ../../examples/provisioning_config.yml:/home/wirepas/provisioning_config.yml
 
         command: ${WM_BACKEND_CLI_CMD}
 
