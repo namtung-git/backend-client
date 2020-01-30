@@ -67,7 +67,13 @@ def decode_apdu():
 
         print("Flatten keys")
         print(json.dumps(parsed_message.serialize(flat_keys=True), indent=4))
-        print("=========")
+
+        try:
+            print("Print cbor string")
+            print(parsed_message.cbor_contents)
+            print("=========")
+        except AttributeError:
+            pass
 
 
 if __name__ == "__main__":

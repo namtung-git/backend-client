@@ -115,34 +115,36 @@ class JsonSerializer(json.JSONEncoder):
 
 
 def flatten(input_dict, separator="/", prefix=""):
-    """ Flattens a dictionary with nested dictionaries and lists
+    """
+    Flattens a dictionary with nested dictionaries and lists
     into a single dictionary.
 
     The key compression is done using the chosen separator.
     """
     output_dict = {}
-    for key, value in input_dict.items():
 
-        if isinstance(value, dict) and value:
+    def step(member, parent_key=""):
+        if isinstance(member, dict):
+            for key, value in member.items():
+                step(
+                    value,
+                    f"{parent_key}{separator}{key}"
+                    if parent_key
+                    else str(key),
+                )
 
-            deeper = flatten(value, separator, f"{prefix}{key}{separator}")
-            output_dict.update({key2: val2 for key2, val2 in deeper.items()})
-
-        elif isinstance(value, list) and value:
-            for index, sublist in enumerate(value, start=0):
-                if isinstance(sublist, dict) and sublist:
-                    deeper = flatten(
-                        sublist,
-                        separator,
-                        f"{prefix}{key}{separator}{index}{separator}",
-                    )
-                    output_dict.update(
-                        {f"{key2}": val2 for key2, val2 in deeper.items()}
-                    )
-                else:
-                    output_dict[f"{prefix}{key}"] = value
+        elif isinstance(member, list):
+            for index, sublist in enumerate(member, start=0):
+                step(
+                    sublist,
+                    f"{parent_key}{separator}{index}"
+                    if parent_key
+                    else str(index),
+                )
         else:
-            output_dict[f"{prefix}{key}"] = value
+            output_dict[f"{parent_key}"] = member
+
+    step(input_dict)
 
     return output_dict
 
