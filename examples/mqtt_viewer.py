@@ -81,6 +81,11 @@ def main(settings, logger):
             data_queue=data_queue,
             event_queue=event_queue,
             response_queue=response_queue,
+            gateway_id=settings.mqtt_subscribe_gateway_id,
+            sink_id=settings.mqtt_subscribe_sink_id,
+            network_id=settings.mqtt_subscribe_network_id,
+            source_endpoint=settings.mqtt_subscribe_source_endpoint,
+            destination_endpoint=settings.mqtt_subscribe_destination_endpoint,
             mqtt_settings=settings,
         ),
     )
