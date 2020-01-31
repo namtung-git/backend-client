@@ -45,13 +45,15 @@ class Network(object):
     def nodes(self):
         """ Loops through all gateways and returns all the known nodes """
         for gateway in self._gateways.values():
-            return gateway.nodes
+            for node in gateway.nodes:
+                yield node
 
     @property
     def sinks(self):
         """ Loops through all gateways and returns all the known sinks """
         for gateway in self._gateways.values():
-            return gateway.sinks
+            for sink in gateway.sinks:
+                yield sink
 
     @property
     def devices(self):

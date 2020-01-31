@@ -11,8 +11,8 @@
 
 from .api.wnt import wnt_main
 from .api.wpe import wpe_main
-from .cli import main as cli_main
 from .provisioning import prov_main
+from .cli import cli_main
 
 
 def wnt_client():

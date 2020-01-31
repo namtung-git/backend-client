@@ -51,17 +51,19 @@ class MeshManagement(object):
     def sinks(self):
         """ yields all known sinks """
         if not self._networks:
-            return list()
+            yield list()
         for network in self._networks:  # generator magic
-            return self._networks[network].sinks
+            for sink in self._networks[network].sinks:
+                yield sink
 
     @property
     def nodes(self):
         """ yields all known nodes """
         if not self._networks:
-            return list()
+            yield list()
         for network in self._networks:  # generator magic
-            return self._networks[network].nodes
+            for node in self._networks[network].nodes:
+                yield node
 
     def add(
         self,
