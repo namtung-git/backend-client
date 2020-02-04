@@ -1,5 +1,19 @@
 # Change Log
 
+## [v1.3.1](https://github.com/wirepas/backend-client/tree/v1.3.1) (2020-01-31)
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.0...v1.3.1)
+
+**Closed issues:**
+
+- Set a custom gateway and sink id through the cli [\#239](https://github.com/wirepas/backend-client/issues/239)
+- Add toggle to hide MQTT response "acks" [\#228](https://github.com/wirepas/backend-client/issues/228)
+- Add a command to disable the apdu parsing when running the cli [\#167](https://github.com/wirepas/backend-client/issues/167)
+- Refactor gw command line class [\#102](https://github.com/wirepas/backend-client/issues/102)
+
+**Merged pull requests:**
+
+- Update gw cli [\#236](https://github.com/wirepas/backend-client/pull/236) ([PFigs](https://github.com/PFigs))
+
 ## [v1.3.0](https://github.com/wirepas/backend-client/tree/v1.3.0) (2020-01-30)
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.2.4...v1.3.0)
 
@@ -9,6 +23,7 @@
 
 **Merged pull requests:**
 
+- Release v1.3.0 [\#240](https://github.com/wirepas/backend-client/pull/240) ([PFigs](https://github.com/PFigs))
 - Flatten serialization [\#238](https://github.com/wirepas/backend-client/pull/238) ([PFigs](https://github.com/PFigs))
 - MQTT subscriber filters for MQTT viewer [\#237](https://github.com/wirepas/backend-client/pull/237) ([PFigs](https://github.com/PFigs))
 - Wirepas provisioning server example. [\#235](https://github.com/wirepas/backend-client/pull/235) ([vgeneves](https://github.com/vgeneves))
@@ -36,6 +51,7 @@
 - Update adv mysql schema [\#220](https://github.com/wirepas/backend-client/pull/220) ([PFigs](https://github.com/PFigs))
 - ADV reserved field [\#219](https://github.com/wirepas/backend-client/pull/219) ([PFigs](https://github.com/PFigs))
 - Endpoint property [\#218](https://github.com/wirepas/backend-client/pull/218) ([PFigs](https://github.com/PFigs))
+- Update ruuvi.py [\#212](https://github.com/wirepas/backend-client/pull/212) ([PFigs](https://github.com/PFigs))
 - Change .settings to settings/examples.yml [\#181](https://github.com/wirepas/backend-client/pull/181) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.3](https://github.com/wirepas/backend-client/tree/v1.2.3) (2020-01-16)
@@ -45,9 +61,8 @@
 
 - Release v1.2.3 [\#215](https://github.com/wirepas/backend-client/pull/215) ([PFigs](https://github.com/PFigs))
 - Update test vectors [\#213](https://github.com/wirepas/backend-client/pull/213) ([PFigs](https://github.com/PFigs))
-- Update ruuvi.py [\#212](https://github.com/wirepas/backend-client/pull/212) ([PFigs](https://github.com/PFigs))
 - Diagnostic decoder [\#209](https://github.com/wirepas/backend-client/pull/209) ([PFigs](https://github.com/PFigs))
-- Advertiser message: interface compliance [\#200](https://github.com/wirepas/backend-client/pull/200) ([PFigs](https://github.com/PFigs))
+- Release helper [\#206](https://github.com/wirepas/backend-client/pull/206) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.2](https://github.com/wirepas/backend-client/tree/v1.2.2) (2020-01-15)
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.2.2-rc.3...v1.2.2)
@@ -55,9 +70,10 @@
 **Merged pull requests:**
 
 - Update version [\#207](https://github.com/wirepas/backend-client/pull/207) ([PFigs](https://github.com/PFigs))
-- Release helper [\#206](https://github.com/wirepas/backend-client/pull/206) ([PFigs](https://github.com/PFigs))
 - cli: fix data tracking exception [\#203](https://github.com/wirepas/backend-client/pull/203) ([PFigs](https://github.com/PFigs))
 - Update travis [\#202](https://github.com/wirepas/backend-client/pull/202) ([PFigs](https://github.com/PFigs))
+- Diagnostics dashboard [\#201](https://github.com/wirepas/backend-client/pull/201) ([PFigs](https://github.com/PFigs))
+- Advertiser message: interface compliance [\#200](https://github.com/wirepas/backend-client/pull/200) ([PFigs](https://github.com/PFigs))
 - Mesh request example [\#197](https://github.com/wirepas/backend-client/pull/197) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.2-rc.3](https://github.com/wirepas/backend-client/tree/v1.2.2-rc.3) (2020-01-07)
@@ -73,7 +89,6 @@
 
 **Merged pull requests:**
 
-- Diagnostics dashboard [\#201](https://github.com/wirepas/backend-client/pull/201) ([PFigs](https://github.com/PFigs))
 - RC2 for v1.2.2 [\#193](https://github.com/wirepas/backend-client/pull/193) ([PFigs](https://github.com/PFigs))
 - Update diagnostics [\#192](https://github.com/wirepas/backend-client/pull/192) ([PFigs](https://github.com/PFigs))
 
