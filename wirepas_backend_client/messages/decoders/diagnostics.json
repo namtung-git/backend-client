@@ -177,6 +177,7 @@
   "38": "stack_profile",
   "39": "firmware_app",
   "4": "network_scans_amount",
+  "40": "boot_fault_reason",
   "5": "scanstat_avg_routers",
   "6": "cfmac_access_cycle_interval",
   "64": "trace_options",
@@ -193,7 +194,7 @@
     "0": "average",
     "1": "maximum"
   },
-  "build_date": "2020-01-07T09:47:52.534638",
+  "build_date": "2020-02-03T11:43:23.362762",
   "cbmac_cca_channels": {
     "0": "cbmac_cca_channel",
     "1": "cbmac_cca_failed"
