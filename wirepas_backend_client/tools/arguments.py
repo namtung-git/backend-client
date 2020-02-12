@@ -119,9 +119,10 @@ class ParserHelper:
     @property
     def known_arguments(self):
         """ returns the unknown arguments it could not parse """
-        self._arguments, self._unknown_arguments = (
-            self.parser.parse_known_args()
-        )
+        (
+            self._arguments,
+            self._unknown_arguments,
+        ) = self.parser.parse_known_args()
         return self._arguments
 
     @property
@@ -172,9 +173,10 @@ class ParserHelper:
                         arglist.append(arg)
 
                 # Override self._arguments as there are parameters from file
-                self._arguments, self._unknown_arguments = self.parser.parse_known_args(
-                    arglist
-                )
+                (
+                    self._arguments,
+                    self._unknown_arguments,
+                ) = self.parser.parse_known_args(arglist)
             except FileNotFoundError:
                 pass
 
