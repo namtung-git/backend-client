@@ -29,7 +29,7 @@ class RunConfiguration(Enum):
     run_only_http = 2  # For testing of http server. Does not require MySQL
 
 
-run_config: RunConfiguration = RunConfiguration.run_normally
+run_config: RunConfiguration = RunConfiguration.run_only_http
 
 
 class MultiMessageMqttObserver(MQTTObserver):

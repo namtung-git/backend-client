@@ -474,18 +474,19 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         if len(command) > 0:
 
-            self.logger.info("HTTP process (%s)..", command)
+            self.logger.info("HTTP command '%s' received", command)
 
             response[self.HTTP_response_fields.text.value] = f"{command} ok!"
             response[
                 self.HTTP_response_fields.code.value
             ] = self.HTTP_server_response_codes.http_response_ok.value
 
+            config_messages = list()
+            messages = list()
+
             # Go through all gateways and sinks that are currently known
             gateways_and_sinks = self.status_observer.gateways_and_sinks
             for gateway_id, sinks in gateways_and_sinks.items():
-
-                messages = list()
 
                 # Sends the command towards all the discovered sinks
                 for sink_id, sink in sinks.items():
@@ -497,7 +498,7 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                         (
                             command_was_ok,
                             new_messages,
-                        ) = self.handle_datatx_command(
+                        ) = self._handle_datatx_command(
                             gateway_id,
                             refresh,
                             response,
@@ -510,41 +511,45 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                         if command_was_ok is not True:
                             break
                         else:
-                            messages.append(new_messages)
+                            if len(new_messages) > 0:
+                                messages.append(new_messages)
 
                     elif command == self.HTTP_server_commands.start.value:
                         (
                             command_was_ok,
                             refresh,
                             new_messages,
-                        ) = self.handle_start_command(
+                        ) = self._handle_start_command(
                             gateway_id, refresh, sink_id
                         )
-                        messages.append(new_messages)
+                        if len(new_messages) > 0:
+                            messages.append(new_messages)
                     elif command == self.HTTP_server_commands.stop.value:
                         (
                             command_was_ok,
                             refresh,
                             new_messages,
-                        ) = self.handle_stop_command(
+                        ) = self._handle_stop_command(
                             gateway_id, refresh, sink_id
                         )
-                        messages.append(new_messages)
+                        if len(new_messages) > 0:
+                            messages.append(new_messages)
                     elif command == self.HTTP_server_commands.set_config.value:
                         (
                             command_was_ok,
                             refresh,
                             new_messages,
-                        ) = self.handle_setconfig_command(
+                        ) = self._handle_setconfig_command(
                             gateway_id, params, refresh, sink, sink_id
                         )
-                        messages.append(new_messages)
+                        if len(new_messages) > 0:
+                            messages.append(new_messages)
                     elif command == self.HTTP_server_commands.get_info.value:
                         (
                             command_was_ok,
                             refresh,
                             new_messages,
-                        ) = self.handle_info_command(
+                        ) = self._handle_info_command(
                             command,
                             gateway_id,
                             refresh,
@@ -552,55 +557,66 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                             sink,
                             sink_id,
                         )
-                        messages.append(new_messages)
-
+                        if len(new_messages) > 0:
+                            messages.append(new_messages)
                     else:
-                        self.handle_unknown_command(response)
+                        self._handle_unknown_command(response)
                         break
                     # Renews information about remote gateways
                     if command_was_ok is True:
-                        self.logger.info("HTTP command ok")
+
                         if refresh:
                             refresh = False
-                            self.send_get_config_request_to_gateways(
-                                gateway_id, messages
-                            )
-
-                        # sends all messages
-                        if self.http_api_test_mode is False:
-                            self.send_messages_to_mqtt(messages)
-                        else:
-                            self.logger.error(
-                                "HTTP API test test mode. "
-                                "Not sending MQTT messages."
+                            self._send_get_config_request_to_gateways(
+                                gateway_id, config_messages
                             )
                     else:
                         self.logger.error(
                             "HTTP command parsing (%s) failed", command
                         )
+
+            # sends all messages
+            if self.http_api_test_mode is False:
+                if len(messages) > 0:
+                    self.logger.info(
+                        "Send %d MQTT data messages", len(messages)
+                    )
+                    self._send_messages_to_mqtt(messages)
+                if len(config_messages) > 0:
+                    self.logger.info(
+                        "Send %d MQTT config_messages messages",
+                        len(config_messages),
+                    )
+                    self._send_messages_to_mqtt(config_messages)
+            else:
+                self.logger.error(
+                    "HTTP API test test mode. " "Not sending MQTT messages."
+                )
         else:
-            self.handle_empty_request(response)
+            self._handle_empty_request(response)
 
         if (
             response[self.HTTP_response_fields.code.value]
             != self.HTTP_server_response_codes.http_response_ok.value
         ):
             self.logger.error(response)
+        else:
+            self.logger.info("HTTP command ok")
 
         # send code and response message
-        self.send_http_response(response)
+        self._send_http_response(response)
 
         if self.debug_comms is True:
             self.logger.info("HTTP response body: %s", response)
 
-    def send_http_response(self, response):
+    def _send_http_response(self, response):
         self.send_response(
             code=response[self.HTTP_response_fields.code.value],
             message=response[self.HTTP_response_fields.text.value],
         )
         self.end_headers()
 
-    def handle_empty_request(self, response):
+    def _handle_empty_request(self, response):
 
         self.logger.error("HTTP request was empty")
 
@@ -611,19 +627,20 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.HTTP_server_response_codes.http_response_code_unknown_command.value
         )
 
-    def send_get_config_request_to_gateways(self, gateway_id, messages):
+    def _send_get_config_request_to_gateways(self, gateway_id, messages):
         message = self.mqtt_topics.request_message(
             "get_configs", **dict(gw_id=gateway_id)
         )
         messages.append(message)
 
-    def send_messages_to_mqtt(self, messages):
+    def _send_messages_to_mqtt(self, messages):
         for message in messages:
             if len(message) > 0:
-                self.logger.info(message)
                 self.http_tx_queue.put(message)
+            else:
+                self.logger.error("MQTT message size is 0")
 
-    def handle_unknown_command(self, response):
+    def _handle_unknown_command(self, response):
         response[
             self.HTTP_response_fields.code.value
         ] = (
@@ -632,7 +649,7 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.logger.error("HTTP request command was unknown")
         response[self.HTTP_response_fields.text.value] = "Unknown command"
 
-    def find_sink(self, sink_node_address: int, gateways: dict):
+    def _find_sink(self, sink_node_address: int, gateways: dict):
 
         sink_node_address_belongs_network = False
         for gateway_id, sinks in gateways.items():
@@ -649,7 +666,7 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         return sink_node_address_belongs_network
 
-    def handle_datatx_command(
+    def _handle_datatx_command(
         self,
         gateway_id,
         refresh,
@@ -664,6 +681,7 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         command_was_ok: bool = True
         command_parse_was_ok: bool = False
         newMessages = list()
+        message = None
 
         try:
             # When sending message to certain gateway/sink on network we need
@@ -728,13 +746,16 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             send_message_to_sink: bool = False
 
-            if self.find_sink(destination_node_address, gateways):
+            if self._find_sink(destination_node_address, gateways):
                 if (
                     sink[App_config_keys.app_config_node_address_key.value]
                     == destination_node_address
                 ):
                     # send only addressed sink
                     send_message_to_sink = True
+                    if self.debug_comms is True:
+                        self.logger.info("Node address is sink address")
+
             else:
                 # send to all sinks on network
                 send_message_to_sink = True
@@ -747,7 +768,7 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
                     if self.debug_comms is True:
                         self.logger.info(
-                            "HTTP message payload sent via %s/%s to "
+                            "Create message to be sent via %s/%s to "
                             "nodeaddress=%s dst ep=%s payload=%s",
                             gateway_id,
                             sink_id,
@@ -775,7 +796,7 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         return command_was_ok, newMessages
 
-    def handle_info_command(
+    def _handle_info_command(
         self, command, gateway_id, refresh, response, sink, sink_id
     ):
 
@@ -802,7 +823,7 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         return command_was_ok, refresh, newMessages
 
-    def handle_setconfig_command(
+    def _handle_setconfig_command(
         self, gateway_id, params, refresh, sink, sink_id
     ):
 
@@ -835,7 +856,7 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         newMessages.append(message)
         return command_was_ok, refresh, newMessages
 
-    def handle_stop_command(self, gateway_id, refresh, sink_id):
+    def _handle_stop_command(self, gateway_id, refresh, sink_id):
 
         command_was_ok = True
         refresh = True
@@ -850,7 +871,7 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         return command_was_ok, refresh, newMessages
 
-    def handle_start_command(self, gateway_id, refresh, sink_id):
+    def _handle_start_command(self, gateway_id, refresh, sink_id):
 
         command_was_ok = True
         newMessages = list()
