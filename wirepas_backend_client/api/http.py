@@ -394,6 +394,10 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.http_tx_queue = server.http_tx_queue
         self.status_observer = server.status_observer
         self.mqtt_topics = Topics()
+
+        self.debug_comms = False  # if true communication details are logged
+        self.http_api_test_mode = False  # When on, does not send MQTT messages
+
         super(wbcHTTPRequestHandler, self).__init__(
             request, client_address, server
         )
@@ -425,19 +429,20 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         if command == "":
             command = __default_command
-
-        self.logger.info(
-            dict(
-                protocol="http",
-                verb=verb,
-                path=self.path,
-                params=str(params),
-                command=command,
-                gateways_and_sinks=str(
-                    self.status_observer.gateways_and_sinks
-                ),
+        if self.debug_comms is True:
+            self.logger.info(
+                dict(
+                    protocol="http",
+                    verb=verb,
+                    path=self.path,
+                    params=str(params),
+                    command=command,
+                    gateways_and_sinks=str(
+                        self.status_observer.gateways_and_sinks
+                    ),
+                )
             )
-        )
+
         self._mesh_control(command, params)
 
     # flake8: noqa
@@ -457,10 +462,9 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         # By default assume that gateway configuration does not need
         # refreshing after command is executed
         refresh = False
-
-        # default http request answer and code
         response = dict()
 
+        # Create HTTP response header
         response[self.HTTP_response_fields.path.value] = self.path
         response[self.HTTP_response_fields.params.value] = str(params)
         response[self.HTTP_response_fields.gw_and_sinks.value] = str(
@@ -469,6 +473,8 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         response[self.HTTP_response_fields.command.value] = command
 
         if len(command) > 0:
+
+            self.logger.info("HTTP process (%s)..", command)
 
             response[self.HTTP_response_fields.text.value] = f"{command} ok!"
             response[
@@ -487,6 +493,7 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     command_was_ok = False
 
                     if command == self.HTTP_server_commands.data_tx.value:
+                        # Handle transmit request.
                         (
                             command_was_ok,
                             new_messages,
@@ -498,6 +505,7 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                             sink_id,
                             command,
                             params,
+                            gateways_and_sinks,
                         )
                         if command_was_ok is not True:
                             break
@@ -551,6 +559,7 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                         break
                     # Renews information about remote gateways
                     if command_was_ok is True:
+                        self.logger.info("HTTP command ok")
                         if refresh:
                             refresh = False
                             self.send_get_config_request_to_gateways(
@@ -558,9 +567,17 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                             )
 
                         # sends all messages
-                        self.send_messages_to_mqtt(messages)
+                        if self.http_api_test_mode is False:
+                            self.send_messages_to_mqtt(messages)
+                        else:
+                            self.logger.error(
+                                "HTTP API test test mode. "
+                                "Not sending MQTT messages."
+                            )
                     else:
-                        self.logger.info("Parsing command %s failed", command)
+                        self.logger.error(
+                            "HTTP command parsing (%s) failed", command
+                        )
         else:
             self.handle_empty_request(response)
 
@@ -572,7 +589,9 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         # send code and response message
         self.send_http_response(response)
-        self.logger.info(response)
+
+        if self.debug_comms is True:
+            self.logger.info("HTTP response body: %s", response)
 
     def send_http_response(self, response):
         self.send_response(
@@ -582,6 +601,9 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
 
     def handle_empty_request(self, response):
+
+        self.logger.error("HTTP request was empty")
+
         response[self.HTTP_response_fields.text.value] = "Error: empty request"
         response[
             self.HTTP_response_fields.code.value
@@ -607,15 +629,40 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         ] = (
             self.HTTP_server_response_codes.http_response_code_unknown_command.value
         )
-
+        self.logger.error("HTTP request command was unknown")
         response[self.HTTP_response_fields.text.value] = "Unknown command"
 
+    def find_sink(self, sink_node_address: int, gateways: dict):
+
+        sink_node_address_belongs_network = False
+        for gateway_id, sinks in gateways.items():
+            # Sends the command towards all the discovered sinks
+            for sink_id, sink in sinks.items():
+                if (
+                    sink[App_config_keys.app_config_node_address_key.value]
+                    == sink_node_address
+                ):
+                    sink_node_address_belongs_network = True
+                    break
+            if sink_node_address_belongs_network is True:
+                break
+
+        return sink_node_address_belongs_network
+
     def handle_datatx_command(
-        self, gateway_id, refresh, response, sink, sink_id, command, params
+        self,
+        gateway_id,
+        refresh,
+        response,
+        sink,
+        sink_id,
+        command,
+        params,
+        gateways: dict,
     ):
 
-        command_was_ok = True
-        command_parse_was_ok = False
+        command_was_ok: bool = True
+        command_parse_was_ok: bool = False
         newMessages = list()
 
         try:
@@ -668,21 +715,47 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             except KeyError:
                 count = 1
 
-            # Send message only if desired destination address match to
-            # sink node address. Each sink addresses
-            # are unique to network.
-            if (
-                sink[App_config_keys.app_config_node_address_key.value]
-                == destination_node_address
-            ):
+            # Expected behavior:
+            # (1) If destination_node_address is any of gateway sink addresses,
+            # send only to desired sink.
+
+            # (2) If destination_node_address is not any of gateway sink
+            # addresses, then send this to all sinks of gateways belonging
+            # to this network
+
+            # Assumptions
+            # (1) each sink node address is unique to network
+
+            send_message_to_sink: bool = False
+
+            if self.find_sink(destination_node_address, gateways):
+                if (
+                    sink[App_config_keys.app_config_node_address_key.value]
+                    == destination_node_address
+                ):
+                    # send only addressed sink
+                    send_message_to_sink = True
+            else:
+                # send to all sinks on network
+                send_message_to_sink = True
+
+            if send_message_to_sink is True:
                 # sends a or multiple messages according to the count
                 # parameter in the request
 
-                self.logger.info(
-                    "message sent to %s", destination_node_address
-                )
-
                 while count:
+
+                    if self.debug_comms is True:
+                        self.logger.info(
+                            "HTTP message payload sent via %s/%s to "
+                            "nodeaddress=%s dst ep=%s payload=%s",
+                            gateway_id,
+                            sink_id,
+                            destination_node_address,
+                            dst_ep,
+                            binascii.hexlify(payload),
+                        )
+
                     count -= 1
                     message = self.mqtt_topics.request_message(
                         "send_data",

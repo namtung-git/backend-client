@@ -220,18 +220,23 @@ def main():
 
         gw_status_from_mqtt_broker = daemon.create_queue()
 
+        use_storage = False
+
         if run_config == RunConfiguration.run_normally:
             mqtt_name = "mqtt"
             storage_name = "mysql"
             control_name = "http"
+            use_storage = True
         elif run_config == RunConfiguration.run_only_http:
             mqtt_name = "mqtt"
             storage_name = None
+            use_storage = False
             control_name = "http"
         else:
             mqtt_name = "mqtt"
             storage_name = "mysql"
             control_name = "http"
+            use_storage = True
 
         if storage_name is not None:
             daemon.build(
@@ -253,7 +258,7 @@ def main():
                     gw_status_queue=gw_status_from_mqtt_broker,
                     mqtt_settings=MQTTSettings(settings),
                 ),
-                storage=False,
+                storage=use_storage,
                 storage_name=storage_name,
             )
 
