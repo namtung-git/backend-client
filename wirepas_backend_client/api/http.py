@@ -514,7 +514,8 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                             break
                         else:
                             if len(new_messages) > 0:
-                                messages.append(new_messages)
+                                for msg in new_messages:
+                                    messages.append(msg)
 
                     elif command == self.HTTP_server_commands.start.value:
                         (
@@ -525,7 +526,8 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                             gateway_id, refresh, sink_id
                         )
                         if len(new_messages) > 0:
-                            messages.append(new_messages)
+                            for msg in new_messages:
+                                messages.append(msg)
                     elif command == self.HTTP_server_commands.stop.value:
                         (
                             command_was_ok,
@@ -535,7 +537,8 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                             gateway_id, refresh, sink_id
                         )
                         if len(new_messages) > 0:
-                            messages.append(new_messages)
+                            for msg in new_messages:
+                                messages.append(msg)
                     elif command == self.HTTP_server_commands.set_config.value:
                         (
                             command_was_ok,
@@ -545,7 +548,8 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                             gateway_id, params, refresh, sink, sink_id
                         )
                         if len(new_messages) > 0:
-                            messages.append(new_messages)
+                            for msg in new_messages:
+                                messages.append(msg)
                     elif command == self.HTTP_server_commands.get_info.value:
                         (
                             command_was_ok,
@@ -560,7 +564,8 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                             sink_id,
                         )
                         if len(new_messages) > 0:
-                            messages.append(new_messages)
+                            for msg in new_messages:
+                                messages.append(msg)
                     else:
                         self._handle_unknown_command(response)
                         break
@@ -638,6 +643,8 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def _send_messages_to_mqtt(self, messages):
         for message in messages:
             if len(message) > 0:
+                if self.debug_comms is True:
+                    self.logger.info({message["topic"]: str(message["data"])})
                 self.http_tx_queue.put(message)
             else:
                 self.logger.error("MQTT message size is 0")
