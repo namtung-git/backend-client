@@ -52,6 +52,7 @@ class ProvisioningStatus(enum.Enum):
     ERROR_NOT_START = 7
     ERROR_INVALID_STATE = 8
     ERROR_NACK_RECEIVED = 9
+    ERROR_NO_RESPONSE = 10
 
 
 class ProvisioningStateMachine(object):
@@ -168,12 +169,12 @@ class ProvisioningStateMachine(object):
 
         # Encrypt payload + mic
         # Generate Initial Counter Block (ICB).
-        icb = iv
         ctr_bytes = self.counter + int.from_bytes(
-            icb[-2:], byteorder="little", signed=False
+            iv, byteorder="little", signed=False
         )
-        ctr_bytes = ctr_bytes % 65536
-        icb = b"".join([icb[:-2], ctr_bytes.to_bytes(2, byteorder="little")])
+
+        ctr_bytes = ctr_bytes % (2 ** 128)
+        icb = ctr_bytes.to_bytes(16, byteorder="little")
 
         self.logger.debug(
             "   -  ICB: %s", "".join("{:02X}".format(x) + " " for x in icb)
@@ -221,7 +222,7 @@ class ProvisioningStateMachine(object):
                 key_index=key_idx,
             ).payload
             self.logger.debug(
-                " - Provisioning data: %s",
+                " - Provisioning DATA packet: %s",
                 "".join("{:02X}".format(x) + " " for x in self._data_pkt),
             )
             self._send_packet(self._data_pkt)
@@ -229,16 +230,21 @@ class ProvisioningStateMachine(object):
             self.state = ProvisioningStates.WAIT_DATA_SENT
         else:
             self.status = ProvisioningStatus.ERROR_NOT_AUTHORIZED
+
+            if msg.uid not in self.data.keys():
+                reason = ProvisioningNackReason.NOT_AUTHORIZED
+            else:
+                reason = ProvisioningNackReason.METHOD_NOT_SUPPORTED
+
             self.logger.error(
                 " - UID(%s) not in whitelist"
-                " (or method not supported) - Send NACK.",
+                " (or method not supported) - Send NACK (%s).",
                 msg.uid,
+                reason,
             )
             self._send_packet(
                 ProvisioningMessageNACK(
-                    self.sm_id[1],
-                    self.sm_id[2],
-                    ProvisioningNackReason.NOT_AUTHORIZED,
+                    self.sm_id[1], self.sm_id[2], reason
                 ).payload
             )
             self._timer_start(self.timeout)
@@ -315,6 +321,12 @@ class ProvisioningStateMachine(object):
                 )
                 self._timer_cancel()
                 self.status = ProvisioningStatus.ERROR_NACK_RECEIVED
+        elif event.type == "timeout":
+            self.logger.error(
+                "  - No response from Node, Provisioning FAILURE."
+            )
+            self._timer_cancel()
+            self.status = ProvisioningStatus.ERROR_NO_RESPONSE
 
     def _state_wait_nack_sent(self, event):
         self.logger.info("%s State Wait NACK Sent:", str(self))
