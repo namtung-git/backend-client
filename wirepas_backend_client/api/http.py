@@ -67,13 +67,15 @@ class SinkAndGatewayStatusObserver(Thread):
         )  # This will be populated according query defined in
         # settins.yaml/mqtt_subscribe_network_id.
 
-        # pylint: disable=locally-disabled, too-many-nested-blocks, too-many-branches
+        # pylint: disable=locally-disabled, too-many-nested-blocks,
+        # too-many-branches
 
     def run(self):
         while not self.exit_signal.is_set():
             try:
-                # Http server does not subscribe MQTT configuration. It is done by
-                # caller of http. Caller subscribes certain network all gateways.
+                # Http server does not subscribe MQTT configuration. It is
+                # done by caller of http. Caller subscribes certain network
+                # all gateways.
                 status_msg = self.gw_status_queue.get(block=True, timeout=60)
                 self.logger.info("HTTP status_msg={}".format(status_msg))
                 # New status of gateway received.
@@ -714,12 +716,7 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         if command_parse_was_ok is True:
             try:
-                is_unack_csma_ca = params["fast"] in [
-                    "true",
-                    "1",
-                    "yes",
-                    "y",
-                ]
+                is_unack_csma_ca = params["fast"] in ["true", "1", "yes", "y"]
             except KeyError:
                 is_unack_csma_ca = False
 
@@ -847,11 +844,11 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         except KeyError:
             data = sink[App_config_keys.app_config_data_key.value]
         new_config = dict(
-            app_config_diag=diag, app_config_data=data, app_config_seq=seq,
+            app_config_diag=diag, app_config_data=data, app_config_seq=seq
         )
         message = self.mqtt_topics.request_message(
             "set_config",
-            **dict(sink_id=sink_id, gw_id=gateway_id, new_config=new_config,),
+            **dict(sink_id=sink_id, gw_id=gateway_id, new_config=new_config),
         )
         newMessages.append(message)
         return command_was_ok, refresh, newMessages
@@ -865,7 +862,7 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         new_config = dict(started=False)
         message = self.mqtt_topics.request_message(
             "set_config",
-            **dict(sink_id=sink_id, gw_id=gateway_id, new_config=new_config,),
+            **dict(sink_id=sink_id, gw_id=gateway_id, new_config=new_config),
         )
         newMessages.append(message)
 
@@ -879,7 +876,7 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         new_config = dict(started=True)
         message = self.mqtt_topics.request_message(
             "set_config",
-            **dict(sink_id=sink_id, gw_id=gateway_id, new_config=new_config,),
+            **dict(sink_id=sink_id, gw_id=gateway_id, new_config=new_config),
         )
         newMessages.append(message)
         refresh = True
