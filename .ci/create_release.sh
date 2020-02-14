@@ -21,8 +21,8 @@ function update_version
 # updates the changelog up to the current tag and commits changes
 function update_changelog
 {
-    echo "creating changelog..."
-    github_changelog_generator -t "${GH_TOKEN}" --future-release "${GIT_TAG}"
+    echo "creating changelog..."    
+    github_changelog_generator -t "${GH_TOKEN}" --user wirepas --project backend-client --future-release "${GIT_TAG}" 
 
     git add CHANGELOG.md
     git commit --amend --no-verify
