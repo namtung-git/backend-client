@@ -591,8 +591,7 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     self._send_messages_to_mqtt(messages)
                 if len(config_messages) > 0:
                     self.logger.info(
-                        "Send %d MQTT config_messages messages",
-                        len(config_messages),
+                        "Send %d MQTT config messages", len(config_messages)
                     )
                     self._send_messages_to_mqtt(config_messages)
             else:
