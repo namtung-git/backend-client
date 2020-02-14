@@ -1,6 +1,26 @@
-# Change Log
+# Changelog
 
-## [v1.3.1](https://github.com/wirepas/backend-client/tree/v1.3.1) (2020-01-31)
+## [v1.3.2](https://github.com/wirepas/backend-client/tree/v1.3.2) (2020-02-14)
+
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.1...v1.3.2)
+
+**Closed issues:**
+
+- When sending message via http server to multisink configuration, only addressed sink should receive message\[BUG\]  [\#247](https://github.com/wirepas/backend-client/issues/247)
+
+**Merged pull requests:**
+
+- Fix comma issue [\#257](https://github.com/wirepas/backend-client/pull/257) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- Fix list appending issue [\#256](https://github.com/wirepas/backend-client/pull/256) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- Black linter fixes round 1 [\#254](https://github.com/wirepas/backend-client/pull/254) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- \#247 2 [\#253](https://github.com/wirepas/backend-client/pull/253) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- \#247 2 [\#252](https://github.com/wirepas/backend-client/pull/252) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- Change HTTP implementation so that when request destination [\#251](https://github.com/wirepas/backend-client/pull/251) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- \#247 [\#249](https://github.com/wirepas/backend-client/pull/249) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- Feature provisioning [\#248](https://github.com/wirepas/backend-client/pull/248) ([vgeneves](https://github.com/vgeneves))
+
+## [v1.3.1](https://github.com/wirepas/backend-client/tree/v1.3.1) (2020-02-04)
+
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.0...v1.3.1)
 
 **Closed issues:**
@@ -12,9 +32,13 @@
 
 **Merged pull requests:**
 
+- Diagnostic cbor ids [\#246](https://github.com/wirepas/backend-client/pull/246) ([PFigs](https://github.com/PFigs))
+- Update gitignore [\#245](https://github.com/wirepas/backend-client/pull/245) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- Release v1.3.1 [\#243](https://github.com/wirepas/backend-client/pull/243) ([PFigs](https://github.com/PFigs))
 - Update gw cli [\#236](https://github.com/wirepas/backend-client/pull/236) ([PFigs](https://github.com/PFigs))
 
 ## [v1.3.0](https://github.com/wirepas/backend-client/tree/v1.3.0) (2020-01-30)
+
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.2.4...v1.3.0)
 
 **Closed issues:**
@@ -30,6 +54,7 @@
 - Update dependency PyYAML to v5.3 [\#186](https://github.com/wirepas/backend-client/pull/186) ([renovate[bot]](https://github.com/apps/renovate))
 
 ## [v1.2.4](https://github.com/wirepas/backend-client/tree/v1.2.4) (2020-01-27)
+
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.2.3...v1.2.4)
 
 **Closed issues:**
@@ -51,25 +76,27 @@
 - Update adv mysql schema [\#220](https://github.com/wirepas/backend-client/pull/220) ([PFigs](https://github.com/PFigs))
 - ADV reserved field [\#219](https://github.com/wirepas/backend-client/pull/219) ([PFigs](https://github.com/PFigs))
 - Endpoint property [\#218](https://github.com/wirepas/backend-client/pull/218) ([PFigs](https://github.com/PFigs))
-- Update ruuvi.py [\#212](https://github.com/wirepas/backend-client/pull/212) ([PFigs](https://github.com/PFigs))
 - Change .settings to settings/examples.yml [\#181](https://github.com/wirepas/backend-client/pull/181) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.3](https://github.com/wirepas/backend-client/tree/v1.2.3) (2020-01-16)
+
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.2.2...v1.2.3)
 
 **Merged pull requests:**
 
 - Release v1.2.3 [\#215](https://github.com/wirepas/backend-client/pull/215) ([PFigs](https://github.com/PFigs))
 - Update test vectors [\#213](https://github.com/wirepas/backend-client/pull/213) ([PFigs](https://github.com/PFigs))
+- Update ruuvi.py [\#212](https://github.com/wirepas/backend-client/pull/212) ([PFigs](https://github.com/PFigs))
 - Diagnostic decoder [\#209](https://github.com/wirepas/backend-client/pull/209) ([PFigs](https://github.com/PFigs))
-- Release helper [\#206](https://github.com/wirepas/backend-client/pull/206) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.2](https://github.com/wirepas/backend-client/tree/v1.2.2) (2020-01-15)
+
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.2.2-rc.3...v1.2.2)
 
 **Merged pull requests:**
 
 - Update version [\#207](https://github.com/wirepas/backend-client/pull/207) ([PFigs](https://github.com/PFigs))
+- Release helper [\#206](https://github.com/wirepas/backend-client/pull/206) ([PFigs](https://github.com/PFigs))
 - cli: fix data tracking exception [\#203](https://github.com/wirepas/backend-client/pull/203) ([PFigs](https://github.com/PFigs))
 - Update travis [\#202](https://github.com/wirepas/backend-client/pull/202) ([PFigs](https://github.com/PFigs))
 - Diagnostics dashboard [\#201](https://github.com/wirepas/backend-client/pull/201) ([PFigs](https://github.com/PFigs))
@@ -77,6 +104,7 @@
 - Mesh request example [\#197](https://github.com/wirepas/backend-client/pull/197) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.2-rc.3](https://github.com/wirepas/backend-client/tree/v1.2.2-rc.3) (2020-01-07)
+
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.2.2-rc.2...v1.2.2-rc.3)
 
 **Merged pull requests:**
@@ -85,6 +113,7 @@
 - Diagnostics cbor ids [\#195](https://github.com/wirepas/backend-client/pull/195) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.2-rc.2](https://github.com/wirepas/backend-client/tree/v1.2.2-rc.2) (2019-12-20)
+
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.2.2-rc.1...v1.2.2-rc.2)
 
 **Merged pull requests:**
@@ -93,6 +122,7 @@
 - Update diagnostics [\#192](https://github.com/wirepas/backend-client/pull/192) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.2-rc.1](https://github.com/wirepas/backend-client/tree/v1.2.2-rc.1) (2019-12-17)
+
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.2.1...v1.2.2-rc.1)
 
 **Closed issues:**
@@ -120,28 +150,24 @@
 - Update dependency mysqlclient to v1.4.6 [\#183](https://github.com/wirepas/backend-client/pull/183) ([renovate[bot]](https://github.com/apps/renovate))
 - Diagnostic packets [\#182](https://github.com/wirepas/backend-client/pull/182) ([PFigs](https://github.com/PFigs))
 - Update README.md [\#180](https://github.com/wirepas/backend-client/pull/180) ([PFigs](https://github.com/PFigs))
-- Update dependency wirepas\_messaging to v1.3.0 [\#178](https://github.com/wirepas/backend-client/pull/178) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency mysqlclient to v1.4.5 [\#177](https://github.com/wirepas/backend-client/pull/177) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency pandas to v0.25.3 [\#175](https://github.com/wirepas/backend-client/pull/175) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency paho-mqtt to v1.5.0 [\#174](https://github.com/wirepas/backend-client/pull/174) ([renovate[bot]](https://github.com/apps/renovate))
 - Reduce TOC level [\#173](https://github.com/wirepas/backend-client/pull/173) ([PFigs](https://github.com/PFigs))
-- Fix mesh diagnostics exception handling [\#172](https://github.com/wirepas/backend-client/pull/172) ([PFigs](https://github.com/PFigs))
 - Decoder exception handling test [\#171](https://github.com/wirepas/backend-client/pull/171) ([PFigs](https://github.com/PFigs))
 - Update dependency pandas to v0.25.2 [\#169](https://github.com/wirepas/backend-client/pull/169) ([renovate[bot]](https://github.com/apps/renovate))
-- TLV decoder exception handling [\#168](https://github.com/wirepas/backend-client/pull/168) ([PFigs](https://github.com/PFigs))
 - Update dependency fluent-logger to v0.9.4 [\#165](https://github.com/wirepas/backend-client/pull/165) ([renovate[bot]](https://github.com/apps/renovate))
 - Environment keys [\#163](https://github.com/wirepas/backend-client/pull/163) ([PFigs](https://github.com/PFigs))
 - Update wnt interfaces [\#161](https://github.com/wirepas/backend-client/pull/161) ([PFigs](https://github.com/PFigs))
 - Travis service tests [\#160](https://github.com/wirepas/backend-client/pull/160) ([PFigs](https://github.com/PFigs))
-- Update wirepas messaging version and wnt manager imports [\#159](https://github.com/wirepas/backend-client/pull/159) ([JanneSiren](https://github.com/JanneSiren))
 - Influx queries index name [\#158](https://github.com/wirepas/backend-client/pull/158) ([PFigs](https://github.com/PFigs))
 - Update readme [\#155](https://github.com/wirepas/backend-client/pull/155) ([PFigs](https://github.com/PFigs))
-- Update README.md [\#154](https://github.com/wirepas/backend-client/pull/154) ([jou48](https://github.com/jou48))
 - Diagnostics decoding within MySQL interfaces [\#153](https://github.com/wirepas/backend-client/pull/153) ([PFigs](https://github.com/PFigs))
 - Propagation of ssl fields within influx interfaces [\#152](https://github.com/wirepas/backend-client/pull/152) ([PFigs](https://github.com/PFigs))
 - Fix apdu decoding [\#147](https://github.com/wirepas/backend-client/pull/147) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.1](https://github.com/wirepas/backend-client/tree/v1.2.1) (2019-10-01)
+
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.2.0...v1.2.1)
 
 **Closed issues:**
@@ -154,6 +180,7 @@
 - V1.2.1 dev [\#146](https://github.com/wirepas/backend-client/pull/146) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.0](https://github.com/wirepas/backend-client/tree/v1.2.0) (2019-09-20)
+
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.2.0-rc.3...v1.2.0)
 
 **Closed issues:**
@@ -170,6 +197,7 @@
 - Update docs [\#137](https://github.com/wirepas/backend-client/pull/137) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.0-rc.3](https://github.com/wirepas/backend-client/tree/v1.2.0-rc.3) (2019-09-17)
+
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.2.0-rc.2...v1.2.0-rc.3)
 
 **Closed issues:**
@@ -187,7 +215,12 @@
 - Fix settings error message [\#128](https://github.com/wirepas/backend-client/pull/128) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.0-rc.2](https://github.com/wirepas/backend-client/tree/v1.2.0-rc.2) (2019-09-12)
+
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.1.0...v1.2.0-rc.2)
+
+**Security fixes:**
+
+- Hide credentials when printing to stdout [\#48](https://github.com/wirepas/backend-client/issues/48)
 
 **Closed issues:**
 
@@ -205,7 +238,6 @@
 - Export influx data [\#75](https://github.com/wirepas/backend-client/issues/75)
 - \[BUG\] Exception when packet has whitened payload [\#71](https://github.com/wirepas/backend-client/issues/71)
 - \[BUG\] Event id above long limit [\#51](https://github.com/wirepas/backend-client/issues/51)
-- Hide credentials when printing to stdout [\#48](https://github.com/wirepas/backend-client/issues/48)
 - Expose fluentd to all entrypoints [\#47](https://github.com/wirepas/backend-client/issues/47)
 - \[BUG\] Remove unused arguments from wm-gw-cli   [\#46](https://github.com/wirepas/backend-client/issues/46)
 - Add tests and examples to package  [\#37](https://github.com/wirepas/backend-client/issues/37)
@@ -214,16 +246,13 @@
 
 - Update travis [\#126](https://github.com/wirepas/backend-client/pull/126) ([PFigs](https://github.com/PFigs))
 - Fix message data size [\#125](https://github.com/wirepas/backend-client/pull/125) ([PFigs](https://github.com/PFigs))
-- Pylint violations [\#122](https://github.com/wirepas/backend-client/pull/122) ([PFigs](https://github.com/PFigs))
 - Changes for v1.2.0-rc.2 [\#121](https://github.com/wirepas/backend-client/pull/121) ([PFigs](https://github.com/PFigs))
 - Example: Find all nodes print format [\#119](https://github.com/wirepas/backend-client/pull/119) ([PFigs](https://github.com/PFigs))
-- Entrypoint for unit tests [\#118](https://github.com/wirepas/backend-client/pull/118) ([PFigs](https://github.com/PFigs))
 - Test Kpi: Create database [\#117](https://github.com/wirepas/backend-client/pull/117) ([PFigs](https://github.com/PFigs))
 - Extra comma in json file [\#116](https://github.com/wirepas/backend-client/pull/116) ([PFigs](https://github.com/PFigs))
 - Bug fixes: mqtt\_allow\_untrusted and random crash on gateway\_configuration [\#115](https://github.com/wirepas/backend-client/pull/115) ([musicoliv](https://github.com/musicoliv))
 - Update dependency influxdb to v5.2.3 [\#114](https://github.com/wirepas/backend-client/pull/114) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency pandas to v0.25.1 [\#113](https://github.com/wirepas/backend-client/pull/113) ([renovate[bot]](https://github.com/apps/renovate))
-- Management/network cleanup [\#112](https://github.com/wirepas/backend-client/pull/112) ([PFigs](https://github.com/PFigs))
 - Set received\_package to be foreign key at TestData\_ID\_x tables [\#111](https://github.com/wirepas/backend-client/pull/111) ([JanneSiren](https://github.com/JanneSiren))
 - fix typo [\#110](https://github.com/wirepas/backend-client/pull/110) ([JanneSiren](https://github.com/JanneSiren))
 - Refactor HTTP server [\#109](https://github.com/wirepas/backend-client/pull/109) ([JanneSiren](https://github.com/JanneSiren))
@@ -285,14 +314,15 @@
 - Configure Renovate [\#7](https://github.com/wirepas/backend-client/pull/7) ([renovate[bot]](https://github.com/apps/renovate))
 
 ## [v1.1.0](https://github.com/wirepas/backend-client/tree/v1.1.0) (2019-04-03)
+
+[Full Changelog](https://github.com/wirepas/backend-client/compare/21e3d66dbd072cdf5ee2a3a6f77f0d7c43bc819a...v1.1.0)
+
 **Merged pull requests:**
 
 - Docker build [\#6](https://github.com/wirepas/backend-client/pull/6) ([PFigs](https://github.com/PFigs))
 - Added example settings file [\#4](https://github.com/wirepas/backend-client/pull/4) ([PFigs](https://github.com/PFigs))
 - Dev requirements [\#3](https://github.com/wirepas/backend-client/pull/3) ([PFigs](https://github.com/PFigs))
-- Travis file [\#2](https://github.com/wirepas/backend-client/pull/2) ([PFigs](https://github.com/PFigs))
-- Run black & flake8 rules on project [\#1](https://github.com/wirepas/backend-client/pull/1) ([PFigs](https://github.com/PFigs))
 
 
 
-\* *This Change Log was automatically generated by [github_changelog_generator](https://github.com/skywinder/Github-Changelog-Generator)*
+\* *This Changelog was automatically generated by [github_changelog_generator](https://github.com/github-changelog-generator/github-changelog-generator)*
