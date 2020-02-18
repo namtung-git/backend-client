@@ -54,6 +54,8 @@ class GatewayCliCommands(cmd.Cmd):
         self._display_pending_data = False
         self._selection = dict(sink=None, gateway=None, network=None)
 
+        self._device_id_display_string_width = 16
+
     @property
     def gateway(self):
         """
@@ -307,6 +309,37 @@ class GatewayCliCommands(cmd.Cmd):
         if self.sink is None:
             self.do_set_sink("")
 
+    def _filter_nodes_by_gateway_id(
+        self, nodes_list: object, gateway_id: object
+    ) -> list:
+        filtered_nodes_list = list()
+        for node in nodes_list:
+            if node.gateway_id == gateway_id:
+                filtered_nodes_list.append(node)
+        return filtered_nodes_list
+
+    def _filter_sinks_by_gateway_id(
+        self, sink_list: object, gateway_id: object
+    ) -> list:
+        filtered_sink_list = list()
+        for sink in sink_list:
+            if sink.gateway_id == gateway_id:
+                filtered_sink_list.append(sink)
+        return filtered_sink_list
+
+    def _filter_nodes_by_sink_id(
+        self, node_list: list, gateway_id: object
+    ) -> list:
+        filtered_node_list = list()
+        for node in node_list:
+            if node.device_id == gateway_id:
+                filtered_node_list.append(node)
+        return filtered_node_list
+
+    def _sort_items_by_device_id(self, device_list: list):
+        sorted_list = sorted(device_list, key=lambda item: item.device_id)
+        return sorted_list
+
     def do_set_sink(self, line):
         """
         Sets the sink to use with the commands
@@ -318,6 +351,7 @@ class GatewayCliCommands(cmd.Cmd):
             Prompts the user for the sink to use when building
             network requests
         """
+
         if self.gateway is None:
             self.do_set_gateway(line)
 
@@ -330,24 +364,33 @@ class GatewayCliCommands(cmd.Cmd):
         except TypeError:
             sinks = list()
 
-        custom_index = len(sinks)
-        if sinks:
+        current_gateway_id = self.gateway.device_id
+
+        print("Current gateway is {}".format(current_gateway_id))
+
+        filtered_sink_list = self._filter_sinks_by_gateway_id(
+            sinks, current_gateway_id
+        )
+
+        filtered_sink_list = self._sort_items_by_device_id(filtered_sink_list)
+
+        custom_index = len(filtered_sink_list)
+        if filtered_sink_list:
             list(
                 map(
                     lambda sink: print(
-                        f"{sinks.index(sink)} "
-                        f":{sink.network_id}"
-                        f":{sink.gateway_id}"
+                        f"{filtered_sink_list.index(sink)} "
                         f":{sink.device_id}"
+                        f" ( {sink.network_id} )"
                     ),
-                    sinks,
+                    filtered_sink_list,
                 )
             )
         print(f"{custom_index} : custom sink id")
         arg = input("Please enter your sink selection [0]: ") or 0
         try:
             arg = int(arg)
-            self._selection["sink"] = sinks[arg]
+            self._selection["sink"] = filtered_sink_list[arg]
 
         except (ValueError, IndexError):
             arg = input("Please enter your custom sink id: ")
@@ -370,16 +413,18 @@ class GatewayCliCommands(cmd.Cmd):
         except TypeError:
             gateways = list()
 
-        custom_index = len(gateways)
-        if gateways:
+        gateways = self._sort_items_by_device_id(gateways)
+        online_gateways = self._filter_online_gateways(gateways)
+
+        custom_index = len(online_gateways)
+        print("Listing current online gateways:")
+        if online_gateways:
             list(
                 map(
                     lambda gw: print(
-                        f"{gateways.index(gw)} "
-                        f":{gw.device_id}"
-                        f":{gw.state}"
+                        f"{online_gateways.index(gw)} " f":{gw.device_id}"
                     ),
-                    gateways,
+                    online_gateways,
                 )
             )
 
@@ -387,12 +432,15 @@ class GatewayCliCommands(cmd.Cmd):
         arg = input("Please enter your gateway selection [0]: ") or 0
         try:
             arg = int(arg)
-            self._selection["gateway"] = gateways[arg]
+            self._selection["gateway"] = online_gateways[arg]
 
         except (ValueError, IndexError):
             arg = input("Please enter your custom gateway id: ")
             self._selection["gateway"] = Gateway(device_id=arg)
             print(f"Gateway set to: {self._selection['gateway']}")
+
+        # Finally reset sink selection
+        self._selection["sink"] = None
 
     def do_clear_offline_gateways(self, line):
         """
@@ -431,8 +479,56 @@ class GatewayCliCommands(cmd.Cmd):
         Returns:
             Prints the discovered sinks
         """
-        for sink in self.device_manager.sinks:
-            print(sink)
+
+        current_gateway = self._selection["gateway"]
+
+        if current_gateway:
+            # print sinks under gateway
+            filtered_sink_list = self._filter_sinks_by_gateway_id(
+                self.device_manager.sinks, current_gateway.device_id
+            )
+
+            sorted_sink_list = self._sort_items_by_device_id(
+                filtered_sink_list
+            )
+
+            print(
+                "Printing sinks of currently set gateway '{}'".format(
+                    current_gateway.device_id
+                )
+            )
+
+            sinks_str: str
+            sinks_str = ""
+            for sink in sorted_sink_list:
+                sinks_str += "{} ".format(sink.device_id)
+
+            sinks_str = sinks_str[:-1]
+
+            if len(sinks_str) > 0:
+                gw_sinks = "( {} )".format(sinks_str)
+                print(gw_sinks)
+            else:
+                print("No sinks!")
+        else:
+            sorted_sink_list = self._sort_items_by_device_id(
+                self.device_manager.sinks
+            )
+
+            print("Printing sinks from all gateways..")
+
+            print(
+                "sink id".ljust(self._device_id_display_string_width),
+                "( gateway )",
+            )
+
+            for sink in sorted_sink_list:
+                print(
+                    str(sink.device_id).ljust(
+                        self._device_id_display_string_width
+                    ),
+                    "( {} )".format(sink.gateway_id),
+                )
 
     def do_gateways(self, line):
         """
@@ -444,8 +540,41 @@ class GatewayCliCommands(cmd.Cmd):
         Returns:
             Prints the discovered gateways
         """
-        for gateway in self.device_manager.gateways:
-            print(gateway)
+        print("Printing all encountered gateways of MQTT broker")
+
+        print(
+            "gateway id".ljust(self._device_id_display_string_width),
+            "( sink0 .. sinkN )",
+        )
+        sorted_device_list = self._sort_items_by_device_id(
+            self.device_manager.gateways
+        )
+        for gateway in sorted_device_list:
+            sink_list = gateway.sinks
+
+            sinks_str: str
+            sinks_str = ""
+            sorted_sink_list = self._sort_items_by_device_id(sink_list)
+            for sink in sorted_sink_list:
+                sinks_str += "{} ".format(sink.device_id)
+
+            sinks_str = sinks_str[:-1]
+
+            if len(sinks_str) > 0:
+                print(
+                    str(gateway.gateway_id).ljust(
+                        self._device_id_display_string_width
+                    ),
+                    "(",
+                    sinks_str,
+                    ")",
+                )
+            else:
+                print(
+                    str(gateway.gateway_id).ljust(
+                        self._device_id_display_string_width
+                    )
+                )
 
     def do_nodes(self, line):
         """
@@ -457,8 +586,57 @@ class GatewayCliCommands(cmd.Cmd):
         Returns:
             Prints the discovered nodes
         """
-        for nodes in self.device_manager.nodes:
-            print(nodes)
+        current_gateway = self._selection["gateway"]
+
+        if current_gateway:
+            print(
+                "Printing all encountered nodes of gateway {}".format(
+                    current_gateway.device_id
+                )
+            )
+            filtered_nodes_list: list = list()
+            filtered_nodes_list = self._filter_nodes_by_gateway_id(
+                self.device_manager.nodes, current_gateway.device_id
+            )
+
+            nodes_str: str
+            nodes_str = ""
+            sorted_filtered_nodes = sorted(
+                list(filtered_nodes_list), key=lambda item: int(item.device_id)
+            )
+            for node in sorted_filtered_nodes:
+                nodes_str += "{} ".format(node.device_id)
+
+            nodes_str = nodes_str[:-1]
+
+            if len(nodes_str) > 0:
+                nodes_str = "( {} )".format(nodes_str)
+                print(nodes_str)
+
+            print("Total {} nodes".format(len(list(filtered_nodes_list))))
+
+        else:
+            print("Printing all encountered nodes of MQTT broker")
+
+            nodes_str: str
+            nodes_str = ""
+
+            sorted_filtered_nodes = sorted(
+                list(self.device_manager.nodes),
+                key=lambda item: int(item.device_id),
+            )
+
+            for node in sorted_filtered_nodes:
+                nodes_str += "{} ".format(node.device_id)
+
+            nodes_str = nodes_str[:-1]
+
+            if len(nodes_str) > 0:
+                nodes_str = "( {} )".format(nodes_str)
+                print(nodes_str)
+            print(
+                "Total {} nodes".format(len(list(self.device_manager.nodes)))
+            )
 
     def do_networks(self, line):
         """
@@ -471,8 +649,15 @@ class GatewayCliCommands(cmd.Cmd):
             Prints the discovered networks
         """
 
-        for network in self.device_manager.networks:
-            print(network)
+        print("Printing all encountered networks of MQTT")
+
+        sorted_networks = sorted(
+            list(self.device_manager.networks),
+            key=lambda item: int(item.network_id),
+        )
+
+        for network in sorted_networks:
+            print(network.network_id)
 
     def do_gateway_configuration(self, line):
         """
@@ -707,28 +892,28 @@ class GatewayCliCommands(cmd.Cmd):
 
             if not self.is_valid(args):
                 self.do_help("send_data", args)
+            else:
+                gateway_id = self.gateway.device_id
+                sink_id = self.sink.device_id
 
-            gateway_id = self.gateway.device_id
-            sink_id = self.sink.device_id
+                message = self.mqtt_topics.request_message(
+                    "send_data",
+                    **dict(
+                        sink_id=sink_id,
+                        dest_add=args["destination_address"],
+                        src_ep=args["source_endpoint"],
+                        dst_ep=args["destination_endpoint"],
+                        payload=args["payload"],
+                        qos=args["qos"],
+                        is_unack_csma_ca=args["is_unack_csma_ca"],
+                        hop_limit=args["hop_limit"],
+                        initial_delay_ms=args["initial_delay_ms"],
+                        gw_id=gateway_id,
+                    ),
+                )
 
-            message = self.mqtt_topics.request_message(
-                "send_data",
-                **dict(
-                    sink_id=sink_id,
-                    dest_add=args["destination_address"],
-                    src_ep=args["source_endpoint"],
-                    dst_ep=args["destination_endpoint"],
-                    payload=args["payload"],
-                    qos=args["qos"],
-                    is_unack_csma_ca=args["is_unack_csma_ca"],
-                    hop_limit=args["hop_limit"],
-                    initial_delay_ms=args["initial_delay_ms"],
-                    gw_id=gateway_id,
-                ),
-            )
-
-            self.request_queue.put(message)
-            self.wait_for_answer(gateway_id)
+                self.request_queue.put(message)
+                self.wait_for_answer(gateway_id)
         else:
             self._set_target()
             self.do_send_data(line)
@@ -784,3 +969,11 @@ class GatewayCliCommands(cmd.Cmd):
 
         else:
             self._set_target()
+
+    def _filter_online_gateways(self, gateways):
+        online_gw_list: list = list()
+
+        for gw in gateways:
+            if str(gw.state) == "GatewayState.ONLINE":
+                online_gw_list.append(gw)
+        return online_gw_list
