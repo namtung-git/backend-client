@@ -1,5 +1,14 @@
 # Changelog
 
+## [v1.3.3-rc.1](https://github.com/wirepas/backend-client/tree/v1.3.3-rc.1) (2020-02-18)
+
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.2...v1.3.3-rc.1)
+
+**Merged pull requests:**
+
+- Fixed broken link [\#260](https://github.com/wirepas/backend-client/pull/260) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- Merge \#250 [\#259](https://github.com/wirepas/backend-client/pull/259) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+
 ## [v1.3.2](https://github.com/wirepas/backend-client/tree/v1.3.2) (2020-02-14)
 
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.1...v1.3.2)
