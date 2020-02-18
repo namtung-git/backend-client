@@ -586,7 +586,7 @@ The framework or package is organized in several submodules:
 4.  [messages][bcli_messages]
 5.  [test][bcli_test]
 6.  [tools][bcli_tools]
-7.  [cli][bcli_cli]
+7.  [cli](https://github.com/wirepas/backend-client/tree/master/wirepas_backend_client/cli)
 
 #### API submodule
 
