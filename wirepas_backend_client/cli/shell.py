@@ -16,6 +16,7 @@ import readline
 import select
 import subprocess
 import sys
+import time
 import queue
 
 from .gateway import GatewayCliCommands
@@ -267,17 +268,67 @@ class GatewayShell(GatewayCliCommands):
         """ Prettified reply """
         super().on_print(reply, reply_greeting=None, pretty=None)
 
-    def wait_for_answer(self, device, timeout=10, block=True):
+    def wait_for_answer(self, device, request_message, timeout=30, block=True):
         """ Exhaust a given queue until it is empty """
+
+        wait_start_time = time.perf_counter()
+
+        if device is None:
+            raise ValueError
+        if request_message is None:
+            raise ValueError
+
         message = None
         if timeout:
             try:
-                message = self.response_queue.get(
-                    block=block, timeout=self.timeout
+                response_good: bool
+                response_good = False
+
+                print(
+                    "Waiting response to request. Timeout"
+                    " is {:.0f} seconds ..".format(timeout)
                 )
-                self._print(message)
+
+                while not response_good:
+                    message = self.response_queue.get(
+                        block=block, timeout=self.timeout
+                    )
+                    if str(message.gw_id) == str(device):
+                        if int(message.req_id) == int(
+                            request_message["data"].req_id
+                        ):
+                            print(
+                                "Request send ok. Operation "
+                                "took {:.1f} sec.".format(
+                                    time.perf_counter() - wait_start_time
+                                )
+                            )
+                            response_good = True
+                    else:
+                        # put message back to queue back
+                        if self.request_queue.empty():
+                            # wait a bit to avoid busy loop
+                            defaultSleepTime = 0.1
+                            time.sleep(defaultSleepTime)
+
+                        self.response_queue.put(message)
+
+                    if time.perf_counter() - wait_start_time > timeout:
+                        print(
+                            "Error got no reply for {} in time. "
+                            "Time waited {:.0f} secs.".format(
+                                device, time.perf_counter() - wait_start_time
+                            )
+                        )
+                        break
+
             except queue.Empty:
-                print("got no reply for {}".format(device))
+                print(
+                    "Request error got no reply for {}. "
+                    "Time waited {:.0f} secs.".format(
+                        device, time.perf_counter() - wait_start_time
+                    )
+                )
         return message
 
     def notify(self):

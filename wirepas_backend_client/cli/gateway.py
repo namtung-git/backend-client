@@ -13,8 +13,10 @@
 
 import cmd
 import json
+
 from wirepas_messaging.gateway.api import GatewayState
 
+from ..mesh.interfaces import MQTT_QOS_options
 from ..mesh.sink import Sink
 from ..mesh.gateway import Gateway
 
@@ -740,7 +742,7 @@ class GatewayCliCommands(cmd.Cmd):
             )
 
             self.request_queue.put(message)
-            self.wait_for_answer(gateway_id)
+            self.wait_for_answer(gateway_id, message)
 
         else:
             self._set_target()
@@ -766,7 +768,7 @@ class GatewayCliCommands(cmd.Cmd):
             )
 
             self.request_queue.put(message)
-            self.wait_for_answer(gateway_id)
+            self.wait_for_answer(gateway_id, message)
 
         else:
             self._set_target()
@@ -791,10 +793,10 @@ class GatewayCliCommands(cmd.Cmd):
                 **dict(sink_id=sink_id, gw_id=gateway_id),
             )
 
-            message["qos"] = 2
+            message["qos"] = MQTT_QOS_options.exactly_once.value
 
             self.request_queue.put(message)
-            self.wait_for_answer(gateway_id)
+            self.wait_for_answer(gateway_id, message)
 
         else:
             self._set_target()
@@ -843,10 +845,10 @@ class GatewayCliCommands(cmd.Cmd):
                     gw_id=gateway_id,
                 ),
             )
-            message["qos"] = 2
+            message["qos"] = MQTT_QOS_options.exactly_once.value
 
             self.request_queue.put(message)
-            self.wait_for_answer(gateway_id)
+            self.wait_for_answer(gateway_id, message)
 
         else:
             self._set_target()
@@ -865,7 +867,7 @@ class GatewayCliCommands(cmd.Cmd):
             - destination_address=101   (default=None)
             - payload=0011   (default=None)
             - timeout=0 # skip wait for a response (default=0)
-            - qos=1 # normal priority (default=1)
+            - qos=MQTT_QOS_options.exactly_once
             - is_unack_csma_ca=0  # if true only sent to CB-MAC nodes (default=0)
             - hop_limit=0  # maximum number of hops this message can do to reach its destination (<16) (default=0 - disabled)
             - initial_delay_ms=0 # initial delay to add to travel time (default: 0)
@@ -880,7 +882,7 @@ class GatewayCliCommands(cmd.Cmd):
             destination_address=dict(type=int, default=None),
             payload=dict(type=self.strtobytes, default=None),
             timeout=dict(type=int, default=0),
-            qos=dict(type=int, default=1),
+            qos=dict(type=int, default=MQTT_QOS_options.exactly_once.value),
             is_unack_csma_ca=dict(type=bool, default=0),
             hop_limit=dict(type=int, default=0),
             initial_delay_ms=dict(type=int, default=0),
@@ -912,8 +914,9 @@ class GatewayCliCommands(cmd.Cmd):
                     ),
                 )
 
+                message["qos"] = MQTT_QOS_options.exactly_once.value
                 self.request_queue.put(message)
-                self.wait_for_answer(gateway_id)
+                self.wait_for_answer(gateway_id, message)
         else:
             self._set_target()
             self.do_send_data(line)
@@ -964,7 +967,7 @@ class GatewayCliCommands(cmd.Cmd):
             )
             self.request_queue.put(message)
             self.wait_for_answer(
-                f"{gateway_id}/{sink_id}", timeout=self.timeout
+                f"{gateway_id}/{sink_id}", message, timeout=self.timeout
             )
 
         else:
