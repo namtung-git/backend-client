@@ -16,7 +16,17 @@ import queue
 from .connectors import MQTT
 from .decorators import decode_topic_message
 from ..stream import StreamObserver
+
 from ...tools import Settings
+
+from enum import Enum
+
+
+# multiple definitions exists
+class MQTT_QOS_options(Enum):
+    at_most_once = 0
+    at_least_once = 1
+    exactly_once = 2
 
 
 class MQTTObserver(StreamObserver):
@@ -131,7 +141,7 @@ class MQTTObserver(StreamObserver):
         except queue.Empty:
             return False
 
-        qos = 1
+        qos = MQTT_QOS_options.exactly_once.value
         retain = False
         wait_for_publish = False
         data = None

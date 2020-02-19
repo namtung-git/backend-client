@@ -42,6 +42,12 @@ from .stream import StreamObserver
 from .mqtt import Topics
 from ..tools import Settings
 
+# multiple definitions exists
+class MQTT_QOS_options(Enum):
+    at_most_once = 0
+    at_least_once = 1
+    exactly_once = 2
+
 
 class App_config_keys(Enum):
     app_config_data_key = "app_config_data"
@@ -696,7 +702,12 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             destination_node_address = int(params["destination"])
             src_ep = int(params["source_ep"])
             dst_ep = int(params["dest_ep"])
-            qos = int(params["qos"])
+
+            # QOS passed by HTTP request (int(params["qos"])) is not used
+            # from now on. MQTT QOS is fixed to
+            # MQTT_QOS_options.exactly_once.value
+            qos = MQTT_QOS_options.exactly_once.value
+
             payload = binascii.unhexlify(params["payload"])
             command_parse_was_ok = True
         except KeyError as error:
