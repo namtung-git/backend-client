@@ -95,24 +95,15 @@ As a recommendation, it is good practice to install and run the
 application on a virtual python environment. Such approach avoids
 possible issues with conflicting package versions.
 
-We recommend you use either [virtualenv][virtualenv] or [pipenv][pipenv]:
+We recommend you use [pipenv][pipenv]:
 
 ```shell
-    pip3 install virtualenv
     pip3 install pipenv
 ```
 
 If you choose to install and run the Backend Client inside a virtual
 environment, please activate the environment before moving with the next
 steps.
-
-A virtual environment with virtualenv is created and activated
-with:
-
-```shell
-    virtualenv wm_bcli_env
-    source wm_bcli_env/bin/activate
-```
 
 For pipenv, a virtual environment is created and activated by:
 
