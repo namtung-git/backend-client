@@ -1,5 +1,14 @@
 # Changelog
 
+## [v1.3.3-rc.2](https://github.com/wirepas/backend-client/tree/v1.3.3-rc.2) (2020-02-20)
+
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.3-rc.1...v1.3.3-rc.2)
+
+**Merged pull requests:**
+
+- Change http command request qos=2 and change mqtt default qos =2 [\#265](https://github.com/wirepas/backend-client/pull/265) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- Fix wait message function [\#263](https://github.com/wirepas/backend-client/pull/263) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+
 ## [v1.3.3-rc.1](https://github.com/wirepas/backend-client/tree/v1.3.3-rc.1) (2020-02-18)
 
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.2...v1.3.3-rc.1)
@@ -106,7 +115,6 @@
 
 - Update version [\#207](https://github.com/wirepas/backend-client/pull/207) ([PFigs](https://github.com/PFigs))
 - Release helper [\#206](https://github.com/wirepas/backend-client/pull/206) ([PFigs](https://github.com/PFigs))
-- cli: fix data tracking exception [\#203](https://github.com/wirepas/backend-client/pull/203) ([PFigs](https://github.com/PFigs))
 - Update travis [\#202](https://github.com/wirepas/backend-client/pull/202) ([PFigs](https://github.com/PFigs))
 - Diagnostics dashboard [\#201](https://github.com/wirepas/backend-client/pull/201) ([PFigs](https://github.com/PFigs))
 - Advertiser message: interface compliance [\#200](https://github.com/wirepas/backend-client/pull/200) ([PFigs](https://github.com/PFigs))
@@ -118,6 +126,7 @@
 
 **Merged pull requests:**
 
+- cli: fix data tracking exception [\#203](https://github.com/wirepas/backend-client/pull/203) ([PFigs](https://github.com/PFigs))
 - Update version to v1.2.2.rc3 [\#196](https://github.com/wirepas/backend-client/pull/196) ([PFigs](https://github.com/PFigs))
 - Diagnostics cbor ids [\#195](https://github.com/wirepas/backend-client/pull/195) ([PFigs](https://github.com/PFigs))
 
