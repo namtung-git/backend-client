@@ -1,5 +1,14 @@
 # Changelog
 
+## [v.1.3.3](https://github.com/wirepas/backend-client/tree/v.1.3.3) (2020-02-28)
+
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.3-rc.2...v.1.3.3)
+
+**Closed issues:**
+
+- \[BUG\] Change HTTP.py MQTT qos = 2  [\#264](https://github.com/wirepas/backend-client/issues/264)
+- \[BUG\] Backend client MQTT gateway cli send data response handling is incorrect [\#262](https://github.com/wirepas/backend-client/issues/262)
+
 ## [v1.3.3-rc.2](https://github.com/wirepas/backend-client/tree/v1.3.3-rc.2) (2020-02-20)
 
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.3-rc.1...v1.3.3-rc.2)
@@ -115,6 +124,7 @@
 
 - Update version [\#207](https://github.com/wirepas/backend-client/pull/207) ([PFigs](https://github.com/PFigs))
 - Release helper [\#206](https://github.com/wirepas/backend-client/pull/206) ([PFigs](https://github.com/PFigs))
+- cli: fix data tracking exception [\#203](https://github.com/wirepas/backend-client/pull/203) ([PFigs](https://github.com/PFigs))
 - Update travis [\#202](https://github.com/wirepas/backend-client/pull/202) ([PFigs](https://github.com/PFigs))
 - Diagnostics dashboard [\#201](https://github.com/wirepas/backend-client/pull/201) ([PFigs](https://github.com/PFigs))
 - Advertiser message: interface compliance [\#200](https://github.com/wirepas/backend-client/pull/200) ([PFigs](https://github.com/PFigs))
@@ -126,7 +136,6 @@
 
 **Merged pull requests:**
 
-- cli: fix data tracking exception [\#203](https://github.com/wirepas/backend-client/pull/203) ([PFigs](https://github.com/PFigs))
 - Update version to v1.2.2.rc3 [\#196](https://github.com/wirepas/backend-client/pull/196) ([PFigs](https://github.com/PFigs))
 - Diagnostics cbor ids [\#195](https://github.com/wirepas/backend-client/pull/195) ([PFigs](https://github.com/PFigs))
 
