@@ -60,7 +60,7 @@ class PositioningMessage(GenericMessage):
         self.apdu = None
         self.measurements = list()
         super(PositioningMessage, self).__init__(*args, **kwargs)
-        self.type = ApplicationTypes.TrafficDiagnosticsMessage
+        self.type = ApplicationTypes.PositioningMessage
         self.decode()
 
     def decode(self) -> None:
