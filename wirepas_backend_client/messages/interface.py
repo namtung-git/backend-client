@@ -35,7 +35,7 @@ class MessageManager(object):
 
     _endpoint (dict): dictionary with source endpoint as key. Each key
                           contains a dictionary as a value. The value's
-                          dictionary key is the destination endpoint.
+                          dictionary key is the destination endpoint to test.
 
 
     """
