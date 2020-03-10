@@ -62,7 +62,7 @@ class ProvisioningStateMachine(object):
         sm_id,
         data,
         retry=1,
-        timeout=60,
+        timeout=180,
         exit_signal=None,
         logger=None,
     ):
