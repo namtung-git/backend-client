@@ -81,24 +81,30 @@ class AdvertiserMessage(GenericMessage):
         Header (2 bytes): Type | Reserved
 
         Measurements (N bytes):
-            Addr: 3 bytes
+            Addr: 3 bytes or 4 bytes
             Value: 1 byte (eg, RSS or OTAP)
         """
 
         super().decode()
 
         s_header = struct.Struct("<B B")
-        s_advertisement = struct.Struct("<B B B B")
 
         header = s_header.unpack(self.data_payload[0:2])
 
-        self.apdu["adv_type"] = header[0]
+        self.apdu["adv_type"] = header[0] & 0x7F
         self.apdu["adv_reserved_field"] = header[1]
+        address_4byte = header[0] >> 7
+        if address_4byte == 1:
+            s_advertisement = struct.Struct("<B B B B B")
+            address_len = 4
+        else:
+            s_advertisement = struct.Struct("<B B B B")
+            address_len = 3
 
         # switch on type
         body = self.data_payload[2:]
         for chunk in tools.chunker(body, s_advertisement.size):
-            if len(chunk) < 4:
+            if len(chunk) < (address_len + 1):
                 continue
 
             values = s_advertisement.unpack(chunk)
@@ -106,6 +112,8 @@ class AdvertiserMessage(GenericMessage):
             address = values[0]
             address = address | (values[1] << 8)
             address = address | (values[2] << 16)
+            if address_len == 4:
+                address = address | (values[3] << 24)
 
             rss = None
             otap = None
