@@ -18,6 +18,7 @@ from ...api.mqtt import (
 )
 from ...tools import Signal
 
+
 class NetworkDiscovery(MQTTObserver):
     """
     NetworkDiscovery

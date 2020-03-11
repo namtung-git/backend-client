@@ -42,8 +42,6 @@ from wirepas_backend_client.api.stream import StreamObserver
 from wirepas_backend_client.tools import Settings
 
 
-
-
 class App_config_keys(Enum):
     app_config_data_key = "app_config_data"
     app_config_diag_key = "app_config_diag"
