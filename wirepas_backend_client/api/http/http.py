@@ -41,11 +41,7 @@ from wirepas_backend_client.api.mqtt import Topics
 from wirepas_backend_client.api.stream import StreamObserver
 from wirepas_backend_client.tools import Settings
 
-# multiple definitions exists
-class MQTT_QOS_options(Enum):
-    at_most_once = 0
-    at_least_once = 1
-    exactly_once = 2
+
 
 
 class App_config_keys(Enum):

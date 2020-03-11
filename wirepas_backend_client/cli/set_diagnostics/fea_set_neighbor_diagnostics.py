@@ -18,13 +18,6 @@ from datetime import datetime
 import time
 
 
-# multiple definitions exists
-class MQTT_QOS_options(Enum):
-    at_most_once = 0
-    at_least_once = 1
-    exactly_once = 2
-
-
 class DiagnosticActivationStatus:
     def __init__(self, requestId, gatewayId, sinkId, nodeDestinationAddress):
         self.gatewayId = gatewayId

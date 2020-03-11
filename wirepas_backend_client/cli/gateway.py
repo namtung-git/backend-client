@@ -21,7 +21,7 @@ from wirepas_backend_client.cli.set_diagnostics.fea_set_neighbor_diagnostics imp
     SetDiagnostics,
     SetDiagnosticsIntervals,
 )
-from ..mesh.interfaces import MQTT_QOS_options
+from ..api.mqtt.mqtt_options import MQTT_QOS_options
 from ..mesh.sink import Sink
 from ..mesh.gateway import Gateway
 

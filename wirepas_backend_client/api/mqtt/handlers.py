@@ -15,18 +15,12 @@ import queue
 
 from .connectors import MQTT
 from .decorators import decode_topic_message
+from .mqtt_options import MQTT_QOS_options
 from ..stream import StreamObserver
 
 from ...tools import Settings
 
 from enum import Enum
-
-
-# multiple definitions exists
-class MQTT_QOS_options(Enum):
-    at_most_once = 0
-    at_least_once = 1
-    exactly_once = 2
 
 
 class MQTTObserver(StreamObserver):
@@ -40,16 +34,16 @@ class MQTTObserver(StreamObserver):
     """
 
     def __init__(
-        self,
-        mqtt_settings: Settings,
-        start_signal: multiprocessing.Event,
-        exit_signal: multiprocessing.Event,
-        tx_queue: multiprocessing.Queue,
-        rx_queue: multiprocessing.Queue,
-        allowed_endpoints: set = None,
-        message_subscribe_handlers: dict = None,
-        publish_cb: callable = None,
-        logger=None,
+            self,
+            mqtt_settings: Settings,
+            start_signal: multiprocessing.Event,
+            exit_signal: multiprocessing.Event,
+            tx_queue: multiprocessing.Queue,
+            rx_queue: multiprocessing.Queue,
+            allowed_endpoints: set = None,
+            message_subscribe_handlers: dict = None,
+            publish_cb: callable = None,
+            logger=None,
     ) -> "MQTTObserver":
         """ MQTT Observer constructor """
         super(MQTTObserver, self).__init__(
@@ -116,8 +110,8 @@ class MQTTObserver(StreamObserver):
             """ Retrieves a MQTT message and sends it to the tx_queue """
 
             if not self.allowed_endpoints or (
-                message.source_endpoint in self.allowed_endpoints
-                and message.destination_endpoint in self.allowed_endpoints
+                    message.source_endpoint in self.allowed_endpoints
+                    and message.destination_endpoint in self.allowed_endpoints
             ):
 
                 if self.start_signal.is_set():

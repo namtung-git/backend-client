@@ -18,16 +18,6 @@ from ...api.mqtt import (
 )
 from ...tools import Signal
 
-from enum import Enum
-
-
-# multiple definitions exists
-class MQTT_QOS_options(Enum):
-    at_most_once = 0
-    at_least_once = 1
-    exactly_once = 2
-
-
 class NetworkDiscovery(MQTTObserver):
     """
     NetworkDiscovery
