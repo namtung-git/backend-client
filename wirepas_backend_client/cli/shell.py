@@ -206,17 +206,35 @@ class GatewayShell(GatewayCliCommands):
             self.on_response_queue_message(message)
             yield message
 
+    def get_message_from_response_queue(self):
+        message = None
+        if self.response_queue.empty() is not True:
+            message = self.response_queue.get()
+        return message
+
     def consume_data_queue(self):
         """ Exhausts the data queue """
         for message in self.consume_queue(self.data_queue):
             self.on_data_queue_message(message)
             yield message
 
+    def get_message_from_data_queue(self):
+        message = None
+        if self.data_queue.empty() is not True:
+            message = self.data_queue.get()
+        return message
+
     def consume_event_queue(self):
         """ Exhausts the event queue """
         for message in self.consume_queue(self.event_queue):
             self.on_event_queue_message(message)
             yield message
+
+    def get_message_from_event_queue(self):
+        message = None
+        if self.event_queue.empty() is not True:
+            message = self.event_queue.get()
+        return message
 
     def _trim_queues(self):
         """ Trim queues ensures that queue size does not run too long"""
@@ -284,11 +302,6 @@ class GatewayShell(GatewayCliCommands):
                 response_good: bool
                 response_good = False
 
-                print(
-                    "Waiting response to request. Timeout"
-                    " is {:.0f} seconds ..".format(timeout)
-                )
-
                 while not response_good:
                     message = self.response_queue.get(
                         block=block, timeout=self.timeout
@@ -297,12 +310,6 @@ class GatewayShell(GatewayCliCommands):
                         if int(message.req_id) == int(
                             request_message["data"].req_id
                         ):
-                            print(
-                                "Request send ok. Operation "
-                                "took {:.1f} sec.".format(
-                                    time.perf_counter() - wait_start_time
-                                )
-                            )
                             response_good = True
                     else:
                         # put message back to queue back

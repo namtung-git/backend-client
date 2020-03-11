@@ -15,10 +15,18 @@ import cmd
 import json
 
 from wirepas_messaging.gateway.api import GatewayState
+from wirepas_messaging.gateway.api import GatewayResultCode
 
+from wirepas_backend_client.cli.set_diagnostics.fea_set_neighbor_diagnostics import (
+    SetDiagnostics,
+    SetDiagnosticsIntervals,
+)
 from ..mesh.interfaces import MQTT_QOS_options
 from ..mesh.sink import Sink
 from ..mesh.gateway import Gateway
+
+import threading
+from time import sleep
 
 
 class GatewayCliCommands(cmd.Cmd):
@@ -57,6 +65,10 @@ class GatewayCliCommands(cmd.Cmd):
         self._selection = dict(sink=None, gateway=None, network=None)
 
         self._device_id_display_string_width = 16
+
+        self._dataQueueMessageHandler = None
+        self._eventQueueMessageHandler = None
+        self._responseQueueMessageHandler = None
 
     @property
     def gateway(self):
@@ -126,18 +138,44 @@ class GatewayCliCommands(cmd.Cmd):
         else:
             print(reply)
 
+    def set_message_handlers(
+        self,
+        dataQueueMessageHandler,
+        eventQueueMessageHandler,
+        responseQueueMessageHandler,
+    ):
+        """ Set message handlers that process incoming messages """
+        self._dataQueueMessageHandler = dataQueueMessageHandler
+        self._eventQueueMessageHandler = eventQueueMessageHandler
+        self._responseQueueMessageHandler = responseQueueMessageHandler
+
+    def _clear_message_handlers(self):
+        """ Clear message handlers """
+        self._dataQueueMessageHandler = None
+        self._eventQueueMessageHandler = None
+        self._responseQueueMessageHandler = None
+
     def on_response_queue_message(self, message):
         """ Method called when retrieving a message from the response queue """
+        if self._responseQueueMessageHandler is not None:
+            self._responseQueueMessageHandler(message)
+
         if self._display_pending_response:
             self.on_print(message, "Pending response message <<")
 
     def on_data_queue_message(self, message):
         """ Method called when retrieving a message from the data queue """
+        if self._dataQueueMessageHandler is not None:
+            self._dataQueueMessageHandler(message)
+
         if self._display_pending_data:
             self.on_print(message, "Pending data message <<")
 
     def on_event_queue_message(self, message):
         """ Method called when retrieving a message from the event queue """
+        if self._eventQueueMessageHandler is not None:
+            self._eventQueueMessageHandler(message)
+
         if self._display_pending_event:
             self.on_print(message, "Pending event message <<")
 
@@ -277,7 +315,7 @@ class GatewayCliCommands(cmd.Cmd):
         """
         self.do_list(line)
 
-    def do_list(self, line):
+    def helpdo_list(self, line):
         """
         Lists all known networks and devices
 
@@ -341,6 +379,39 @@ class GatewayCliCommands(cmd.Cmd):
     def _sort_items_by_device_id(self, device_list: list):
         sorted_list = sorted(device_list, key=lambda item: item.device_id)
         return sorted_list
+
+    def _get_gateway_configuration(self, gateway_device_id):
+        ret = None
+        message = self.mqtt_topics.request_message(
+            "get_configs", **dict(gw_id=gateway_device_id)
+        )
+        self.request_queue.put(message)
+        response = self.wait_for_answer(gateway_device_id, message)
+        if response.res == GatewayResultCode.GW_RES_OK:
+            ret = response.configs
+        else:
+            pass
+        return ret
+
+    def _filter_gateway_configuration(
+        self, configs: dict, sink_id: str
+    ) -> dict:
+        # Parameter configs should be return value of _get_gateway_configuration
+        ret = None
+        for config in configs:
+            if config["sink_id"] == sink_id:
+                ret = config
+                break
+        return ret
+
+    def _lookup_node_address(self, gateway_device_id, sink_id):
+        ret = None
+        gwConfig = self._get_gateway_configuration(gateway_device_id)
+        if gwConfig is not None:
+            sinkConfig = self._filter_gateway_configuration(gwConfig, sink_id)
+            if sinkConfig is not None:
+                ret = sinkConfig["node_address"]
+        return ret
 
     def do_set_sink(self, line):
         """
@@ -504,6 +575,7 @@ class GatewayCliCommands(cmd.Cmd):
             sinks_str = ""
             for sink in sorted_sink_list:
                 sinks_str += "{} ".format(sink.device_id)
+                print(sink)
 
             sinks_str = sinks_str[:-1]
 
@@ -663,7 +735,8 @@ class GatewayCliCommands(cmd.Cmd):
 
     def do_gateway_configuration(self, line):
         """
-        Acquires gateway configuration from the server.
+        Acquires gateway configuration from the server and updates
+        self.device_manager
 
         If no gateway is set, it will acquire configuration from all
         online gateways.
@@ -678,6 +751,8 @@ class GatewayCliCommands(cmd.Cmd):
             Current configuration for each gateway
         """
 
+        ret = list()
+
         for gateway in self.device_manager.gateways:
 
             if gateway.state.value == GatewayState.OFFLINE.value:
@@ -690,11 +765,31 @@ class GatewayCliCommands(cmd.Cmd):
             gw_id = gateway.device_id
 
             print("requesting configuration for {}".format(gw_id))
-            message = self.mqtt_topics.request_message(
-                "get_configs", **dict(gw_id=gw_id)
-            )
-            self.request_queue.put(message)
-            self.wait_for_answer(gateway.device_id)
+            configurations = self._get_gateway_configuration(gateway.device_id)
+
+            for config in configurations:
+                if config is not None:
+                    ret.append(config)
+
+            # Todo check what return type is needed and return needed item.
+
+    def _refresh_device_manager(self):
+        # refresh device manager (gw, sinks) by requesting configurations from
+        # gateways
+
+        for gateway in self.device_manager.gateways:
+
+            if gateway.state.value == GatewayState.OFFLINE.value:
+                continue
+
+            if self.gateway is not None:
+                if self.gateway.device_id != gateway.device_id:
+                    continue
+
+            gw_id = gateway.device_id
+
+            config = self._get_gateway_configuration(gateway.device_id)
+            self.device_manager.update(gw_id, config)
 
     def do_set_app_config(self, line):
         """
@@ -854,6 +949,20 @@ class GatewayCliCommands(cmd.Cmd):
             self._set_target()
             self.scratchpad_upload(line=line)
 
+    def _build_default_mqtt_request_options(self):
+        options = dict(
+            source_endpoint=dict(type=int, default=None),
+            destination_endpoint=dict(type=int, default=None),
+            destination_address=dict(type=int, default=None),
+            payload=dict(type=self.strtobytes, default=None),
+            timeout=dict(type=int, default=0),
+            qos=dict(type=int, default=MQTT_QOS_options.exactly_once.value),
+            is_unack_csma_ca=dict(type=bool, default=0),
+            hop_limit=dict(type=int, default=0),
+            initial_delay_ms=dict(type=int, default=0),
+        )
+        return options
+
     def do_send_data(self, line):
         """
         Sends a custom payload to the target address.
@@ -876,17 +985,7 @@ class GatewayCliCommands(cmd.Cmd):
             Answer or timeout
         """
 
-        options = dict(
-            source_endpoint=dict(type=int, default=None),
-            destination_endpoint=dict(type=int, default=None),
-            destination_address=dict(type=int, default=None),
-            payload=dict(type=self.strtobytes, default=None),
-            timeout=dict(type=int, default=0),
-            qos=dict(type=int, default=MQTT_QOS_options.exactly_once.value),
-            is_unack_csma_ca=dict(type=bool, default=0),
-            hop_limit=dict(type=int, default=0),
-            initial_delay_ms=dict(type=int, default=0),
-        )
+        options = self._build_default_mqtt_request_options()
 
         args = self.retrieve_args(line, options)
 
@@ -914,12 +1013,54 @@ class GatewayCliCommands(cmd.Cmd):
                     ),
                 )
 
+                print(message["data"])
+                return
+
                 message["qos"] = MQTT_QOS_options.exactly_once.value
                 self.request_queue.put(message)
                 self.wait_for_answer(gateway_id, message)
         else:
             self._set_target()
             self.do_send_data(line)
+
+    def send_message_to_mqtt_async(
+        self,
+        gatewayId,
+        sinkId,
+        nodeDestinationAddress,
+        destinationEndPoint,
+        sourceEndPoint,
+        payload,
+    ):
+
+        # options = self._build_default_mqtt_request_options()
+
+        message = self.mqtt_topics.request_message(
+            "send_data",
+            **dict(
+                sink_id=sinkId,
+                dest_add=nodeDestinationAddress,
+                src_ep=sourceEndPoint,
+                dst_ep=destinationEndPoint,
+                payload=payload,
+                qos=MQTT_QOS_options.exactly_once.value,
+                is_unack_csma_ca=0,
+                hop_limit=0,
+                initial_delay_ms=0,
+                gw_id=gatewayId,
+            ),
+        )
+
+        message["qos"] = MQTT_QOS_options.exactly_once.value
+        requestIdOfMessageToBeSent = message["data"].req_id
+
+        dummyMode: bool = False  # If True, no messages is actually sent
+
+        if dummyMode is True:
+            print("Skipping sending ")
+        else:
+            self.request_queue.put(message)
+        return requestIdOfMessageToBeSent
 
     def do_set_config(self, line):
         """
@@ -973,6 +1114,39 @@ class GatewayCliCommands(cmd.Cmd):
         else:
             self._set_target()
 
+    def _getMenuOption(self, menuText: str, options: list):
+
+        minValue = 0
+        maxValue = len(options) - 1
+
+        print(" ")
+        print(menuText)
+
+        menuId = 0
+        for option in options:
+            print("{}: {}".format(menuId, option))
+            menuId += 1
+
+        # print(menuText)
+        inputStr = ""
+        while (
+            self._validateNumericInput(inputStr, minValue, maxValue) is False
+        ):
+            inputStr = input("[{}-{}]: ".format(minValue, maxValue)) or 0
+        ret = options[int(inputStr)]
+        return ret
+
+    def _validateNumericInput(
+        self, inputStr: str, minValue: int, maxValue: int
+    ):
+        ret: bool = False
+        if inputStr.isnumeric():
+            inputValue = int(inputStr)
+            if minValue <= inputValue <= maxValue:
+                ret = True
+
+        return ret
+
     def _filter_online_gateways(self, gateways):
         online_gw_list: list = list()
 
@@ -980,3 +1154,188 @@ class GatewayCliCommands(cmd.Cmd):
             if str(gw.state) == "GatewayState.ONLINE":
                 online_gw_list.append(gw)
         return online_gw_list
+
+    def do_set_ndiag(self, line):
+        """
+        Enables or disables neighbor diagnostics on network level
+
+        Usage:
+            set_ndiag
+
+            Application will ask parameters after invocation of command.
+
+        Arguments asked from user:
+            - Network ID
+            - Diagnostic interval or off
+            - Configuration for performing operation or cancel
+
+        Returns:
+            Prints progress on screen.
+            There is a timeout.
+        """
+
+        print("Set neighbor diagnostics for network")
+        print("")
+
+        print("Refresh network list..")
+        self._refresh_device_manager()
+        sorted_networks = sorted(
+            list(self.device_manager.networks),
+            key=lambda item: int(item.network_id),
+        )
+
+        networkList: list
+        networkList = list()
+        for nw in sorted_networks:
+            networkList.append(nw.network_id)
+
+        if len(networkList) > 0:
+            selectionID: int
+            argNetworkId = self._getMenuOption(
+                "Please enter network to be operated", networkList
+            )
+
+            argDiagnosticIntervalSec: SetDiagnosticsIntervals
+            offOption = "off"
+            diagnosticIntervalSelection = self._getMenuOption(
+                "Select diagnostic interval(s) or off option",
+                [
+                    offOption,
+                    SetDiagnosticsIntervals.i30.value,
+                    SetDiagnosticsIntervals.i60.value,
+                    SetDiagnosticsIntervals.i120.value,
+                    SetDiagnosticsIntervals.i300.value,
+                    SetDiagnosticsIntervals.i1200.value,
+                ],
+            )
+
+            if diagnosticIntervalSelection == offOption:
+                argDiagnosticIntervalSec = (
+                    SetDiagnosticsIntervals.intervalOff.value
+                )
+            else:
+                argDiagnosticIntervalSec = diagnosticIntervalSelection
+
+            featureObject = SetDiagnostics(self.device_manager)
+
+            if (
+                featureObject.setArguments(
+                    int(argNetworkId), argDiagnosticIntervalSec
+                )
+                is True
+            ):
+
+                targetSinks = featureObject.getSinksBelongingToNetwork(
+                    int(argNetworkId)
+                )
+
+                sinksAddressInfo = dict()
+
+                sinkAddressCheckOk: bool = True
+                for gw in targetSinks:
+                    for sink in targetSinks[gw]:
+                        sinkNodeAddress = self._lookup_node_address(gw, sink)
+                        if sinkNodeAddress is not None:
+                            if gw not in sinksAddressInfo:
+                                sinksAddressInfo[gw] = dict()
+
+                            if sink not in sinksAddressInfo[gw]:
+                                sinksAddressInfo[gw][sink] = dict()
+
+                            sinksAddressInfo[gw][sink] = sinkNodeAddress
+                        else:
+                            sinkAddressCheckOk = False
+                            break
+
+                if sinkAddressCheckOk is True:
+                    print(" ")
+                    print("About to send messages to:")
+                    targetList = ""
+                    for gw in targetSinks:
+                        for sink in targetSinks[gw]:
+                            targetList += "{}/{}:{}  ".format(
+                                gw, sink, sinksAddressInfo[gw][sink]
+                            )
+                    print(targetList)
+
+                    uiCommandOptionProceedYes = "yes"
+                    uiCommandOptionoptionProceedNo = "no"
+
+                    proceed = self._getMenuOption(
+                        "Args good. Proceed?",
+                        [
+                            uiCommandOptionoptionProceedNo,
+                            uiCommandOptionProceedYes,
+                        ],
+                    )
+                    if proceed == uiCommandOptionProceedYes:
+                        featureObject.setMQTTmessageSendFunction(
+                            self.send_message_to_mqtt_async
+                        )
+
+                        featureObject.setSinksAddressInfo(sinksAddressInfo)
+
+                        self.set_message_handlers(
+                            featureObject.onDataQueueMessage,
+                            featureObject.onEventQueueMessage,
+                            featureObject.onResponseQueueMessage,
+                        )
+
+                        exitWorkers = False
+
+                        def applicationLoopWorker():
+                            featureObject.performOperation()
+                            nonlocal exitWorkers
+                            exitWorkers = True
+
+                        def backEndClientMessageLoopWorker():
+                            # Todo Move this to upper level.
+                            # Now here because not knowing the
+                            # impacts yet.
+                            nonlocal exitWorkers
+                            while exitWorkers is False:
+                                msgReceived = False
+                                msg = self.get_message_from_response_queue()
+                                if msg is not None:
+                                    msgReceived = True
+                                    self.on_response_queue_message(msg)
+
+                                msg = self.get_message_from_data_queue()
+                                if msg is not None:
+                                    msgReceived = True
+                                    self.on_data_queue_message(msg)
+
+                                msg = self.get_message_from_event_queue()
+                                if msg is not None:
+                                    msgReceived = True
+                                    self.on_event_queue_message(msg)
+
+                                if msgReceived is False:
+                                    defaultSleepSecs = 0.05
+                                    sleep(defaultSleepSecs)
+
+                        t1 = threading.Thread(target=applicationLoopWorker)
+                        t2 = threading.Thread(
+                            target=backEndClientMessageLoopWorker
+                        )
+                        t1.start()
+                        t2.start()
+
+                        # Work start tha this remains blocked until threads
+                        # complete
+
+                        t1.join()
+                        t2.join()
+                        self._clear_message_handlers()
+                    else:
+                        print(" ")
+                        print("Aborted!")
+                else:
+                    print(" ")
+                    print("Sink node address lookup failed!")
+            else:
+                print(" ")
+                print("Arguments not valid!")
+        else:
+            print(" ")
+            print("No networks available!")
