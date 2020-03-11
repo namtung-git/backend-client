@@ -15,18 +15,10 @@ import queue
 
 from .connectors import MQTT
 from .decorators import decode_topic_message
+from .mqtt_options import MQTT_QOS_options
 from ..stream import StreamObserver
 
 from ...tools import Settings
-
-from enum import Enum
-
-
-# multiple definitions exists
-class MQTT_QOS_options(Enum):
-    at_most_once = 0
-    at_least_once = 1
-    exactly_once = 2
 
 
 class MQTTObserver(StreamObserver):

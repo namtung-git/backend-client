@@ -21,7 +21,7 @@ from wirepas_backend_client.cli.set_diagnostics.fea_set_neighbor_diagnostics imp
     SetDiagnostics,
     SetDiagnosticsIntervals,
 )
-from ..mesh.interfaces import MQTT_QOS_options
+from ..api.mqtt.mqtt_options import MQTT_QOS_options
 from ..mesh.sink import Sink
 from ..mesh.gateway import Gateway
 
@@ -1232,20 +1232,9 @@ class GatewayCliCommands(cmd.Cmd):
                 sinksAddressInfo = dict()
 
                 sinkAddressCheckOk: bool = True
-                for gw in targetSinks:
-                    for sink in targetSinks[gw]:
-                        sinkNodeAddress = self._lookup_node_address(gw, sink)
-                        if sinkNodeAddress is not None:
-                            if gw not in sinksAddressInfo:
-                                sinksAddressInfo[gw] = dict()
-
-                            if sink not in sinksAddressInfo[gw]:
-                                sinksAddressInfo[gw][sink] = dict()
-
-                            sinksAddressInfo[gw][sink] = sinkNodeAddress
-                        else:
-                            sinkAddressCheckOk = False
-                            break
+                sinkAddressCheckOk = self.createSinkAddressInfo(
+                    sinkAddressCheckOk, sinksAddressInfo, targetSinks
+                )
 
                 if sinkAddressCheckOk is True:
                     print(" ")
@@ -1268,6 +1257,7 @@ class GatewayCliCommands(cmd.Cmd):
                             uiCommandOptionProceedYes,
                         ],
                     )
+
                     if proceed == uiCommandOptionProceedYes:
                         featureObject.setMQTTmessageSendFunction(
                             self.send_message_to_mqtt_async
@@ -1339,3 +1329,22 @@ class GatewayCliCommands(cmd.Cmd):
         else:
             print(" ")
             print("No networks available!")
+
+    def createSinkAddressInfo(
+        self, sinkAddressCheckOk, sinksAddressInfo, targetSinks
+    ):
+        for gw in targetSinks:
+            for sink in targetSinks[gw]:
+                sinkNodeAddress = self._lookup_node_address(gw, sink)
+                if sinkNodeAddress is not None:
+                    if gw not in sinksAddressInfo:
+                        sinksAddressInfo[gw] = dict()
+
+                    if sink not in sinksAddressInfo[gw]:
+                        sinksAddressInfo[gw][sink] = dict()
+
+                    sinksAddressInfo[gw][sink] = sinkNodeAddress
+                else:
+                    sinkAddressCheckOk = False
+                    break
+        return sinkAddressCheckOk

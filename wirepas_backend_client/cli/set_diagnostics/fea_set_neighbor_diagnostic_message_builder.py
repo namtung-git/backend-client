@@ -1,5 +1,5 @@
 from enum import Enum
-from struct import *
+from struct import pack
 import binascii
 
 
