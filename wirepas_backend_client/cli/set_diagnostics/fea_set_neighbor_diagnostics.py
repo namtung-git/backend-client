@@ -1,4 +1,3 @@
-from enum import Enum
 from time import sleep
 from time import time
 
@@ -15,7 +14,6 @@ from wirepas_backend_client.cli.set_diagnostics.fea_set_neighbor_diagnostic_mess
 from wirepas_backend_client.mesh.state import MeshManagement
 
 from datetime import datetime
-import time
 
 
 class DiagnosticActivationStatus:

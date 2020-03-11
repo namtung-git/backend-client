@@ -20,8 +20,6 @@ from ..stream import StreamObserver
 
 from ...tools import Settings
 
-from enum import Enum
-
 
 class MQTTObserver(StreamObserver):
     """
