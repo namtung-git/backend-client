@@ -5,7 +5,7 @@
 """
 # flake8: noqa
 
-from .http import *
+from wirepas_backend_client.api.http.http import *
 from .influx import *
 from .mqtt import *
 from .mysql import *

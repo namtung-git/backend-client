@@ -27,20 +27,19 @@
         Copyright 2019 Wirepas Ltd under Apache License, Version 2.0.
         See file LICENSE for full license details.
 """
-import multiprocessing
+from enum import Enum
+from threading import Thread
+import binascii
 import http.server
+import logging
+import multiprocessing
+import queue
 import time
 import urllib
-import binascii
-import logging
-import queue
-from threading import Thread
 
-from enum import Enum
-
-from .stream import StreamObserver
-from .mqtt import Topics
-from ..tools import Settings
+from wirepas_backend_client.api.mqtt import Topics
+from wirepas_backend_client.api.stream import StreamObserver
+from wirepas_backend_client.tools import Settings
 
 # multiple definitions exists
 class MQTT_QOS_options(Enum):
