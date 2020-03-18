@@ -1,5 +1,23 @@
 # Changelog
 
+## [v.1.3.4-rc.1](https://github.com/wirepas/backend-client/tree/v.1.3.4-rc.1) (2020-03-18)
+
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v.1.3.3...v.1.3.4-rc.1)
+
+**Closed issues:**
+
+- Move http.py as own component like others on same directory level [\#267](https://github.com/wirepas/backend-client/issues/267)
+- Move MQTT\_QOS\_options to place\(file\) that can be imported properly by modules [\#266](https://github.com/wirepas/backend-client/issues/266)
+
+**Merged pull requests:**
+
+- \#266 [\#283](https://github.com/wirepas/backend-client/pull/283) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- \#267 [\#282](https://github.com/wirepas/backend-client/pull/282) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- \#270 [\#281](https://github.com/wirepas/backend-client/pull/281) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- 4 bytes support added into advertiser address. [\#280](https://github.com/wirepas/backend-client/pull/280) ([kahaapal](https://github.com/kahaapal))
+- \[Provisioning\] Extend provisioning session timeout [\#279](https://github.com/wirepas/backend-client/pull/279) ([vgeneves](https://github.com/vgeneves))
+- Fix positioning message decoding [\#273](https://github.com/wirepas/backend-client/pull/273) ([telindgr](https://github.com/telindgr))
+
 ## [v.1.3.3](https://github.com/wirepas/backend-client/tree/v.1.3.3) (2020-02-28)
 
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.3-rc.2...v.1.3.3)
