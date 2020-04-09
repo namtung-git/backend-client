@@ -88,7 +88,7 @@ class SetDiagnostics:
         return ret
 
     def _getElapsedTimeSting(self):
-        end = time.time()
+        end = time()
         elapsedSecs = end - self._operationStart
         ret = str(
             datetime.now().strftime("%H:%M.%S")
@@ -176,7 +176,7 @@ class SetDiagnostics:
 
         if self._processingActive:
 
-            self._operationStart = time.time()
+            self._operationStart = time()
 
             networkSinks: dict
             networkSinks = self.getSinksBelongingToNetwork(
