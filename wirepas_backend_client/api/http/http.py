@@ -38,6 +38,7 @@ import time
 import urllib
 
 from wirepas_backend_client.api.mqtt import Topics
+from wirepas_backend_client.api.mqtt import MQTT_QOS_options
 from wirepas_backend_client.api.stream import StreamObserver
 from wirepas_backend_client.tools import Settings
 
@@ -94,10 +95,11 @@ class SinkAndGatewayStatusObserver(Thread):
                     if App_config_keys.app_config_sink_id_key.value in config:
 
                         if (
-                            config[
-                                App_config_keys.app_config_sink_id_key.value
-                            ]
-                            not in self.gateways_and_sinks[status_msg["gw_id"]]
+                                config[
+                                    App_config_keys.app_config_sink_id_key.value
+                                ]
+                                not in self.gateways_and_sinks[
+                            status_msg["gw_id"]]
                         ):
                             # New sink detected
                             self.gateways_and_sinks[status_msg["gw_id"]][
@@ -113,16 +115,16 @@ class SinkAndGatewayStatusObserver(Thread):
                         ]
 
                         if (
-                            App_config_keys.app_config_started_key.value
-                            in config
-                            and App_config_keys.app_config_seq_key.value
-                            in config
-                            and App_config_keys.app_config_diag_key.value
-                            in config
-                            and App_config_keys.app_config_data_key.value
-                            in config
-                            and App_config_keys.app_config_node_address_key.value
-                            in config
+                                App_config_keys.app_config_started_key.value
+                                in config
+                                and App_config_keys.app_config_seq_key.value
+                                in config
+                                and App_config_keys.app_config_diag_key.value
+                                in config
+                                and App_config_keys.app_config_data_key.value
+                                in config
+                                and App_config_keys.app_config_node_address_key.value
+                                in config
                         ):
                             # All mandatory fields are present
 
@@ -229,13 +231,13 @@ class ConnectionServer(http.server.ThreadingHTTPServer):
     protocol_version = "HTTP/1.1"
 
     def __init__(
-        self,
-        server_address,
-        RequestHandlerClass,
-        bind_and_activate=True,
-        logger=None,
-        http_tx_queue=None,
-        status_observer=None,
+            self,
+            server_address,
+            RequestHandlerClass,
+            bind_and_activate=True,
+            logger=None,
+            http_tx_queue=None,
+            status_observer=None,
     ):
         self.logger = logger or logging.getLogger(__name__)
         self.http_tx_queue = http_tx_queue
@@ -270,18 +272,18 @@ class HTTPObserver(StreamObserver):
     # pylint: disable=locally-disabled, too-many-arguments, broad-except,
     # unused-argument
     def __init__(
-        self,
-        http_settings: Settings,
-        start_signal: multiprocessing.Event,
-        exit_signal: multiprocessing.Event,
-        tx_queue: multiprocessing.Queue,
-        rx_queue: multiprocessing.Queue,
-        gw_status_queue: multiprocessing.Queue,
-        request_wait_timeout: int = 600,
-        close_connection: bool = False,
-        request_queue_size: int = 1000,
-        allow_reuse_address: bool = True,
-        logger=None,
+            self,
+            http_settings: Settings,
+            start_signal: multiprocessing.Event,
+            exit_signal: multiprocessing.Event,
+            tx_queue: multiprocessing.Queue,
+            rx_queue: multiprocessing.Queue,
+            gw_status_queue: multiprocessing.Queue,
+            request_wait_timeout: int = 600,
+            close_connection: bool = False,
+            request_queue_size: int = 1000,
+            allow_reuse_address: bool = True,
+            logger=None,
     ) -> "HTTPObserver":
         super(HTTPObserver, self).__init__(
             start_signal=start_signal,
@@ -601,8 +603,8 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self._handle_empty_request(response)
 
         if (
-            response[self.HTTP_response_fields.code.value]
-            != self.HTTP_server_response_codes.http_response_ok.value
+                response[self.HTTP_response_fields.code.value]
+                != self.HTTP_server_response_codes.http_response_ok.value
         ):
             self.logger.error(response)
         else:
@@ -663,8 +665,8 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             # Sends the command towards all the discovered sinks
             for sink_id, sink in sinks.items():
                 if (
-                    sink[App_config_keys.app_config_node_address_key.value]
-                    == sink_node_address
+                        sink[App_config_keys.app_config_node_address_key.value]
+                        == sink_node_address
                 ):
                     sink_node_address_belongs_network = True
                     break
@@ -674,15 +676,15 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         return sink_node_address_belongs_network
 
     def _handle_datatx_command(
-        self,
-        gateway_id,
-        refresh,
-        response,
-        sink,
-        sink_id,
-        command,
-        params,
-        gateways: dict,
+            self,
+            gateway_id,
+            refresh,
+            response,
+            sink,
+            sink_id,
+            command,
+            params,
+            gateways: dict,
     ):
 
         command_was_ok: bool = True
@@ -755,8 +757,8 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             if self._find_sink(destination_node_address, gateways):
                 if (
-                    sink[App_config_keys.app_config_node_address_key.value]
-                    == destination_node_address
+                        sink[App_config_keys.app_config_node_address_key.value]
+                        == destination_node_address
                 ):
                     # send only addressed sink
                     send_message_to_sink = True
@@ -804,7 +806,7 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         return command_was_ok, newMessages
 
     def _handle_info_command(
-        self, command, gateway_id, refresh, response, sink, sink_id
+            self, command, gateway_id, refresh, response, sink, sink_id
     ):
 
         command_was_ok = True
@@ -831,7 +833,7 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         return command_was_ok, refresh, newMessages
 
     def _handle_setconfig_command(
-        self, gateway_id, params, refresh, sink, sink_id
+            self, gateway_id, params, refresh, sink, sink_id
     ):
 
         command_was_ok = True
