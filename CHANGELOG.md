@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.3.4-rc.4](https://github.com/wirepas/backend-client/tree/v1.3.4-rc.4) (2020-04-09)
+
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.4-rc.3...v1.3.4-rc.4)
+
+**Merged pull requests:**
+
+- Minor change to test release script [\#291](https://github.com/wirepas/backend-client/pull/291) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+
 ## [v1.3.4-rc.3](https://github.com/wirepas/backend-client/tree/v1.3.4-rc.3) (2020-04-09)
 
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.4-rc.1...v1.3.4-rc.3)
