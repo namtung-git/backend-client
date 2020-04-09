@@ -169,7 +169,8 @@ class MultiMessageMqttObserver(MQTTObserver):
                         if "network_address" in config:
                             try:
                                 if int(config["network_address"]) == int(
-                                        network_id):
+                                    network_id
+                                ):
                                     self.gw_status_queue.put(message.__dict__)
                                     configuration_processed = True
                                     # We assume that each sink of gateway
