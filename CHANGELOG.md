@@ -71,6 +71,7 @@
 - Change HTTP implementation so that when request destination [\#251](https://github.com/wirepas/backend-client/pull/251) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - \#247 [\#249](https://github.com/wirepas/backend-client/pull/249) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Feature provisioning [\#248](https://github.com/wirepas/backend-client/pull/248) ([vgeneves](https://github.com/vgeneves))
+- Update gitignore [\#245](https://github.com/wirepas/backend-client/pull/245) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 
 ## [v1.3.1](https://github.com/wirepas/backend-client/tree/v1.3.1) (2020-02-04)
 
@@ -86,7 +87,6 @@
 **Merged pull requests:**
 
 - Diagnostic cbor ids [\#246](https://github.com/wirepas/backend-client/pull/246) ([PFigs](https://github.com/PFigs))
-- Update gitignore [\#245](https://github.com/wirepas/backend-client/pull/245) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Release v1.3.1 [\#243](https://github.com/wirepas/backend-client/pull/243) ([PFigs](https://github.com/PFigs))
 - Update gw cli [\#236](https://github.com/wirepas/backend-client/pull/236) ([PFigs](https://github.com/PFigs))
 
