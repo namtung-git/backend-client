@@ -76,6 +76,7 @@ class SinkAndGatewayStatusObserver(Thread):
                 # Http server does not subscribe MQTT configuration. It is
                 # done by caller of http. Caller subscribes certain network
                 # all gateways.
+
                 status_msg = self.gw_status_queue.get(block=True, timeout=60)
                 self.logger.info("HTTP status_msg={}".format(status_msg))
                 # New status of gateway received.
