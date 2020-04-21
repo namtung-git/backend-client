@@ -133,11 +133,12 @@ class AdvertiserManager(TestManager):
                     self.logger.critical("storage queue is too big")
 
             # create map of apdu["adv"]
-            for node_address, details in message.apdu["adv"].items():
+            for tag_address, details in message.apdu["adv"].items():
                 self.inventory.add(
-                    node_address=node_address,
+                    tag_address=tag_address,
                     rss=details["rss"],
                     otap_sequence=details["otap"],
+                    tag_sequence=details["sequence"],
                     timestamp=details["time"],
                 )
 

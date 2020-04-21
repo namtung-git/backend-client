@@ -25,11 +25,12 @@ class AdvertiserMessage(GenericMessage):
     Represents a message sent by advertiser devices.
 
     Attributes:
-        _source_endpoint (int): Advertiser source endpoint
-        _destination_endpoint (int): Advertiser destination endpoint
-        _message_type_rss (int): APDU's RSS message type
-        _message_type_otap (int): APDU's OTAP message type
-        _message_counter (int): How many messages have been seen so far
+        source_endpoint (int): Advertiser source endpoint
+        destination_endpoint (int): Advertiser destination endpoint
+        message_type_rss (int): APDU's RSS message type
+        message_type_otap (int): APDU's OTAP message type
+        message_sequence (int): APDU's sequence number message type
+        message_counter (int): How many messages have been seen so far
 
         timestamp (int): Message received time
         type (int): Type of application message (ApplicationTypes)
@@ -47,6 +48,7 @@ class AdvertiserMessage(GenericMessage):
     message_counter = 0
     message_type_rss = 2
     message_type_otap = 3
+    message_sequence = 6
 
     def __init__(self, *args, **kwargs) -> "AdvertiserMessage":
 
@@ -58,7 +60,7 @@ class AdvertiserMessage(GenericMessage):
         self.full_adv_serialization = False
         self.apdu["adv"] = dict()
         self.apdu["adv_type"] = None
-        self.apdu["adv_reserved_field"] = None
+        self.apdu["adv_message_count"] = None
         self.index = None
         self.count()
         self.decode()
@@ -92,7 +94,7 @@ class AdvertiserMessage(GenericMessage):
         header = s_header.unpack(self.data_payload[0:2])
 
         self.apdu["adv_type"] = header[0] & 0x7F
-        self.apdu["adv_reserved_field"] = header[1]
+        self.apdu["adv_message_count"] = header[1]
         address_4byte = header[0] >> 7
         if address_4byte == 1:
             s_advertisement = struct.Struct("<B B B B B")
@@ -117,6 +119,7 @@ class AdvertiserMessage(GenericMessage):
 
             rss = None
             otap = None
+            sequence = None
             value = values[-1]
 
             if self.apdu["adv_type"] == AdvertiserMessage.message_type_rss:
@@ -125,10 +128,17 @@ class AdvertiserMessage(GenericMessage):
             elif self.apdu["adv_type"] == AdvertiserMessage.message_type_otap:
                 otap = values[-1]
                 value = otap
+            elif self.apdu["adv_type"] == AdvertiserMessage.message_sequence:
+                sequence = values[-1]
+                value = sequence
 
             if address not in self.apdu["adv"]:
                 self.apdu["adv"][address] = dict(
-                    time=None, rss=list(), otap=list(), value=list()
+                    time=None,
+                    rss=list(),
+                    otap=list(),
+                    sequence=list(),
+                    value=list(),
                 )
 
             self.apdu["adv"][address]["time"] = self.timestamp
@@ -137,6 +147,8 @@ class AdvertiserMessage(GenericMessage):
                 self.apdu["adv"][address]["rss"].append(rss)
             elif otap:
                 self.apdu["adv"][address]["otap"].append(otap)
+            elif sequence:
+                self.apdu["adv"][address]["sequence"].append(sequence)
             else:
                 self.apdu["adv"][address]["value"].append(value)
 

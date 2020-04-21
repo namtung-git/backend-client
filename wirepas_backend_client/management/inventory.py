@@ -154,21 +154,24 @@ class Inventory(object):
 
     def add(
         self,
-        node_address: int,
+        tag_address: int,
         rss: list = None,
         otap_sequence: list = None,
+        tag_sequence: list = None,
         timestamp: int = None,
     ) -> None:
         """
-        Adds a node to the inventory
+        Adds a tag to the inventory
 
         Arguments:
+            tag_address: the address of the tag
             rss (list): a list of rss measurements to/from the device
             otap_sequence (list): a list of otap sequences registered by the device
+            tag_sequence (list) : a list of tag sequence
             timestamp (int): a time representation
 
         """
-        self._nodes.add(node_address)
+        self._nodes.add(tag_address)
 
         otap_min = None
         otap_max = None
@@ -178,16 +181,18 @@ class Inventory(object):
             otap_max = max(otap_sequence)
 
         # creates an event
-        if otap_min and otap_max and any(rss):
+        if otap_min and otap_max and any(rss) and any(tag_sequence):
             event = dict(
                 rss=rss,
                 otap=otap_sequence,
                 otap_max=max(otap_sequence),
                 otap_min=min(otap_sequence),
+                tag_sequence=tag_sequence,
             )
         elif any(rss):
             event = dict(rss=rss)
-
+        elif any(tag_sequence):
+            event = dict(tag_sequence=tag_sequence)
         elif any(otap_sequence):
             event = dict(
                 otap=otap_sequence,
@@ -195,27 +200,27 @@ class Inventory(object):
                 otap_min=min(otap_sequence),
             )
         else:
-            event = dict(rss=rss, otap=otap_sequence)
-
-        # add nodes to index
+            event = dict(
+                rss=rss, otap=otap_sequence, tag_sequence=tag_sequence
+            )
+        # add tags to index
         try:
-            self._index[node_address]["count"] += 1
-            self._index[node_address]["last_seen"] = timestamp
-            self._index[node_address]["events"].append(event)
-
+            self._index[tag_address]["count"] += 1
+            self._index[tag_address]["last_seen"] = timestamp
+            self._index[tag_address]["events"].append(event)
         except KeyError:
-            self._index[node_address] = dict(
+            self._index[tag_address] = dict(
                 last_seen=timestamp, events=[event], count=1
             )
             self.logger.debug(
-                "adding node: {0} / {1}".format(node_address, event),
+                "adding tag: {0} / {1}".format(tag_address, event),
                 dict(sequence=self.sequence),
             )
 
-    def remove(self, node_address) -> None:
+    def remove(self, tag_address) -> None:
         """ Removes a node from the known inventory """
-        self.nodes.remove(node_address)
-        del self._index[node_address]
+        self.nodes.remove(tag_address)
+        del self._index[tag_address]
 
     def is_out_of_time(self):
         """ Evaluates if the time has run out for the run """
