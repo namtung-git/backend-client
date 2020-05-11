@@ -45,7 +45,7 @@ class AdvertiserMessage(GenericMessage):
     source_endpoint = 200
     destination_endpoint = 200
 
-    message_counter = 0
+    message_counter = 0  # clarify: this is not any message type enum number
     message_type_rss = 2
     message_type_otap = 3
     message_sequence = 6
@@ -145,9 +145,9 @@ class AdvertiserMessage(GenericMessage):
 
             if rss:
                 self.apdu["adv"][address]["rss"].append(rss)
-            elif otap:
+            elif otap is not None:  # the otap sequence can be 0
                 self.apdu["adv"][address]["otap"].append(otap)
-            elif sequence:
+            elif sequence is not None:  # the tag sequence can be 0
                 self.apdu["adv"][address]["sequence"].append(sequence)
             else:
                 self.apdu["adv"][address]["value"].append(value)

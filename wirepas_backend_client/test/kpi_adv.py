@@ -22,7 +22,7 @@ from wirepas_backend_client.messages import AdvertiserMessage
 from wirepas_backend_client.tools import ParserHelper, LoggerHelper
 from wirepas_backend_client.api import MySQLSettings, MySQLObserver
 from wirepas_backend_client.api import MQTTObserver, MQTTSettings
-from wirepas_backend_client.management import Daemon, Inventory
+from wirepas_backend_client.management import Daemon, Inventory, Reliability
 from wirepas_backend_client.test import TestManager
 
 
@@ -42,7 +42,8 @@ class AdvertiserManager(TestManager):
 
     """
 
-    # pylint: disable=locally-disabled, logging-format-interpolation, logging-too-many-args
+    # pylint: disable=locally-disabled, logging-format-interpolation,
+    # logging-too-many-args
     def __init__(
         self,
         tx_queue: multiprocessing.Queue,
@@ -206,6 +207,137 @@ class AdvertiserManager(TestManager):
         return msg
 
 
+class ReliabilityManager(TestManager):
+    def __init__(
+        self,
+        tx_queue: multiprocessing.Queue,
+        rx_queue: multiprocessing.Queue,
+        start_signal: multiprocessing.Event,
+        exit_signal: multiprocessing.Event,
+        storage_queue: multiprocessing.Queue = None,
+        delay: int = 5,
+        duration: int = 5,
+        logger=None,
+    ):
+
+        super(ReliabilityManager, self).__init__(
+            tx_queue=tx_queue,
+            rx_queue=rx_queue,
+            start_signal=start_signal,
+            exit_signal=exit_signal,
+            logger=logger,
+        )
+
+        self.storage_queue = storage_queue
+        self.delay = delay
+        self.duration = duration
+
+        self.reliability = Reliability(
+            start_delay=delay, maximum_duration=duration, logger=self.logger
+        )
+
+        self._test_sequence_number = 0
+        self._timeout = 1
+        self._tasks = list()
+
+    def test_reliability(self, test_sequence_number=0) -> None:
+        """
+        Inventory test
+
+        This test starts by calculating the time when it should start counting
+        and when it should stop its inventory.
+
+        Afterwards, before the time to start the count is reached, any message
+        coming in the queue is discarded. Discarding messages is necessary
+        otherwise it would lead to false results.
+
+        """
+
+        self._test_sequence_number = test_sequence_number
+        self.reliability.sequence = test_sequence_number
+        self.reliability.wait()
+        self.start_signal.set()
+        self.logger.info(
+            "starting reliability #{}".format(test_sequence_number),
+            dict(sequence=self._test_sequence_number),
+        )
+
+        AdvertiserMessage.message_counter = 0
+        empty_counter = 0
+
+        while not self.exit_signal.is_set():
+            try:
+                message = self.rx_queue.get(timeout=self._timeout, block=True)
+                empty_counter = 0
+            except queue.Empty:
+                empty_counter = empty_counter + 1
+                if empty_counter > 10:
+                    self.logger.debug(
+                        "Advertiser messages " "are not being received"
+                    )
+                    empty_counter = 0
+
+                if self.reliability.is_out_of_time():
+                    break
+                else:
+                    continue
+
+            self.logger.info(message.serialize())
+
+            for key, value in message.apdu["adv"].items():
+                print("DECODE: ", key, value)
+
+            if self.storage_queue:
+                self.storage_queue.put(message)
+                if self.storage_queue.qsize() > 100:
+                    self.logger.critical("storage queue is too big")
+
+            # create map of apdu["adv"]
+            self.reliability.add_routers_and_missed_routers(
+                router_address=message.source_address,
+                adv_message_count=message.apdu["adv_message_count"],
+                timestamp=message.tx_time.isoformat("T"),
+            )
+
+            for tag_address, details in message.apdu["adv"].items():
+                self.reliability.add_tags_and_missed_tags(
+                    tag_address=tag_address,
+                    tag_sequence=details["sequence"],
+                    timestamp=details["time"],
+                )
+
+            if self.reliability.is_out_of_time():
+                break
+
+        self.reliability.finish()
+        report = self.report()
+        self.tx_queue.put(report)
+        record = dict(
+            test_sequence_number=self._test_sequence_number,
+            inventory_start=report["start"].isoformat("T"),
+            missed_router_msg=report["missed_router_msg"],
+            missed_tag_msg=report["missed_tag_msg"],
+            inventory_end=report["end"].isoformat("T"),
+            elapsed=report["elapsed"],
+        )
+
+        self.logger.info(record, dict(sequence=self._test_sequence_number))
+
+    def report(self) -> dict:
+        """
+        Returns a string with the gathered results.
+        """
+        msg = dict(
+            title="{}:{}".format(__TEST_NAME__, self._test_sequence_number),
+            start=self.reliability.start,
+            end=self.reliability.finish(),
+            missed_router_msg=self.reliability.missed_msg_in_router(),
+            missed_tag_msg=self.reliability.missed_msg_in_tag(),
+            elapsed=self.reliability.elapsed,
+        )
+        return msg
+
+
 def fetch_report(
     args, rx_queue, timeout, report_output, number_of_runs, exit_signal, logger
 ):
@@ -285,42 +417,72 @@ def main(args, logger):
 
         daemon.set_run("mqtt", task=mqtt_process.run)
 
-        # build each process and set the communication
-        adv_manager = daemon.build(
-            "adv_manager",
-            AdvertiserManager,
-            dict(
-                inventory_target_nodes=args.target_nodes,
-                inventory_target_otap=args.target_otap,
-                inventory_target_frequency=args.target_frequency,
-                logger=logger,
-                delay=args.delay,
-                duration=args.duration,
-            ),
-            receive_from="mqtt",
-            storage=mysql_available,
-            storage_name=__STORAGE_ENGINE__,
-        )
+        # when the duration or
+        if args.testcase == "inventory" or args.testcase is None:
+            # build each process and set the communication
+            adv_manager = daemon.build(
+                "adv_manager",
+                AdvertiserManager,
+                dict(
+                    inventory_target_nodes=args.target_nodes,
+                    inventory_target_otap=args.target_otap,
+                    inventory_target_frequency=args.target_frequency,
+                    logger=logger,
+                    delay=args.delay,
+                    duration=args.duration,
+                ),
+                receive_from="mqtt",
+                storage=mysql_available,
+                storage_name=__STORAGE_ENGINE__,
+            )
 
-        adv_manager.execution_jitter(
-            _min=args.jitter_minimum, _max=args.jitter_maximum
-        )
-        adv_manager.register_task(
-            adv_manager.test_inventory, number_of_runs=args.number_of_runs
-        )
+            adv_manager.execution_jitter(
+                _min=args.jitter_minimum, _max=args.jitter_maximum
+            )
+            adv_manager.register_task(
+                adv_manager.test_inventory, number_of_runs=args.number_of_runs
+            )
 
-        daemon.set_loop(
-            fetch_report,
-            dict(
-                args=args,
-                rx_queue=adv_manager.tx_queue,
-                timeout=args.delay + args.duration + 60,
-                report_output=args.output,
+            daemon.set_loop(
+                fetch_report,
+                dict(
+                    args=args,
+                    rx_queue=adv_manager.tx_queue,
+                    timeout=args.delay + args.duration + 60,
+                    report_output=args.output,
+                    number_of_runs=args.number_of_runs,
+                    exit_signal=daemon.exit_signal,
+                    logger=logger,
+                ),
+            )
+        if args.testcase == "reliability":
+            reliability_manager = daemon.build(
+                "reliability_manager",
+                ReliabilityManager,
+                dict(delay=args.delay, duration=args.duration, logger=logger),
+                receive_from="mqtt",
+                storage=mysql_available,
+                storage_name=__STORAGE_ENGINE__,
+            )
+
+            reliability_manager.register_task(
+                reliability_manager.test_reliability,
                 number_of_runs=args.number_of_runs,
-                exit_signal=daemon.exit_signal,
-                logger=logger,
-            ),
-        )
+            )
+
+            daemon.set_loop(
+                fetch_report,
+                dict(
+                    args=args,
+                    rx_queue=reliability_manager.tx_queue,
+                    timeout=args.delay + args.duration + 60,
+                    report_output=args.output,
+                    number_of_runs=args.number_of_runs,
+                    exit_signal=daemon.exit_signal,
+                    logger=logger,
+                ),
+            )
+
         daemon.start()
     else:
         print("Please check you MQTT settings")

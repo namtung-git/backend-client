@@ -423,6 +423,13 @@ class ParserHelper:
     def add_test(self):
         """ Commonly used arguments for test execution """
         self.test.add_argument(
+            "--testcase",
+            default=os.environ.get("WM_BCLI_TEST_TEST_CASE", None),
+            type=str,
+            choices={"inventory", "reliability"},
+            help="The test case name, the choice is 'inventory' or 'reliability'",
+        )
+        self.test.add_argument(
             "--delay",
             default=os.environ.get("WM_BCLI_TEST_DELAY", None),
             type=int,
