@@ -71,21 +71,21 @@ class GatewayCliCommands(cmd.Cmd):
         self._responseQueueMessageHandler = None
 
     @property
-    def gateway(self):
+    def gateway(self) -> object:
         """
         Returns the currently selected gateway
         """
         return self._selection["gateway"]
 
     @property
-    def sink(self):
+    def sink(self) -> object:
         """
         Returns the currently selected sink
         """
         return self._selection["sink"]
 
     @property
-    def network(self):
+    def network(self) -> object:
         """
         Returns the currently selected network
         """
@@ -843,7 +843,97 @@ class GatewayCliCommands(cmd.Cmd):
             self._set_target()
             self.do_set_app_config(line)
 
-    def do_scratchpad_status(self, line):
+    @staticmethod
+    def __print_scratch_pad_response(response) -> None:
+
+        """
+        UI spec
+        Stored scratchpad:
+        seq	    : 1
+        len	    : 896
+        crc 	: 58114
+        status	: new
+        type	: present
+
+        Processed scratchpad:
+        seq	    : 1
+        crc	    : 36840
+        len	    : 105072
+
+        Firmware:
+        area id : 259
+        """
+        text_field_len: int = 8
+        sep_str: str = ": "
+        hex_formatter_str: str = "02x"
+        print("")
+
+        print("Stored scratchpad:")
+        print(
+            "seq".ljust(text_field_len)
+            + sep_str
+            + "{}".format(response.stored_scratchpad["seq"])
+        )
+        print(
+            "len".ljust(text_field_len)
+            + sep_str
+            + "{}".format(response.stored_scratchpad["len"])
+        )
+        print(
+            "crc".ljust(text_field_len)
+            + sep_str
+            + "0x{}".format(
+                format(
+                    int(response.stored_scratchpad["crc"]), hex_formatter_str
+                )
+            )
+        )
+        print(
+            "status".ljust(text_field_len)
+            + sep_str
+            + "{}".format(response.stored_status)
+        )
+        print(
+            "type".ljust(text_field_len)
+            + sep_str
+            + "{}".format(response.stored_type)
+        )
+        print("")
+
+        print("Processed scratchpad:")
+        print(
+            "seq".ljust(text_field_len)
+            + sep_str
+            + "{}".format(response.processed_scratchpad["seq"])
+        )
+        print(
+            "len".ljust(text_field_len)
+            + sep_str
+            + "{}".format(response.processed_scratchpad["len"])
+        )
+        print(
+            "crc".ljust(text_field_len)
+            + sep_str
+            + "0x{}".format(
+                format(
+                    int(response.processed_scratchpad["crc"]),
+                    hex_formatter_str,
+                )
+            )
+        )
+        print("")
+
+        print("Firmware:")
+        print(
+            "area id".ljust(text_field_len)
+            + sep_str
+            + "0x{}".format(
+                format(int(response.firmware_area_id), hex_formatter_str)
+            )
+        )
+        print("")
+
+    def do_scratchpad_status(self, line) -> None:
         """
         Retrieves the scratchpad status from the sink
 
@@ -851,8 +941,13 @@ class GatewayCliCommands(cmd.Cmd):
             scratchpad_status
 
         Returns:
-            The scratchpad loaded on the target gateway:sink pair
+            None
         """
+
+        if self.gateway and self.sink:
+            pass
+        else:
+            self._set_target()
 
         if self.gateway and self.sink:
             gateway_id = self.gateway.device_id
@@ -862,13 +957,24 @@ class GatewayCliCommands(cmd.Cmd):
                 "otap_status", **dict(sink_id=sink_id, gw_id=gateway_id)
             )
 
+            print("Performing upload. Request sent.")
             self.request_queue.put(message)
-            self.wait_for_answer(gateway_id, message)
 
+            print("Waiting response.")
+            response = self.wait_for_answer(gateway_id, message)
+
+            if response is not None:
+                if response.res == GatewayResultCode.GW_RES_OK:
+                    print("Command OK.")
+                    self.__print_scratch_pad_response(response)
+                else:
+                    print("Command FAIL [{}]".format(response.res))
+            else:
+                print("Command FAIL due timeout.")
         else:
-            self._set_target()
+            print("Command FAIL due invalid gw or sink selection.")
 
-    def do_scratchpad_update(self, line):
+    def do_scratchpad_update(self, line) -> None:
         """
         Sends a scratchpad update command to the sink
 
@@ -876,8 +982,12 @@ class GatewayCliCommands(cmd.Cmd):
             scratchpad_update
 
         Returns:
-            The update status
+            None
         """
+        if self.gateway and self.sink:
+            pass
+        else:
+            self._set_target()
 
         if self.gateway and self.sink:
             gateway_id = self.gateway.device_id
@@ -890,64 +1000,123 @@ class GatewayCliCommands(cmd.Cmd):
 
             message["qos"] = MQTT_QOS_options.exactly_once.value
 
+            print("Performing update. Request sent.")
             self.request_queue.put(message)
-            self.wait_for_answer(gateway_id, message)
+            scratchpad_update_timeout_sec: int = 60
+            print(
+                "Waiting response up to {} sec.".format(
+                    scratchpad_update_timeout_sec
+                )
+            )
+
+            response = self.wait_for_answer(
+                gateway_id, message, scratchpad_update_timeout_sec
+            )
+            if response is not None:
+                if response.res == GatewayResultCode.GW_RES_OK:
+                    print("Command OK.")
+                else:
+                    print("Command FAIL [{}]".format(response.res))
+            else:
+                print("Command FAIL due timeout.")
 
         else:
-            self._set_target()
+            print("Command FAIL due invalid gw or sink selection.")
 
-    def do_scratchpad_upload(self, line):
+    def do_scratchpad_upload(self, line) -> None:
         """
         Uploads a scratchpad to the target sink/gateway pair
 
         Usage:
-            scratchpad_upload argument=value
+            scratchpad_upload filepath=<path/to/myscratchpad.otap>  sequence=<n>
 
         Arguments:
             - filepath=~/myscratchpad.otap # the path to the scratchpad
             - sequence=1 # the scratchpad sequence number
 
         Returns:
-            The status of the upload success
+            None
         """
 
+        file_path_arg_str: str = "filepath"
+        sequence_arg_str: str = "sequence"
+        scratchpad_load_cmd_str: str = "otap_load_scratchpad"
+
         options = dict(
-            file_path=dict(type=int, default=None),
-            seq=dict(type=int, default=None),
+            filepath=dict(type=str, default=None),
+            sequence=dict(type=int, default=None),
         )
-
         args = self.retrieve_args(line, options)
+        if (
+            file_path_arg_str in args
+            and sequence_arg_str in args
+            and self.is_valid(args)
+        ):
 
-        if self.gateway and self.sink:
-            gateway_id = self.gateway.device_id
-            sink_id = self.sink.device_id
+            if self.gateway and self.sink:
+                pass
+            else:
+                self._set_target()
 
-            try:
-                with open(args["file_path"], "rb") as f:
-                    scratchpad = f.read()
-            except FileNotFoundError:
-                scratchpad = None
+            if self.gateway and self.sink:
 
-            if not self.is_valid(args):
-                self.do_help("scratchpad_upload", args)
+                gateway_id = self.gateway.device_id
+                sink_id = self.sink.device_id
 
-            message = self.mqtt_topics.request_message(
-                "otap_load_scratchpad",
-                **dict(
-                    sink_id=sink_id,
-                    scratchpad=scratchpad,
-                    seq=args["seq"],
-                    gw_id=gateway_id,
-                ),
-            )
-            message["qos"] = MQTT_QOS_options.exactly_once.value
+                try:
+                    with open(args[file_path_arg_str], "rb") as f:
+                        scratchpad = f.read()
+                except FileNotFoundError:
+                    print(
+                        "File '{}' not found.".format(args[file_path_arg_str])
+                    )
+                    scratchpad = None
 
-            self.request_queue.put(message)
-            self.wait_for_answer(gateway_id, message)
+                if scratchpad is not None:
+                    message = self.mqtt_topics.request_message(
+                        scratchpad_load_cmd_str,
+                        **dict(
+                            sink_id=sink_id,
+                            scratchpad=scratchpad,
+                            seq=args[sequence_arg_str],
+                            gw_id=gateway_id,
+                        ),
+                    )
+                    message["qos"] = MQTT_QOS_options.exactly_once.value
+                    print("Performing upload. Request sent.")
+                    self.request_queue.put(message)
 
+                    scratchpad_upload_timeout_sec: int = 60
+                    print(
+                        "Waiting response up to {} sec.".format(
+                            scratchpad_upload_timeout_sec
+                        )
+                    )
+
+                    response = self.wait_for_answer(
+                        gateway_id,
+                        message,
+                        scratchpad_upload_timeout_sec,
+                        True,
+                    )
+                    if response is not None:
+                        if response.res == GatewayResultCode.GW_RES_OK:
+                            print("Command OK.")
+                        else:
+                            print("Command FAIL [{}]".format(response.res))
+                    else:
+                        print("Command FAIL due timeout.")
+                else:
+                    print(
+                        "Command FAIL. Cannot load scratchpad file from '{}'.".format(
+                            args[file_path_arg_str]
+                        )
+                    )
+            else:
+                print("Command FAIL due invalid gw or sink selection.")
         else:
-            self._set_target()
-            self.scratchpad_upload(line=line)
+            print("Command FAIL. Not all expected arguments given.")
+            self.do_help("scratchpad_upload", args)
 
     def _build_default_mqtt_request_options(self):
         options = dict(
