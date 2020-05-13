@@ -1,5 +1,15 @@
 # Changelog
 
+## [v.1.3.5.rc.1](https://github.com/wirepas/backend-client/tree/v.1.3.5.rc.1) (2020-05-13)
+
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v.1.3.4-rc.5...v.1.3.5.rc.1)
+
+**Merged pull requests:**
+
+- \#289 \#300 \#301  [\#302](https://github.com/wirepas/backend-client/pull/302) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- Da reliability [\#297](https://github.com/wirepas/backend-client/pull/297) ([PeiChunyan](https://github.com/PeiChunyan))
+- Change for the DA KPI testing [\#295](https://github.com/wirepas/backend-client/pull/295) ([PeiChunyan](https://github.com/PeiChunyan))
+
 ## [v.1.3.4-rc.5](https://github.com/wirepas/backend-client/tree/v.1.3.4-rc.5) (2020-04-09)
 
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.4-rc.4...v.1.3.4-rc.5)
