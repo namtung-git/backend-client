@@ -13,7 +13,10 @@
 
 import cmd
 import json
+import threading
+from time import sleep, perf_counter
 
+from .otap_status import OtapScratchPadStatus
 from wirepas_messaging.gateway.api import GatewayState
 from wirepas_messaging.gateway.api import GatewayResultCode
 
@@ -25,8 +28,12 @@ from ..api.mqtt import MQTT_QOS_options
 from ..mesh.sink import Sink
 from ..mesh.gateway import Gateway
 
-import threading
-from time import sleep
+end_point_this_source: int = 255
+end_point_default_diagnostic_control: int = 240
+address_broadcast: int = 4294967295
+cmd_MSAP_scratchpad_status: bytes = bytes.fromhex(
+    "1900"
+)  # MSAP scratchpad status
 
 
 class GatewayCliCommands(cmd.Cmd):
@@ -933,6 +940,264 @@ class GatewayCliCommands(cmd.Cmd):
         )
         print("")
 
+    def do_scratchpad_check(self, line) -> None:
+        """
+        Checks nodes scratchpad status connected to current selected sink
+
+        Usage:
+            scratchpad_check
+
+        Returns:
+            Prints status of nodes behind selected sink to console.
+        """
+        if self.gateway and self.sink:
+            pass
+        else:
+            self._set_target()
+
+        if self.gateway and self.sink:
+            gateway_id = self.gateway.device_id
+            sink_id = self.sink.device_id
+
+            node_address = address_broadcast
+
+            sink_node_address = self._lookup_node_address(gateway_id, sink_id)
+
+            # Send scratchpad status to each nodes in network (use broadcast).
+            broad_cast_message = self.create_scratchpad_status_query_msg(
+                gateway_id, node_address, sink_id
+            )
+            sink_message = self.create_scratchpad_status_query_msg(
+                gateway_id, sink_node_address, sink_id
+            )
+
+            self.request_queue.put(broad_cast_message)
+            self.request_queue.put(sink_message)
+
+            processed_scratchpads: dict = dict()
+            stored_scratchpads: dict = dict()
+
+            response_bcast = self.wait_for_answer(
+                gateway_id, broad_cast_message
+            )
+            response_sink = self.wait_for_answer(gateway_id, sink_message)
+
+            if response_bcast is not None and response_sink is not None:
+                if (
+                    response_bcast.res == GatewayResultCode.GW_RES_OK
+                    and response_sink.res == GatewayResultCode.GW_RES_OK
+                ):
+                    silence_time_sec: int = 10
+                    print(
+                        "Commands OK. Collecting answers. Silence time "
+                        "threshold is {} secs.".format(silence_time_sec)
+                    )
+
+                    # Collect responses. Collect responses until there is at
+                    # silence_time_sec silence.
+
+                    def __sc_handle_message(msg) -> bool:
+                        ret = False
+                        if (
+                            msg.source_endpoint
+                            == end_point_default_diagnostic_control
+                        ):
+                            otap_status: OtapScratchPadStatus = OtapScratchPadStatus(
+                                msg.data_payload
+                            )
+
+                            if otap_status.is_valid():
+                                node_just_size: int = 12
+                                print(
+                                    "Node "
+                                    + "{}".format(
+                                        hex(int(msg.source_address)).ljust(
+                                            node_just_size
+                                        )
+                                    )
+                                    + " processed scratchpad CRC:"
+                                    + hex(
+                                        int(otap_status.processedScratchPadCRC)
+                                    )
+                                    + " and seq:"
+                                    + str(
+                                        int.from_bytes(
+                                            otap_status.processedScratchPadSeq,
+                                            byteorder="little",
+                                            signed=False,
+                                        )
+                                    )
+                                    + " stored scratchpad CRC:"
+                                    + hex(int(otap_status.storedScratchPadCRC))
+                                    + " and seq:"
+                                    + str(
+                                        int.from_bytes(
+                                            otap_status.storedScratchSeq,
+                                            byteorder="little",
+                                            signed=False,
+                                        )
+                                    )
+                                )
+                                processed_key = (
+                                    "CRC:"
+                                    + hex(
+                                        int(otap_status.processedScratchPadCRC)
+                                    )
+                                    + " seq:"
+                                    + str(
+                                        int.from_bytes(
+                                            otap_status.processedScratchPadSeq,
+                                            byteorder="little",
+                                            signed=False,
+                                        )
+                                    )
+                                )
+
+                                stored_key = (
+                                    "CRC:"
+                                    + hex(int(otap_status.storedScratchPadCRC))
+                                    + " seq:"
+                                    + str(
+                                        int.from_bytes(
+                                            otap_status.storedScratchSeq,
+                                            byteorder="little",
+                                            signed=False,
+                                        )
+                                    )
+                                )
+
+                                if processed_key not in processed_scratchpads:
+                                    processed_scratchpads[processed_key] = 1
+                                else:
+                                    processed_scratchpads[processed_key] += 1
+
+                                if stored_key not in stored_scratchpads:
+                                    stored_scratchpads[stored_key] = 1
+                                else:
+                                    stored_scratchpads[stored_key] += 1
+                                ret = True
+                        return ret
+
+                    last_msg_received_time = perf_counter()
+                    while (
+                        perf_counter() - last_msg_received_time
+                        < silence_time_sec
+                    ):
+                        data_msg = self.get_message_from_data_queue()
+
+                        if data_msg is not None:
+                            if __sc_handle_message(data_msg) is True:
+                                last_msg_received_time = perf_counter()
+
+                        if data_msg is None:
+                            default_sleep_time: float = 0.1
+                            sleep(default_sleep_time)
+
+                    def __print_dict_key_ratios(
+                        itemsDict: dict, dictName: str
+                    ) -> None:
+                        key_len: int = 18
+                        print("")
+                        print("{} stats".format(dictName))
+                        if len(itemsDict) > 0:
+                            value_sum: int = 0
+                            for val in itemsDict.values():
+                                value_sum += val
+
+                            for key in itemsDict:
+                                print(
+                                    "{}".ljust(key_len).format(key)
+                                    + "{} node(s) ".ljust(4).format(
+                                        itemsDict[key]
+                                    )
+                                    + "({}%)".format(
+                                        int((itemsDict[key] / value_sum) * 100)
+                                    )
+                                )
+                            print("Total {} nodes".format(value_sum))
+                        else:
+                            print("{} has no items")
+
+                    # Calculate result
+                    # Print result to console
+                    __print_dict_key_ratios(processed_scratchpads, "Processed")
+                    __print_dict_key_ratios(stored_scratchpads, "Stored")
+
+                    print("")
+                    print("--")
+
+                    if len(stored_scratchpads) == 1:
+
+                        first_key: str = list(stored_scratchpads.keys())[0]
+                        print(
+                            "All nodes of network has firmware '{}' stored.".format(
+                                first_key
+                            )
+                        )
+                        # Assume that this firmware is to be updated to all
+                        # nodes
+                        nodes_having_stored_scratch: int = stored_scratchpads[
+                            first_key
+                        ]
+                        nodes_using_stored_scratch_pad: int = 0
+                        if first_key in processed_scratchpads:
+                            nodes_using_stored_scratch_pad = processed_scratchpads[
+                                first_key
+                            ]
+
+                        print(
+                            "Firmware '{}' is processed by {} node(s) ({}%).".format(
+                                first_key,
+                                nodes_using_stored_scratch_pad,
+                                int(
+                                    (
+                                        nodes_using_stored_scratch_pad
+                                        / nodes_having_stored_scratch
+                                    )
+                                    * 100
+                                ),
+                            )
+                        )
+
+                        if (
+                            nodes_using_stored_scratch_pad
+                            != nodes_having_stored_scratch
+                            and nodes_having_stored_scratch > 0
+                        ):
+                            print("Network is ready for update command.")
+
+                    else:
+                        print(
+                            "More than one firmware detected. "
+                            "Network is distributing firmware."
+                        )
+                else:
+                    print("Command FAIL [{}]".format(response_bcast.res))
+            else:
+                print("Command FAIL due timeout.")
+
+        else:
+            print("Command FAIL due invalid gw or sink selection.")
+        print("")
+
+    def create_scratchpad_status_query_msg(
+        self, gateway_id, node_address, sink_id
+    ):
+        message = self.mqtt_topics.request_message(
+            "send_data",
+            **dict(
+                sink_id=sink_id,
+                gw_id=gateway_id,
+                dest_add=node_address,
+                src_ep=end_point_this_source,
+                dst_ep=end_point_default_diagnostic_control,
+                qos=1,
+                payload=cmd_MSAP_scratchpad_status,
+            ),
+        )
+        message["qos"] = MQTT_QOS_options.exactly_once.value
+        return message
+
     def do_scratchpad_status(self, line) -> None:
         """
         Retrieves the scratchpad status from the sink
@@ -1181,9 +1446,6 @@ class GatewayCliCommands(cmd.Cmd):
                         gw_id=gateway_id,
                     ),
                 )
-
-                print(message["data"])
-                return
 
                 message["qos"] = MQTT_QOS_options.exactly_once.value
                 self.request_queue.put(message)

@@ -301,7 +301,7 @@ class GatewayShell(GatewayCliCommands):
         if timeout:
             response_good: bool = False
 
-            while not response_good:
+            while response_good is False:
                 try:
                     queue_poll_time_sec: int = 1
                     message = self.response_queue.get(
