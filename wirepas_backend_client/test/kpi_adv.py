@@ -285,7 +285,15 @@ class ReliabilityManager(TestManager):
             self.logger.info(message.serialize())
 
             for key, value in message.apdu["adv"].items():
-                print("DECODE: ", key, value)
+                self.logger.info(
+                    "tag: {0}/ tag sequence: {1} / "
+                    "node: {2} / node sequence: {3}".format(
+                        key,
+                        value,
+                        message.source_address,
+                        message.apdu["adv_message_count"],
+                    )
+                )
 
             if self.storage_queue:
                 self.storage_queue.put(message)

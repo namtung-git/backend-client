@@ -140,7 +140,7 @@ class Reliability(object):
         # creates an event
         event = dict(
             tag_sequence=tag_sequence,
-            timestamp=datetime.datetime.fromtimestamp(timestamp / 1000),
+            timestamp=datetime.datetime.fromtimestamp(timestamp / 1e3),
         )
 
         # add tags to index
@@ -176,8 +176,9 @@ class Reliability(object):
         all_sequences_in_tag_event = self._index[tag_address]["all_sequence"]
 
         # Be sure the stack is alway the same length
-        if len(tag_event) > Reliability.maxi_events_size:
+        while len(tag_event) > Reliability.maxi_events_size:
             self._index[tag_address]["events"].pop(0)
+            self._index[tag_address]["all_sequence"].pop(0)
 
         if len(tag_event) == Reliability.maxi_events_size:
             middle_one = self._index[tag_address]["events"][
@@ -199,6 +200,10 @@ class Reliability(object):
                     pass
                 else:
                     self._missed_packet_tag.append([tag_address, middle_one])
+                    self.logger.debug(
+                        "[MISSED]adding tag: {0} / {1} to missed packet result"
+                        "".format(tag_address, middle_one)
+                    )
             except (KeyError, IndexError) as e:
                 self.logger.debug("got exception {}".format(e))
 
@@ -247,8 +252,8 @@ class Reliability(object):
                 )
                 not in Reliability.sequence_delta
             ):
-                self.logger.debug(
-                    "[MISSED] adding router: {0} / {1} to missed packet router"
+                self.logger.info(
+                    "[MISSED] adding router: {0} / {1} to missed packet result"
                     "".format(router_address, event)
                 )
                 self._missed_packet_router.append(
