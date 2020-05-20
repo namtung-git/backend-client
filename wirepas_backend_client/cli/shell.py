@@ -377,7 +377,7 @@ class GatewayShell(GatewayCliCommands):
         self._raise_errors = not self._raise_errors
         print("raise errors: {}".format(self._raise_errors))
 
-    def do_set_loop_iterations(self, line):
+    def disabled_do_set_loop_iterations(self, line):
         """
         Sets the amount of loop iterations
         """
@@ -391,7 +391,7 @@ class GatewayShell(GatewayCliCommands):
             "track loop iterations: {}".format(self._tracking_loop_iterations)
         )
 
-    def do_set_loop_timeout(self, line):
+    def disabled_do_set_loop_timeout(self, line):
         """
         Sets the loop evaluation time
         """
@@ -443,15 +443,15 @@ class GatewayShell(GatewayCliCommands):
         """
         return self.do_bye(line)
 
-    def do_eof(self, line):
+    def disabled_do_eof(self, line):
         """ Captures CTRL-D """
         return self.do_bye(line)
 
-    def do_EOF(self, line):
+    def disabled_do_EOF(self, line):
         """ Captures CTRL-D """
         return self.do_bye(line)
 
-    def do_record(self, arg="shell-session.record"):
+    def disabled_do_record(self, arg="shell-session.record"):
         """
         Saves typed commands in a file for later playback
 
@@ -461,7 +461,7 @@ class GatewayShell(GatewayCliCommands):
         self.close()
         self._file = open(arg, "w")
 
-    def do_playback(self, arg="shell-session.record"):
+    def disabled_do_playback(self, arg="shell-session.record"):
         """
         Plays commands from a file
 

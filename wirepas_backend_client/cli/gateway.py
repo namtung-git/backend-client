@@ -212,7 +212,7 @@ class GatewayCliCommands(cmd.Cmd):
         print("display pending events: {}".format(self._display_pending_data))
 
     # track status
-    def do_track_devices(self, line):
+    def disabled_do_track_devices(self, line):
         """
         Displays the current selected devices for the desired amount of time.
 
@@ -316,7 +316,7 @@ class GatewayCliCommands(cmd.Cmd):
 
         # commands
 
-    def do_ls(self, line):
+    def disabled_do_ls(self, line):
         """
         See list
         """
