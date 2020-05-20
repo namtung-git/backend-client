@@ -186,7 +186,7 @@ class GatewayCliCommands(cmd.Cmd):
         if self._display_pending_event:
             self.on_print(message, "Pending event message <<")
 
-    def do_toggle_print_pending_responses(self, line):
+    def disabled_do_toggle_print_pending_responses(self, line):
         """
         When True prints any response that is going to be discarded
         """
@@ -197,14 +197,14 @@ class GatewayCliCommands(cmd.Cmd):
             )
         )
 
-    def do_toggle_print_pending_events(self, line):
+    def disabled_do_toggle_print_pending_events(self, line):
         """
         When True prints any event that is going to be discarded
         """
         self._display_pending_event = not self._display_pending_event
         print("display pending events: {}".format(self._display_pending_event))
 
-    def do_toggle_print_pending_data(self, line):
+    def disabled_do_toggle_print_pending_data(self, line):
         """
         When True prints any data that is going to be discarded
         """

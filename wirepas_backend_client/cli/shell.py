@@ -344,35 +344,35 @@ class GatewayShell(GatewayCliCommands):
         """
         self._shared_state["devices"] = self.device_manager
 
-    def do_toggle_print_minimal_information(self, line):
+    def disabled_do_toggle_print_minimal_information(self, line):
         """
         Switches the byte prints as hex strings or python byte strings
         """
         self._minimal_prints = not self._minimal_prints
         print("Minimal prints: {}".format(self._minimal_prints))
 
-    def do_toggle_byte_print(self, line):
+    def disabled_do_toggle_byte_print(self, line):
         """
         Switches the byte prints as hex strings or python byte strings
         """
         self._bstr_as_hex = not self._bstr_as_hex
         print("hex prints: {}".format(self._bstr_as_hex))
 
-    def do_toggle_pretty_print(self, line):
+    def disabled_do_toggle_pretty_print(self, line):
         """
         Switches between json or pretty print
         """
         self._pretty_prints = not self._pretty_prints
         print("pretty prints: {}".format(self._pretty_prints))
 
-    def do_toggle_silent_loop(self, line):
+    def disabled_do_toggle_silent_loop(self, line):
         """
         Enables/disables the tracking loop verbosity
         """
         self._silent_loop = not self._silent_loop
         print("track loop prints: {}".format(self._silent_loop))
 
-    def do_toggle_raise_errors(self, line):
+    def disabled_do_toggle_raise_errors(self, line):
         """ Sets the raise error toggle """
         self._raise_errors = not self._raise_errors
         print("raise errors: {}".format(self._raise_errors))
