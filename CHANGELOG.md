@@ -1,5 +1,29 @@
 # Changelog
 
+## [v1.3.5-rc.2](https://github.com/wirepas/backend-client/tree/v1.3.5-rc.2) (2020-05-20)
+
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v.1.3.5-rc.1...v1.3.5-rc.2)
+
+**Closed issues:**
+
+- Disable currently broken commands from CLI [\#309](https://github.com/wirepas/backend-client/issues/309)
+- Implement global scratchpad\_update command that also ask nodes to take firmware into use. [\#306](https://github.com/wirepas/backend-client/issues/306)
+- Implement scratchpad\_check command [\#303](https://github.com/wirepas/backend-client/issues/303)
+
+**Merged pull requests:**
+
+- Removed sink selection from  scratchpad\_ commands.  [\#313](https://github.com/wirepas/backend-client/pull/313) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- Console printout improvements to scractchpad\_check\_all [\#312](https://github.com/wirepas/backend-client/pull/312) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- \#309 [\#311](https://github.com/wirepas/backend-client/pull/311) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- \#308 [\#310](https://github.com/wirepas/backend-client/pull/310) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- Fix the problem that the missed packet calculation stopped after about [\#307](https://github.com/wirepas/backend-client/pull/307) ([PeiChunyan](https://github.com/PeiChunyan))
+- \#303 \#304 [\#305](https://github.com/wirepas/backend-client/pull/305) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- Print black version [\#299](https://github.com/wirepas/backend-client/pull/299) ([PeiChunyan](https://github.com/PeiChunyan))
+
+## [v.1.3.5-rc.1](https://github.com/wirepas/backend-client/tree/v.1.3.5-rc.1) (2020-05-13)
+
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v.1.3.5.rc.1...v.1.3.5-rc.1)
+
 ## [v.1.3.5.rc.1](https://github.com/wirepas/backend-client/tree/v.1.3.5.rc.1) (2020-05-13)
 
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v.1.3.4-rc.5...v.1.3.5.rc.1)
@@ -77,7 +101,6 @@
 **Merged pull requests:**
 
 - Fixed broken link [\#260](https://github.com/wirepas/backend-client/pull/260) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
-- Merge \#250 [\#259](https://github.com/wirepas/backend-client/pull/259) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 
 ## [v1.3.2](https://github.com/wirepas/backend-client/tree/v1.3.2) (2020-02-14)
 
@@ -89,6 +112,7 @@
 
 **Merged pull requests:**
 
+- Merge \#250 [\#259](https://github.com/wirepas/backend-client/pull/259) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Fix comma issue [\#257](https://github.com/wirepas/backend-client/pull/257) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Fix list appending issue [\#256](https://github.com/wirepas/backend-client/pull/256) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Black linter fixes round 1 [\#254](https://github.com/wirepas/backend-client/pull/254) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
