@@ -987,7 +987,8 @@ class GatewayCliCommands(cmd.Cmd):
         if self.gateway and self.sink:
             pass
         else:
-            self._set_target()
+            print("Command FAIL. Set sink first")
+            return
 
         if self.gateway and self.sink:
             gateway_id = self.gateway.device_id
@@ -1080,7 +1081,7 @@ class GatewayCliCommands(cmd.Cmd):
                                     )
 
                                     headerStr += addFieldFormatterToStr(
-                                        "Stack SW", stack_version_just_size,
+                                        "Stack SW", stack_version_just_size
                                     )
 
                                     headerStr += addFieldFormatterToStr(
@@ -1160,6 +1161,8 @@ class GatewayCliCommands(cmd.Cmd):
 
                                 print(valuesStr)
 
+                                seq_field_len: int = 3
+
                                 processed_key = (
                                     "CRC: {} Stack SW: {} stack proc seq:{}"
                                     " App SW: {} app proc seq:{}".format(
@@ -1167,11 +1170,19 @@ class GatewayCliCommands(cmd.Cmd):
                                             otap_status.processedScratchPadCRC
                                         ),
                                         getStackSwVersionStr(otap_status),
-                                        otap_status.processedScratchPadSeq[0],
+                                        addFieldFormatterToStr(
+                                            otap_status.processedScratchPadSeq[
+                                                0
+                                            ],
+                                            seq_field_len,
+                                        ),
                                         getAppSwVersionStr(otap_status),
-                                        otap_status.applicationProcessedScratchPadSeq[
-                                            0
-                                        ],
+                                        addFieldFormatterToStr(
+                                            otap_status.applicationProcessedScratchPadSeq[
+                                                0
+                                            ],
+                                            seq_field_len,
+                                        ),
                                     )
                                 )
 
@@ -1180,7 +1191,10 @@ class GatewayCliCommands(cmd.Cmd):
                                     "{}".format(
                                         hex(otap_status.storedScratchPadCRC),
                                         getStackSwVersionStr(otap_status),
-                                        otap_status.storedScratchSeq[0],
+                                        addFieldFormatterToStr(
+                                            otap_status.storedScratchSeq[0],
+                                            seq_field_len,
+                                        ),
                                     )
                                 )
 
@@ -1270,12 +1284,17 @@ class GatewayCliCommands(cmd.Cmd):
                     else:
                         print("More than one firmware detected. ")
                 else:
-                    print("Command FAIL [{}]".format(response_bcast.res))
+                    print(
+                        "Command FAIL broadcast cmd status:[{}] sink "
+                        "cmd status:[{}]".format(
+                            response_bcast.res, response_sink.res
+                        )
+                    )
             else:
                 print("Command FAIL due timeout.")
 
         else:
-            print("Command FAIL due invalid gw or sink selection.")
+            print("Command FAIL. Set sink first")
         print("")
 
     def create_scratchpad_status_query_msg(
@@ -1451,7 +1470,8 @@ class GatewayCliCommands(cmd.Cmd):
             if self.gateway and self.sink:
                 pass
             else:
-                self._set_target()
+                print("Command FAIL. Set sink first")
+                return
 
             if self.gateway and self.sink:
                 gateway_id = self.gateway.device_id
@@ -1522,7 +1542,11 @@ class GatewayCliCommands(cmd.Cmd):
                                             ] += 1
                                         ret = True
                                     else:
-                                        pass
+                                        print(
+                                            "Node {} responded nok".format(
+                                                msg.source_address
+                                            )
+                                        )
 
                                 return ret
 
@@ -1632,7 +1656,6 @@ class GatewayCliCommands(cmd.Cmd):
         if all_msgs_ok:
             ret = True
         else:
-            print("all msgs nok")
             ret = False
         return ret
 
@@ -1760,7 +1783,8 @@ class GatewayCliCommands(cmd.Cmd):
         if self.gateway and self.sink:
             pass
         else:
-            self._set_target()
+            print("Command FAIL. Set sink first")
+            return
 
         if self.gateway and self.sink:
             gateway_id = self.gateway.device_id
@@ -1800,7 +1824,8 @@ class GatewayCliCommands(cmd.Cmd):
         if self.gateway and self.sink:
             pass
         else:
-            self._set_target()
+            print("Command FAIL. Set sink first")
+            return
 
         if self.gateway and self.sink:
             gateway_id = self.gateway.device_id
@@ -1869,7 +1894,8 @@ class GatewayCliCommands(cmd.Cmd):
             if self.gateway and self.sink:
                 pass
             else:
-                self._set_target()
+                print("Command FAIL. Set sink first")
+                return
 
             if self.gateway and self.sink:
 
@@ -1929,7 +1955,7 @@ class GatewayCliCommands(cmd.Cmd):
                 print("Command FAIL due invalid gw or sink selection.")
         else:
             print("Command FAIL. Not all expected arguments given.")
-            self.do_help("scratchpad_upload", args)
+            self.do_help("scratchpad_upload_to_sink", args)
 
     def _build_default_mqtt_request_options(self):
         options = dict(

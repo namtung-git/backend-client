@@ -19,7 +19,7 @@ class MsapUpdateReq:
     def __init__(self):
         pass
 
-    def setCountDown(self, seq: int,) -> bool:
+    def setCountDown(self, seq: int) -> bool:
         ret: bool = False
         min_val: int = 10  # MSAP update
         max_val: int = 32767  # MSAP update
@@ -69,7 +69,7 @@ class MsapUpdateResp:
 
             if message_len == msap_update_msg_len:
                 fields = struct.unpack(fmt, data_bytes)
-                (self.type, self.msgLen, self.time,) = fields  # LSB, MSB
+                (self.type, self.msgLen, self.time) = fields  # LSB, MSB
 
                 if self.type == cmdMsapUpdateResp:
                     self.__is_valid = True

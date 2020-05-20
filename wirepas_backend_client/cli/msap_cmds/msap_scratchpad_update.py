@@ -18,7 +18,7 @@ class MsapScratchpadUpdateReq:
     def __init__(self):
         pass
 
-    def setScrSequence(self, seq: int,) -> bool:
+    def setScrSequence(self, seq: int) -> bool:
         ret: bool = False
         min_seq: int = 0  # OTAP spec
         max_seq: int = 255  # OTAP spec
@@ -66,7 +66,7 @@ class MsapScratchpadUpdateResp:
 
             if message_len == 1:
                 fields = struct.unpack(fmt, data_bytes)
-                (self.type, self.msgLen, self.scrSequence,) = fields
+                (self.type, self.msgLen, self.scrSequence) = fields
 
                 if self.type == cmdOtapMsapScratchpadUpdateResp:
                     self.__is_valid = True

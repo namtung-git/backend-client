@@ -51,7 +51,7 @@ class MsapEndResp:
 
             if message_len == 0:
                 fields = struct.unpack(fmt, data_bytes)
-                (self.type, self.msgLen,) = fields
+                (self.type, self.msgLen) = fields
 
                 if self.type == cmdMsapEndResp:
                     self.__is_valid = True
