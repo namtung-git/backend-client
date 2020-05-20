@@ -1,8 +1,32 @@
 import struct
 
+cmdMSapScratchPadStatusReq: bytes = bytes([0x19])
+cmdMSapScratchPadStatusResp: bytes = bytes([0x99])
 
-class OtapScratchPadStatus:
+
+class MsapScratchPadStatusReq:
     __is_valid: bool = False
+
+    @staticmethod
+    def getType() -> int:
+        return cmdMSapScratchPadStatusReq
+
+    def __init__(self):
+        pass
+
+    def toBytes(self) -> bytes:
+        ret: bytes = cmdMSapScratchPadStatusReq + bytes(
+            [0x00]
+        )  # WP-RM-117, V5.0.A
+        return ret
+
+
+class MsapScratchPadStatusResp:
+    __is_valid: bool = False
+
+    @staticmethod
+    def getType() -> int:
+        return cmdMSapScratchPadStatusResp
 
     def __init__(self, data_bytes):
         message_len_short: int = 24  # WP-RM-117, V5.0.A

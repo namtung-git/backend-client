@@ -16,7 +16,13 @@ import json
 import threading
 from time import sleep, perf_counter
 
-from .otap_status import OtapScratchPadStatus
+from .msap_cmds import MsapEndReq, MsapEndResp
+from .msap_cmds import MsapBeginReq, MsapBeginResp
+from .msap_cmds import MsapCancelReq, MsapCancelResp
+from .msap_cmds import MsapScratchPadStatusReq, MsapScratchPadStatusResp
+from .msap_cmds import MsapScratchpadUpdateReq, MsapScratchpadUpdateResp
+from .msap_cmds import MsapUpdateReq, MsapUpdateResp
+
 from wirepas_messaging.gateway.api import GatewayState
 from wirepas_messaging.gateway.api import GatewayResultCode
 
@@ -31,9 +37,36 @@ from ..mesh.gateway import Gateway
 end_point_this_source: int = 255
 end_point_default_diagnostic_control: int = 240
 address_broadcast: int = 4294967295
-cmd_MSAP_scratchpad_status: bytes = bytes.fromhex(
-    "1900"
-)  # MSAP scratchpad status
+maxPacketSizeBytes: int = 102
+versionFmtFieldWidthStr: str = "x.x.x.xx "
+
+
+def printItem(itemName: str, fieldWidth: int) -> None:
+    print("{}".format(itemName).ljust(fieldWidth))
+
+
+def addFieldFormatterToStr(itemName: str, fieldWidth: int) -> str:
+    return "{}".format(itemName).ljust(fieldWidth)
+
+
+def getStackSwVersionStr(otap_status: MsapScratchPadStatusResp) -> str:
+    s = "{}.{}.{}.{}".format(
+        otap_status.FWmajorVer[0],
+        otap_status.FWminorVer[0],
+        otap_status.FWmaintVer[0],
+        otap_status.FWdevelVer[0],
+    )
+    return s.ljust(len(versionFmtFieldWidthStr))
+
+
+def getAppSwVersionStr(otap_status: MsapScratchPadStatusResp) -> str:
+    s = "{}.{}.{}.{}".format(
+        otap_status.appMajorVer[0],
+        otap_status.appMinorVer[0],
+        otap_status.appMaintVer[0],
+        otap_status.appDevelVer[0],
+    )
+    return s.ljust(len(versionFmtFieldWidthStr))
 
 
 class GatewayCliCommands(cmd.Cmd):
@@ -940,12 +973,13 @@ class GatewayCliCommands(cmd.Cmd):
         )
         print("")
 
-    def do_scratchpad_check(self, line) -> None:
+    def do_scratchpad_check_all(self, line) -> None:
         """
-        Checks nodes scratchpad status connected to current selected sink
+        Checks nodes scratchpad status connected to current selected sink.
+        Returns also sink values.
 
         Usage:
-            scratchpad_check
+            scratchpad_check_all
 
         Returns:
             Prints status of nodes behind selected sink to console.
@@ -976,12 +1010,14 @@ class GatewayCliCommands(cmd.Cmd):
 
             processed_scratchpads: dict = dict()
             stored_scratchpads: dict = dict()
+            node_statuses: dict = dict()
+            header_printed: bool = False
 
             response_bcast = self.wait_for_answer(
                 gateway_id, broad_cast_message
             )
-            response_sink = self.wait_for_answer(gateway_id, sink_message)
 
+            response_sink = self.wait_for_answer(gateway_id, sink_message)
             if response_bcast is not None and response_sink is not None:
                 if (
                     response_bcast.res == GatewayResultCode.GW_RES_OK
@@ -993,76 +1029,158 @@ class GatewayCliCommands(cmd.Cmd):
                         "threshold is {} secs.".format(silence_time_sec)
                     )
 
+                    print("")
+                    print("Nodes info in order of appearance ----------------")
+
                     # Collect responses. Collect responses until there is at
                     # silence_time_sec silence.
 
-                    def __sc_handle_message(msg) -> bool:
+                    def __sc_handle_message(
+                        msg, header_is_printed: bool
+                    ) -> bool:
                         ret = False
                         if (
                             msg.source_endpoint
                             == end_point_default_diagnostic_control
                         ):
-                            otap_status: OtapScratchPadStatus = OtapScratchPadStatus(
+                            otap_status: MsapScratchPadStatusResp = MsapScratchPadStatusResp(
                                 msg.data_payload
                             )
 
                             if otap_status.is_valid():
-                                node_just_size: int = 12
-                                print(
-                                    "Node "
-                                    + "{}".format(
-                                        hex(int(msg.source_address)).ljust(
-                                            node_just_size
-                                        )
+                                address_just_size: int = 18
+                                stored_seq_just_size: int = 12
+                                crc_just_size: int = 12
+                                stack_proc_seq_just_size: int = 16
+                                stack_version_just_size: int = 11
+                                app_proc_sec_just_size: int = 14
+                                app_version_just_size: int = 11
+                                fw_aread_id_just_size: int = 24
+                                app_aread_id_just_size: int = 24
+
+                                if header_is_printed is False:
+                                    headerStr: str = addFieldFormatterToStr(
+                                        "Address", address_just_size
                                     )
-                                    + " processed scratchpad CRC:"
-                                    + hex(
-                                        int(otap_status.processedScratchPadCRC)
+                                    headerStr += addFieldFormatterToStr(
+                                        "Stored seq", stored_seq_just_size
                                     )
-                                    + " and seq:"
-                                    + str(
-                                        int.from_bytes(
-                                            otap_status.processedScratchPadSeq,
-                                            byteorder="little",
-                                            signed=False,
-                                        )
+
+                                    headerStr += addFieldFormatterToStr(
+                                        "Stored crc", crc_just_size
                                     )
-                                    + " stored scratchpad CRC:"
-                                    + hex(int(otap_status.storedScratchPadCRC))
-                                    + " and seq:"
-                                    + str(
-                                        int.from_bytes(
-                                            otap_status.storedScratchSeq,
-                                            byteorder="little",
-                                            signed=False,
-                                        )
+
+                                    headerStr += addFieldFormatterToStr(
+                                        "Stack proc seq",
+                                        stack_proc_seq_just_size,
                                     )
+
+                                    headerStr += addFieldFormatterToStr(
+                                        "Proc crc", crc_just_size
+                                    )
+
+                                    headerStr += addFieldFormatterToStr(
+                                        "Stack SW", stack_version_just_size,
+                                    )
+
+                                    headerStr += addFieldFormatterToStr(
+                                        "Proc firmware area id",
+                                        fw_aread_id_just_size,
+                                    )
+
+                                    headerStr += addFieldFormatterToStr(
+                                        "App proc seq", app_proc_sec_just_size
+                                    )
+
+                                    headerStr += addFieldFormatterToStr(
+                                        "App SW", app_version_just_size
+                                    )
+
+                                    headerStr += addFieldFormatterToStr(
+                                        "Proc application area id",
+                                        app_aread_id_just_size,
+                                    )
+
+                                    print("")
+                                    print(headerStr)
+
+                                valuesStr: str = addFieldFormatterToStr(
+                                    msg.source_address, address_just_size
                                 )
+                                valuesStr += addFieldFormatterToStr(
+                                    otap_status.storedScratchSeq[0],
+                                    stored_seq_just_size,
+                                )
+
+                                valuesStr += addFieldFormatterToStr(
+                                    hex(otap_status.storedScratchPadCRC),
+                                    crc_just_size,
+                                )
+
+                                valuesStr += addFieldFormatterToStr(
+                                    otap_status.processedScratchPadSeq[0],
+                                    stack_proc_seq_just_size,
+                                )
+
+                                valuesStr += addFieldFormatterToStr(
+                                    hex(otap_status.processedScratchPadCRC),
+                                    crc_just_size,
+                                )
+
+                                valuesStr += addFieldFormatterToStr(
+                                    getStackSwVersionStr(otap_status),
+                                    stack_version_just_size,
+                                )
+
+                                valuesStr += addFieldFormatterToStr(
+                                    hex(otap_status.processedFirmwareAreaId),
+                                    fw_aread_id_just_size,
+                                )
+
+                                valuesStr += addFieldFormatterToStr(
+                                    otap_status.applicationProcessedScratchPadSeq[
+                                        0
+                                    ],
+                                    app_proc_sec_just_size,
+                                )
+
+                                valuesStr += addFieldFormatterToStr(
+                                    getAppSwVersionStr(otap_status),
+                                    app_version_just_size,
+                                )
+
+                                valuesStr += addFieldFormatterToStr(
+                                    hex(
+                                        otap_status.processedApplicationAreaId
+                                    ),
+                                    app_aread_id_just_size,
+                                )
+
+                                node_statuses[msg.source_address] = valuesStr
+
+                                print(valuesStr)
+
                                 processed_key = (
-                                    "CRC:"
-                                    + hex(
-                                        int(otap_status.processedScratchPadCRC)
-                                    )
-                                    + " seq:"
-                                    + str(
-                                        int.from_bytes(
-                                            otap_status.processedScratchPadSeq,
-                                            byteorder="little",
-                                            signed=False,
-                                        )
+                                    "CRC: {} Stack SW: {} stack proc seq:{}"
+                                    " App SW: {} app proc seq:{}".format(
+                                        hex(
+                                            otap_status.processedScratchPadCRC
+                                        ),
+                                        getStackSwVersionStr(otap_status),
+                                        otap_status.processedScratchPadSeq[0],
+                                        getAppSwVersionStr(otap_status),
+                                        otap_status.applicationProcessedScratchPadSeq[
+                                            0
+                                        ],
                                     )
                                 )
 
                                 stored_key = (
-                                    "CRC:"
-                                    + hex(int(otap_status.storedScratchPadCRC))
-                                    + " seq:"
-                                    + str(
-                                        int.from_bytes(
-                                            otap_status.storedScratchSeq,
-                                            byteorder="little",
-                                            signed=False,
-                                        )
+                                    "CRC: {} Stack SW: {} stack stored seq:"
+                                    "{}".format(
+                                        hex(otap_status.storedScratchPadCRC),
+                                        getStackSwVersionStr(otap_status),
+                                        otap_status.storedScratchSeq[0],
                                     )
                                 )
 
@@ -1086,8 +1204,12 @@ class GatewayCliCommands(cmd.Cmd):
                         data_msg = self.get_message_from_data_queue()
 
                         if data_msg is not None:
-                            if __sc_handle_message(data_msg) is True:
+                            if (
+                                __sc_handle_message(data_msg, header_printed)
+                                is True
+                            ):
                                 last_msg_received_time = perf_counter()
+                                header_printed = True
 
                         if data_msg is None:
                             default_sleep_time: float = 0.1
@@ -1096,7 +1218,7 @@ class GatewayCliCommands(cmd.Cmd):
                     def __print_dict_key_ratios(
                         itemsDict: dict, dictName: str
                     ) -> None:
-                        key_len: int = 18
+                        key_len: int = 80
                         print("")
                         print("{} stats".format(dictName))
                         if len(itemsDict) > 0:
@@ -1105,10 +1227,14 @@ class GatewayCliCommands(cmd.Cmd):
                                 value_sum += val
 
                             for key in itemsDict:
+                                a = "{}".format(key)
+                                node_count_field_width: int = 4
                                 print(
-                                    "{}".ljust(key_len).format(key)
-                                    + "{} node(s) ".ljust(4).format(
-                                        itemsDict[key]
+                                    a.ljust(key_len)
+                                    + " running on {} node(s) ".format(
+                                        str(itemsDict[key]).ljust(
+                                            node_count_field_width
+                                        )
                                     )
                                     + "({}%)".format(
                                         int((itemsDict[key] / value_sum) * 100)
@@ -1120,6 +1246,12 @@ class GatewayCliCommands(cmd.Cmd):
 
                     # Calculate result
                     # Print result to console
+                    print("")
+                    print("Nodes info in sorted order -----------------------")
+                    print("")
+                    for key in sorted(node_statuses):
+                        print(node_statuses[key])
+
                     __print_dict_key_ratios(processed_scratchpads, "Processed")
                     __print_dict_key_ratios(stored_scratchpads, "Stored")
 
@@ -1134,43 +1266,9 @@ class GatewayCliCommands(cmd.Cmd):
                                 first_key
                             )
                         )
-                        # Assume that this firmware is to be updated to all
-                        # nodes
-                        nodes_having_stored_scratch: int = stored_scratchpads[
-                            first_key
-                        ]
-                        nodes_using_stored_scratch_pad: int = 0
-                        if first_key in processed_scratchpads:
-                            nodes_using_stored_scratch_pad = processed_scratchpads[
-                                first_key
-                            ]
-
-                        print(
-                            "Firmware '{}' is processed by {} node(s) ({}%).".format(
-                                first_key,
-                                nodes_using_stored_scratch_pad,
-                                int(
-                                    (
-                                        nodes_using_stored_scratch_pad
-                                        / nodes_having_stored_scratch
-                                    )
-                                    * 100
-                                ),
-                            )
-                        )
-
-                        if (
-                            nodes_using_stored_scratch_pad
-                            != nodes_having_stored_scratch
-                            and nodes_having_stored_scratch > 0
-                        ):
-                            print("Network is ready for update command.")
 
                     else:
-                        print(
-                            "More than one firmware detected. "
-                            "Network is distributing firmware."
-                        )
+                        print("More than one firmware detected. ")
                 else:
                     print("Command FAIL [{}]".format(response_bcast.res))
             else:
@@ -1182,7 +1280,10 @@ class GatewayCliCommands(cmd.Cmd):
 
     def create_scratchpad_status_query_msg(
         self, gateway_id, node_address, sink_id
-    ):
+    ) -> object:
+
+        req: MsapScratchPadStatusReq = MsapScratchPadStatusReq()
+
         message = self.mqtt_topics.request_message(
             "send_data",
             **dict(
@@ -1192,18 +1293,465 @@ class GatewayCliCommands(cmd.Cmd):
                 src_ep=end_point_this_source,
                 dst_ep=end_point_default_diagnostic_control,
                 qos=1,
-                payload=cmd_MSAP_scratchpad_status,
+                payload=req.toBytes(),
             ),
         )
         message["qos"] = MQTT_QOS_options.exactly_once.value
         return message
 
-    def do_scratchpad_status(self, line) -> None:
+    def create_scratchpad_msap_update_msg(
+        self, gateway_id, node_address, sink_id, seq_number: int
+    ) -> object:
+
+        message: object = None
+
+        req: MsapScratchpadUpdateReq = MsapScratchpadUpdateReq()
+        if req.setScrSequence(seq_number):
+            if req.is_valid():
+                message = self.mqtt_topics.request_message(
+                    "send_data",
+                    **dict(
+                        sink_id=sink_id,
+                        gw_id=gateway_id,
+                        dest_add=node_address,
+                        src_ep=end_point_this_source,
+                        dst_ep=end_point_default_diagnostic_control,
+                        qos=1,
+                        payload=req.toBytes(),
+                    ),
+                )
+                message["qos"] = MQTT_QOS_options.exactly_once.value
+        return message
+
+    def create_msap_cancel_msg(self, gateway_id, node_address, sink_id):
+        message: object = None
+
+        req: MsapCancelReq = MsapCancelReq()
+        if req.is_valid():
+            message = self.mqtt_topics.request_message(
+                "send_data",
+                **dict(
+                    sink_id=sink_id,
+                    gw_id=gateway_id,
+                    dest_add=node_address,
+                    src_ep=end_point_this_source,
+                    dst_ep=end_point_default_diagnostic_control,
+                    qos=1,
+                    payload=req.toBytes(),
+                ),
+            )
+            message["qos"] = MQTT_QOS_options.exactly_once.value
+        return message
+
+    def create_msap_update_msg(
+        self, gateway_id, node_address, sink_id, countdown_secs: int
+    ) -> object:
+
+        message: object = None
+
+        req: MsapUpdateReq = MsapUpdateReq()
+        if req.setCountDown(countdown_secs):
+            if req.is_valid():
+                message = self.mqtt_topics.request_message(
+                    "send_data",
+                    **dict(
+                        sink_id=sink_id,
+                        gw_id=gateway_id,
+                        dest_add=node_address,
+                        src_ep=end_point_this_source,
+                        dst_ep=end_point_default_diagnostic_control,
+                        qos=1,
+                        payload=req.toBytes(),
+                    ),
+                )
+                message["qos"] = MQTT_QOS_options.exactly_once.value
+        return message
+
+    def create_msap_combo_msg(
+        self,
+        gateway_id,
+        node_address,
+        sink_id,
+        countdown_secs: int,
+        seq_number: int,
+    ) -> object:
+
+        # Creates packed combo message where is
+        # cancel + begin + scratchpad_update + end + update
+
+        message: object = None
+
+        cancel_op = MsapCancelReq()
+        begin_op = MsapBeginReq()
+        sc_update_op = MsapScratchpadUpdateReq()
+        sc_update_op.setScrSequence(seq_number)
+
+        end_op = MsapEndReq()
+        update_op = MsapUpdateReq()
+        update_op.setCountDown(countdown_secs)
+
+        if (
+            begin_op.is_valid()
+            and cancel_op.is_valid()
+            and sc_update_op.is_valid()
+            and end_op.is_valid()
+            and update_op.is_valid()
+        ):
+
+            combo_payload: bytes = cancel_op.toBytes() + begin_op.toBytes() + sc_update_op.toBytes() + end_op.toBytes() + update_op.toBytes()
+
+            if len(combo_payload) < maxPacketSizeBytes:
+                message = self.mqtt_topics.request_message(
+                    "send_data",
+                    **dict(
+                        sink_id=sink_id,
+                        gw_id=gateway_id,
+                        dest_add=node_address,
+                        src_ep=end_point_this_source,
+                        dst_ep=end_point_default_diagnostic_control,
+                        qos=1,
+                        payload=combo_payload,
+                    ),
+                )
+                message["qos"] = MQTT_QOS_options.exactly_once.value
+        else:
+            raise ValueError("Parameters for create_msap_combo_msg not ok.")
+        return message
+
+    def do_scratchpad_update_only_nodes(self, line) -> None:
+        """
+        Asks nodes behind sink to take scratchpad into into use.
+        Performs command MSAP_UPDATE (0x05 (WP-RM-117))
+
+        Usage:
+            scratchpad_update_only_nodes <sequence id>.
+
+        Returns:
+            Prints stats of responded nodes to console
+        """
+
+        # Validate arg
+        update_seq_id: int = 0
+
+        args = line.split(" ")
+
+        if len(args) == 1:
+            try:
+                update_seq_id = int(args[0])
+                if 0 <= update_seq_id <= 255:
+                    pass
+                else:
+                    raise ValueError("Seq id not withing limits.")
+            except:
+                # did not work.
+                update_seq_id = -1
+
+        if update_seq_id >= 0:
+
+            if self.gateway and self.sink:
+                pass
+            else:
+                self._set_target()
+
+            if self.gateway and self.sink:
+                gateway_id = self.gateway.device_id
+                sink_id = self.sink.device_id
+
+                node_address = address_broadcast
+                # Send scratchpad status to each nodes in network (use
+                # broadcast).
+                default_countdown_secs: int = 30
+                print(
+                    "Using {} secs as node update countdown time.".format(
+                        default_countdown_secs
+                    )
+                )
+                broadcast_message = self.create_msap_combo_msg(
+                    gateway_id,
+                    node_address,
+                    sink_id,
+                    default_countdown_secs,
+                    update_seq_id,
+                )
+
+                if broadcast_message is not None:
+                    self.request_queue.put(broadcast_message)
+                    responded_nodes_ok: dict = dict()
+
+                    response_bcast = self.wait_for_answer(
+                        gateway_id, broadcast_message
+                    )
+
+                    if response_bcast is not None:
+                        if response_bcast.res == GatewayResultCode.GW_RES_OK:
+                            silence_time_sec: int = default_countdown_secs * 2
+                            print(
+                                "Command OK. Collecting nodes answers. Silence "
+                                "time threshold is {} secs.".format(
+                                    silence_time_sec
+                                )
+                            )
+
+                            # Collect responses. Collect responses until there is at
+                            # silence_time_sec silence.
+
+                            def __sc_handle_msap_update_message(msg) -> bool:
+                                ret = False
+
+                                if (
+                                    msg.source_endpoint
+                                    == end_point_default_diagnostic_control
+                                ):
+
+                                    # We are excepting combo message that has
+                                    # MSAP cancel, begin, sc update, end, update
+                                    # Parse responses accordingly.
+                                    if self.parseMsapUpdateComboResponses(
+                                        msg.data_payload
+                                    ):
+                                        if (
+                                            msg.source_address
+                                            not in responded_nodes_ok
+                                        ):
+                                            responded_nodes_ok[
+                                                msg.source_address
+                                            ] = 1
+                                        else:
+                                            responded_nodes_ok[
+                                                msg.source_address
+                                            ] += 1
+                                        ret = True
+                                    else:
+                                        pass
+
+                                return ret
+
+                            # Poll results
+                            last_msg_received_time = perf_counter()
+                            while (
+                                perf_counter() - last_msg_received_time
+                                < silence_time_sec
+                            ):
+                                data_msg = self.get_message_from_data_queue()
+
+                                if data_msg is not None:
+                                    if (
+                                        __sc_handle_msap_update_message(
+                                            data_msg
+                                        )
+                                        is True
+                                    ):
+                                        last_msg_received_time = perf_counter()
+
+                                if data_msg is None:
+                                    default_sleep_time: float = 0.1
+                                    sleep(default_sleep_time)
+
+                            # Calculate result
+                            # Print result to console
+                            print(
+                                "Ok response received from {} node(s).".format(
+                                    len(responded_nodes_ok)
+                                )
+                            )
+
+                        else:
+                            print(
+                                "Command FAIL [{}]".format(response_bcast.res)
+                            )
+                    else:
+                        print("Command FAIL due timeout.")
+
+            else:
+                print("Command FAIL due invalid gw or sink selection.")
+            print("")
+        else:
+            print("Command FAIL due invalid seq id.")
+
+    @staticmethod
+    def parseMsapUpdateComboResponses(payload: bytes) -> bool:
+        ret: bool = True
+        read_pos: int = 0
+        header_len: int = 2
+        all_msgs_ok: bool = True
+
+        while read_pos <= len(payload) - header_len:
+
+            data_len = int(payload[read_pos + 1])
+            msg_data = payload[read_pos : read_pos + header_len + data_len]
+            if len(msg_data) == data_len + header_len:
+                pass
+            else:
+                print("invalid message. Lengths do not match!")
+                all_msgs_ok = False
+                break
+
+            msg_type = bytes([msg_data[0]])
+            if msg_type == MsapCancelResp.getType():
+                if MsapCancelResp(msg_data).is_valid():
+                    pass
+                else:
+                    print("cancel nok")
+                    all_msgs_ok = False
+                    break
+            elif msg_type == MsapBeginResp.getType():
+                if MsapBeginResp(msg_data).is_valid():
+                    pass
+                else:
+                    print("begin nok")
+                    all_msgs_ok = False
+                    break
+            elif msg_type == MsapScratchpadUpdateResp.getType():
+                if MsapScratchpadUpdateResp(msg_data).is_valid():
+                    pass
+                else:
+                    print("sc update nok")
+                    all_msgs_ok = False
+                    break
+            elif msg_type == MsapEndResp.getType():
+                if MsapEndResp(msg_data).is_valid():
+                    pass
+                else:
+                    print("end nok")
+                    all_msgs_ok = False
+                    break
+            elif msg_type == MsapUpdateResp.getType():
+                if MsapUpdateResp(msg_data).is_valid():
+                    pass
+                else:
+                    print("update nok")
+                    all_msgs_ok = False
+                    break
+            else:
+                print("unknown msg")
+                all_msgs_ok = False
+                break
+
+            read_pos += header_len + data_len
+
+        if all_msgs_ok:
+            ret = True
+        else:
+            print("all msgs nok")
+            ret = False
+        return ret
+
+    def do_send_msap_cancel(self, line: str) -> None:
+        """
+        Sends cancel message to nodes using broadcast.
+
+        Usage:
+            send_msap_cancel
+
+        Returns:
+            Prints stats of responded nodes to console
+        """
+
+        if self.gateway and self.sink:
+            pass
+        else:
+            self._set_target()
+
+        if self.gateway and self.sink:
+            gateway_id = self.gateway.device_id
+            sink_id = self.sink.device_id
+
+            node_address = address_broadcast
+            # Send scratchpad status to each nodes in network (use broadcast).
+
+            broadcast_message = self.create_msap_cancel_msg(
+                gateway_id, node_address, sink_id
+            )
+
+            if broadcast_message is not None:
+                self.request_queue.put(broadcast_message)
+                responded_nodes_ok: dict = dict()
+
+                response_bcast = self.wait_for_answer(
+                    gateway_id, broadcast_message
+                )
+
+                if response_bcast is not None:
+                    if response_bcast.res == GatewayResultCode.GW_RES_OK:
+                        silence_time_sec: int = 10
+                        print(
+                            "Command OK. Collecting nodes answers. Silence "
+                            "time threshold is {} secs.".format(
+                                silence_time_sec
+                            )
+                        )
+
+                        # Collect responses. Collect responses until
+                        # there is at least silence_time_sec silence.
+
+                        def __sc_handle_msap_cancel_message(msg) -> bool:
+                            ret = False
+
+                            if (
+                                msg.source_endpoint
+                                == end_point_default_diagnostic_control
+                            ):
+
+                                msap_cancel_resp: MsapCancelResp = MsapCancelResp(
+                                    msg.data_payload
+                                )
+
+                                if msap_cancel_resp.is_valid():
+                                    if (
+                                        msg.source_address
+                                        not in responded_nodes_ok
+                                    ):
+                                        responded_nodes_ok[
+                                            msg.source_address
+                                        ] = 1
+                                    else:
+                                        responded_nodes_ok[
+                                            msg.source_address
+                                        ] += 1
+                                    ret = True
+                            return ret
+
+                        # Poll results
+                        last_msg_received_time = perf_counter()
+                        while (
+                            perf_counter() - last_msg_received_time
+                            < silence_time_sec
+                        ):
+                            data_msg = self.get_message_from_data_queue()
+
+                            if data_msg is not None:
+                                if (
+                                    __sc_handle_msap_cancel_message(data_msg)
+                                    is True
+                                ):
+                                    last_msg_received_time = perf_counter()
+
+                            if data_msg is None:
+                                default_sleep_time: float = 0.1
+                                sleep(default_sleep_time)
+
+                        # Calculate result
+                        # Print result to console
+                        print(
+                            "Ok response received from {} node(s).".format(
+                                len(responded_nodes_ok)
+                            )
+                        )
+
+                    else:
+                        print("Command FAIL [{}]".format(response_bcast.res))
+                else:
+                    print("Command FAIL due timeout.")
+        else:
+            print("Command FAIL due invalid gw or sink selection.")
+        print("")
+
+    def do_scratchpad_check_sink(self, line) -> None:
         """
         Retrieves the scratchpad status from the sink
 
         Usage:
-            scratchpad_status
+            scratchpad_check_sink
 
         Returns:
             None
@@ -1239,12 +1787,12 @@ class GatewayCliCommands(cmd.Cmd):
         else:
             print("Command FAIL due invalid gw or sink selection.")
 
-    def do_scratchpad_update(self, line) -> None:
+    def do_scratchpad_update_only_sink(self, line) -> None:
         """
         Sends a scratchpad update command to the sink
 
         Usage:
-            scratchpad_update
+            scratchpad_update_only_sink
 
         Returns:
             None
@@ -1288,12 +1836,12 @@ class GatewayCliCommands(cmd.Cmd):
         else:
             print("Command FAIL due invalid gw or sink selection.")
 
-    def do_scratchpad_upload(self, line) -> None:
+    def do_scratchpad_upload_to_sink(self, line) -> None:
         """
         Uploads a scratchpad to the target sink/gateway pair
 
         Usage:
-            scratchpad_upload filepath=<path/to/myscratchpad.otap>  sequence=<n>
+            scratchpad_upload_sink filepath=<path/to/myscratchpad.otap>  sequence=<n>
 
         Arguments:
             - filepath=~/myscratchpad.otap # the path to the scratchpad

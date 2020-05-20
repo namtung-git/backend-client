@@ -303,7 +303,7 @@ class GatewayShell(GatewayCliCommands):
 
             while response_good is False:
                 try:
-                    queue_poll_time_sec: int = 1
+                    queue_poll_time_sec: float = 0.1
                     message = self.response_queue.get(
                         block=block, timeout=queue_poll_time_sec
                     )
@@ -312,12 +312,15 @@ class GatewayShell(GatewayCliCommands):
                             request_message["data"].req_id
                         ):
                             response_good = True
+                        else:
+                            # put pack
+                            self.response_queue.put(message)
                     else:
                         # put message back to queue back
                         if self.request_queue.empty():
                             # wait a bit to avoid busy loop when putting
                             # same message back and reading it again.
-                            default_sleep_time: float = 0.1
+                            default_sleep_time: float = 0.001
                             time.sleep(default_sleep_time)
 
                         self.response_queue.put(message)
