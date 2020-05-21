@@ -16,23 +16,28 @@ import json
 import threading
 from time import sleep, perf_counter
 
-from .msap_cmds import MsapEndReq, MsapEndResp
-from .msap_cmds import MsapBeginReq, MsapBeginResp
-from .msap_cmds import MsapCancelReq, MsapCancelResp
-from .msap_cmds import MsapScratchPadStatusReq, MsapScratchPadStatusResp
-from .msap_cmds import MsapScratchpadUpdateReq, MsapScratchpadUpdateResp
-from .msap_cmds import MsapUpdateReq, MsapUpdateResp
-
-from wirepas_messaging.gateway.api import GatewayState
-from wirepas_messaging.gateway.api import GatewayResultCode
-
-from wirepas_backend_client.cli.set_diagnostics.fea_set_neighbor_diagnostics import (
+# --
+from api.mqtt import MQTTqosOptions
+from mesh.gateway import Gateway
+from mesh.set_diagnostics.fea_set_neighbor_diagnostics import (
     SetDiagnostics,
     SetDiagnosticsIntervals,
 )
-from ..api.mqtt import MQTT_QOS_options
-from ..mesh.sink import Sink
-from ..mesh.gateway import Gateway
+from mesh.sink import Sink
+from messages.msap_cmds import MsapBeginReq, MsapBeginResp
+from messages.msap_cmds import MsapCancelReq, MsapCancelResp
+from messages.msap_cmds import MsapEndReq, MsapEndResp
+from messages.msap_cmds import (
+    MsapScratchPadStatusReq,
+    MsapScratchPadStatusResp,
+)
+from messages.msap_cmds import (
+    MsapScratchpadUpdateReq,
+    MsapScratchpadUpdateResp,
+)
+from messages.msap_cmds import MsapUpdateReq, MsapUpdateResp
+from wirepas_messaging.gateway.api import GatewayResultCode
+from wirepas_messaging.gateway.api import GatewayState
 
 end_point_this_source: int = 255
 end_point_default_diagnostic_control: int = 240
@@ -563,6 +568,7 @@ class GatewayCliCommands(cmd.Cmd):
             clear_offline_gateways
         """
 
+        offline_gws: int = 0
         gateways = list(self.device_manager.gateways)
         for gateway in gateways:
             if gateway.state.value == GatewayState.OFFLINE.value:
@@ -580,7 +586,12 @@ class GatewayCliCommands(cmd.Cmd):
                 self.notify()
 
                 self.request_queue.put(message)
+                offline_gws += 1
                 continue
+        if offline_gws > 0:
+            print("Command ok. Offline GW count was {}.".format(offline_gws))
+        else:
+            print("Command ok. No action needed.")
 
     def do_sinks(self, line):
         """
@@ -1315,7 +1326,7 @@ class GatewayCliCommands(cmd.Cmd):
                 payload=req.toBytes(),
             ),
         )
-        message["qos"] = MQTT_QOS_options.exactly_once.value
+        message["qos"] = MQTTqosOptions.exactly_once.value
         return message
 
     def create_scratchpad_msap_update_msg(
@@ -1339,7 +1350,7 @@ class GatewayCliCommands(cmd.Cmd):
                         payload=req.toBytes(),
                     ),
                 )
-                message["qos"] = MQTT_QOS_options.exactly_once.value
+                message["qos"] = MQTTqosOptions.exactly_once.value
         return message
 
     def create_msap_cancel_msg(self, gateway_id, node_address, sink_id):
@@ -1359,7 +1370,7 @@ class GatewayCliCommands(cmd.Cmd):
                     payload=req.toBytes(),
                 ),
             )
-            message["qos"] = MQTT_QOS_options.exactly_once.value
+            message["qos"] = MQTTqosOptions.exactly_once.value
         return message
 
     def create_msap_update_msg(
@@ -1383,7 +1394,7 @@ class GatewayCliCommands(cmd.Cmd):
                         payload=req.toBytes(),
                     ),
                 )
-                message["qos"] = MQTT_QOS_options.exactly_once.value
+                message["qos"] = MQTTqosOptions.exactly_once.value
         return message
 
     def create_msap_combo_msg(
@@ -1432,7 +1443,7 @@ class GatewayCliCommands(cmd.Cmd):
                         payload=combo_payload,
                     ),
                 )
-                message["qos"] = MQTT_QOS_options.exactly_once.value
+                message["qos"] = MQTTqosOptions.exactly_once.value
         else:
             raise ValueError("Parameters for create_msap_combo_msg not ok.")
         return message
@@ -1836,7 +1847,7 @@ class GatewayCliCommands(cmd.Cmd):
                 **dict(sink_id=sink_id, gw_id=gateway_id),
             )
 
-            message["qos"] = MQTT_QOS_options.exactly_once.value
+            message["qos"] = MQTTqosOptions.exactly_once.value
 
             print("Performing update. Request sent.")
             self.request_queue.put(message)
@@ -1921,7 +1932,7 @@ class GatewayCliCommands(cmd.Cmd):
                             gw_id=gateway_id,
                         ),
                     )
-                    message["qos"] = MQTT_QOS_options.exactly_once.value
+                    message["qos"] = MQTTqosOptions.exactly_once.value
                     print("Performing upload. Request sent.")
                     self.request_queue.put(message)
 
@@ -1964,7 +1975,7 @@ class GatewayCliCommands(cmd.Cmd):
             destination_address=dict(type=int, default=None),
             payload=dict(type=self.strtobytes, default=None),
             timeout=dict(type=int, default=0),
-            qos=dict(type=int, default=MQTT_QOS_options.exactly_once.value),
+            qos=dict(type=int, default=MQTTqosOptions.exactly_once.value),
             is_unack_csma_ca=dict(type=bool, default=0),
             hop_limit=dict(type=int, default=0),
             initial_delay_ms=dict(type=int, default=0),
@@ -2021,7 +2032,7 @@ class GatewayCliCommands(cmd.Cmd):
                     ),
                 )
 
-                message["qos"] = MQTT_QOS_options.exactly_once.value
+                message["qos"] = MQTTqosOptions.exactly_once.value
                 self.request_queue.put(message)
                 self.wait_for_answer(gateway_id, message)
         else:
@@ -2048,7 +2059,7 @@ class GatewayCliCommands(cmd.Cmd):
                 src_ep=sourceEndPoint,
                 dst_ep=destinationEndPoint,
                 payload=payload,
-                qos=MQTT_QOS_options.exactly_once.value,
+                qos=MQTTqosOptions.exactly_once.value,
                 is_unack_csma_ca=0,
                 hop_limit=0,
                 initial_delay_ms=0,
@@ -2056,7 +2067,7 @@ class GatewayCliCommands(cmd.Cmd):
             ),
         )
 
-        message["qos"] = MQTT_QOS_options.exactly_once.value
+        message["qos"] = MQTTqosOptions.exactly_once.value
         requestIdOfMessageToBeSent = message["data"].req_id
 
         dummyMode: bool = False  # If True, no messages is actually sent

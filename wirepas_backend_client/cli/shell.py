@@ -19,8 +19,8 @@ import sys
 import time
 import queue
 
-from .gateway import GatewayCliCommands
-from ..api import Topics
+from api import Topics
+from cli.gateway import GatewayCliCommands
 
 
 class GatewayShell(GatewayCliCommands):
@@ -406,7 +406,7 @@ class GatewayShell(GatewayCliCommands):
         self._tracking_loop_timeout = args["timeout"]
         print("track loop timeout: {}".format(self._tracking_loop_timeout))
 
-    def do_set_reply_greeting(self, line):
+    def disabled_do_set_reply_greeting(self, line):
         """
         Sets the reply greeting
         """

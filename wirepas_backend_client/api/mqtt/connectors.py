@@ -17,7 +17,7 @@ import uuid
 import paho
 import paho.mqtt.client as mqtt
 
-from ...tools import Signal
+from tools import Signal
 
 
 class MQTT(object):

@@ -7,8 +7,8 @@
         See file LICENSE for full license details.
 """
 
-from .gateway import Gateway
-from .network import Network
+from mesh.gateway import Gateway
+from mesh.network import Network
 
 
 class MeshManagement(object):

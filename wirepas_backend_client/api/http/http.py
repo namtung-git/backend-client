@@ -38,7 +38,7 @@ import time
 import urllib
 
 from wirepas_backend_client.api.mqtt import Topics
-from wirepas_backend_client.api.mqtt import MQTT_QOS_options
+from wirepas_backend_client.api.mqtt import MQTTqosOptions
 from wirepas_backend_client.api.stream import StreamObserver
 from wirepas_backend_client.tools import Settings
 
@@ -701,7 +701,7 @@ class wbcHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             # QOS passed by HTTP request (int(params["qos"])) is not used
             # from now on. MQTT QOS is fixed to
             # MQTT_QOS_options.exactly_once.value
-            qos = MQTT_QOS_options.exactly_once.value
+            qos = MQTTqosOptions.exactly_once.value
 
             payload = binascii.unhexlify(params["payload"])
             command_parse_was_ok = True

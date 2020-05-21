@@ -12,9 +12,8 @@
 # pylint: disable=locally-disabled, logging-format-interpolation
 
 
-from .generic import GenericMessage
-from ..types import ApplicationTypes
-from ... import tools
+from messages.decoders import GenericMessage
+from messages.types import ApplicationTypes
 import struct
 
 

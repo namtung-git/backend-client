@@ -21,14 +21,15 @@ import queue
 import time
 
 from ..stream import StreamObserver
-from ...messages import AdvertiserMessage
-from ...messages import BootDiagnosticsMessage
-from ...messages import NeighborDiagnosticsMessage
-from ...messages import NodeDiagnosticsMessage
-from ...messages import TestNWMessage
-from ...messages import TrafficDiagnosticsMessage
-from ...messages import DiagnosticsMessage
-from ...tools import Settings
+
+from messages import AdvertiserMessage
+from messages import BootDiagnosticsMessage
+from messages import NeighborDiagnosticsMessage
+from messages import NodeDiagnosticsMessage
+from messages import TestNWMessage
+from messages import TrafficDiagnosticsMessage
+from messages import DiagnosticsMessage
+from tools import Settings
 
 
 from .connectors import MySQL

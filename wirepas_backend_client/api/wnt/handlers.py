@@ -13,7 +13,7 @@ import logging
 import queue
 
 from .manager import AuthenticationManager, RealtimeManager, MetadataManager
-from ...tools import JsonSerializer
+from tools import JsonSerializer
 
 
 class Backend(object):

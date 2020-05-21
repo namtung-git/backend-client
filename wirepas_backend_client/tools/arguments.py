@@ -16,8 +16,8 @@ import sys
 
 import yaml
 
-from .utils import JsonSerializer
-from ..__about__ import __version__
+from tools.utils import JsonSerializer
+from __about__ import __version__
 
 
 class Settings:

@@ -6,9 +6,9 @@
 # flake8: noqa
 
 from wirepas_backend_client.api.http.http import *
-from .influx import *
-from .mqtt import *
-from .mysql import *
-from .stream import StreamObserver
-from .wnt import *
-from .wpe import *
+from api.influx import *
+from api.mqtt import *
+from api.mysql import *
+from api.stream import StreamObserver
+from api.wnt import *
+from api.wpe import *

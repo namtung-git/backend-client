@@ -15,10 +15,10 @@ import queue
 
 from .connectors import MQTT
 from .decorators import decode_topic_message
-from .mqtt_options import MQTT_QOS_options
+from .mqtt_options import MQTTqosOptions
 from ..stream import StreamObserver
 
-from ...tools import Settings
+from tools import Settings
 
 
 class MQTTObserver(StreamObserver):
@@ -133,7 +133,7 @@ class MQTTObserver(StreamObserver):
         except queue.Empty:
             return False
 
-        qos = MQTT_QOS_options.exactly_once.value
+        qos = MQTTqosOptions.exactly_once.value
         retain = False
         wait_for_publish = False
         data = None
@@ -156,6 +156,10 @@ class MQTTObserver(StreamObserver):
                 data = message["data"].payload
             except AttributeError:
                 data = message["data"]
+            except TypeError:
+                data = None
+            except Exception:
+                data = None
 
         self.logger.debug("message for MQTT publish %s", message)
 

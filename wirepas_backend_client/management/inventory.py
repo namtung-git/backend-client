@@ -20,7 +20,6 @@ import time
 # The Reliability can inherit from Inventory class,
 # here I created a new class to test first
 class Reliability(object):
-
     maxi_events_size = 20
     maxi_sequence_in_packet = 255
     mini_sequence_in_packet = 0

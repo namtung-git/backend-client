@@ -7,7 +7,7 @@
         See file LICENSE for full license details.
 """
 
-from ..tools.utils import JsonSerializer
+from tools.utils import JsonSerializer
 
 
 class MeshDevice(object):

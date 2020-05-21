@@ -9,14 +9,14 @@
 
 import logging
 
-from ..state import MeshManagement
-from ...api.mqtt import (
+from mesh.state import MeshManagement
+from api.mqtt import (
     MQTTObserver,
     Topics,
     decode_topic_message,
     topic_message,
 )
-from ...tools import Signal
+from tools import Signal
 
 
 class NetworkDiscovery(MQTTObserver):

@@ -7,7 +7,7 @@
         See file LICENSE for full license details.
 """
 
-from .device import MeshDevice
+from mesh.device import MeshDevice
 
 
 class Sink(MeshDevice):

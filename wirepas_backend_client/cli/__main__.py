@@ -10,10 +10,11 @@
 
 
 from .shell import GatewayShell
-from ..management import Daemon
-from ..mesh.interfaces.mqtt import NetworkDiscovery
-from ..tools import ParserHelper, LoggerHelper
-from ..api import MQTTSettings
+
+from management import Daemon
+from mesh.interfaces.mqtt import NetworkDiscovery
+from tools import ParserHelper, LoggerHelper
+from api import MQTTSettings
 
 
 def launch_gw_cli(settings, logger):
@@ -76,5 +77,4 @@ def main():
 
 
 if __name__ == "__main__":
-
     main()

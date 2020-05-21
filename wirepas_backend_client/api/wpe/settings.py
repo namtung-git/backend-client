@@ -9,7 +9,7 @@
 """
 # pylint: disable=locally-disabled, duplicate-code
 
-from ...tools import Settings
+from tools import Settings
 from pathlib import Path
 
 
