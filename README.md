@@ -271,14 +271,7 @@ The operation happens as messages are published from the network. It
 will take time to build a full map of the network, which will be faster
 depending on your network's packets per second.
 
-To browse the devices, please type:
-
-```shell
-    wm-gw-cli > ls
-```
-
-The output will show the devices that have been currently found. In case
-you wish to view periodically which devices you have on your network,
+In case you wish to view periodically which devices you have on your network,
 type in the following command:
 
 ```shell
@@ -399,77 +392,6 @@ As an example, on the wm-gw-cli you would type:
 
 The answer will carry the gateway result and present you the new app
 config.
-
-##### Viewing gateway configuration
-
-The wm-gw-cli allows you to see the current gateway configuration by typing:
-
-```shell
-    wm-gw-cli > gateway_configuration
-    requesting configuration for 2485378023427
-    answer <<
-        gw_id: 2485378023427
-        sink_id: None
-        req_ gw_id: 2485378023427
-        sink_id: sink0
-        req_id: 12079559850249952277
-        res: GatewayResultCode.GW_RES_OK
-        sink_id: sink0
-        current_ac_range_min: 2000
-        current_ac_range_max: 8000
-        min_ac: 2000
-        max_ac: 8000
-        max_mtu: 102
-        min_ch: 1
-        max_ch: 27
-        hw_magic: 3
-        stack_profile: 1
-        app_config_max_size: 80
-        are_keys_set: False
-        firmware_version: [3, 4, 37, 0]
-        node_role: 17
-        node_address: 4193520
-        network_address: 3806491
-        network_channel: 22
-        app_config_diag: 30
-        app_config_seq: 10
-        app_config_data:
-        b git'sink_by_the_window\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00
-        \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00
-        \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00
-        \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00
-        \x00\x00\x00\x00'
-        channel_map: 286331153
-        started: Trueid: 13018941017451207243
-        res: GatewayResultCode.GW_RES_OK
-        sink_id: sink0
-        node_role: 17
-        node_address: 4193520
-        network_address: 3806491
-        network_channel: 22
-        app_config_diag: 30
-        app_config_seq: 10
-        app_config_data:
-        b'sink_by_the_window\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00
-        \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00
-        \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00
-        \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00
-        \x00\x00\x00'
-        channel_map: 286331153
-        started: True
-        current_ac_range_min: 2000
-        current_ac_range_max: 8000
-        min_ac: 2000
-        max_ac: 8000
-        max_mtu: 102
-        min_ch: 1
-        max_ch: 27
-        hw_magic: 3
-        stack_profile: 1
-        app_config_max_size: 80
-        are_keys_set: False
-        firmware_version: [3, 4, 37, 0]
-```
 
 ##### Upload and process a scratchpad
 
