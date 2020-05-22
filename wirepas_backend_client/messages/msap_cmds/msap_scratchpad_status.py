@@ -9,7 +9,7 @@ class MsapScratchPadStatusReq:
 
     @staticmethod
     def getType() -> int:
-        return cmdMSapScratchPadStatusReq
+        return int(cmdMSapScratchPadStatusReq[0])
 
     def __init__(self):
         pass
@@ -26,7 +26,7 @@ class MsapScratchPadStatusResp:
 
     @staticmethod
     def getType() -> int:
-        return cmdMSapScratchPadStatusResp
+        return int(cmdMSapScratchPadStatusResp[0])
 
     def __init__(self, data_bytes):
         message_len_short: int = 24  # WP-RM-117, V5.0.A

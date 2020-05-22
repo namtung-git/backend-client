@@ -24,18 +24,24 @@ from mesh.set_diagnostics.fea_set_neighbor_diagnostics import (
     SetDiagnosticsIntervals,
 )
 from mesh.sink import Sink
-from messages.msap_cmds import MsapBeginReq, MsapBeginResp
-from messages.msap_cmds import MsapCancelReq, MsapCancelResp
-from messages.msap_cmds import MsapEndReq, MsapEndResp
+
 from messages.msap_cmds import (
+    MsapBeginReq,
+    MsapBeginResp,
+    MsapCancelReq,
+    MsapCancelResp,
+    MsapEndReq,
+    MsapEndResp,
     MsapScratchPadStatusReq,
     MsapScratchPadStatusResp,
-)
-from messages.msap_cmds import (
     MsapScratchpadUpdateReq,
     MsapScratchpadUpdateResp,
+    MsapUpdateReq,
+    MsapUpdateResp,
+    MsapPingReq,
+    MsapPingResp,
 )
-from messages.msap_cmds import MsapUpdateReq, MsapUpdateResp
+
 from wirepas_messaging.gateway.api import GatewayResultCode
 from wirepas_messaging.gateway.api import GatewayState
 
@@ -1047,180 +1053,6 @@ class GatewayCliCommands(cmd.Cmd):
                     # Collect responses. Collect responses until there is at
                     # silence_time_sec silence.
 
-                    def __sc_handle_message(
-                        msg, header_is_printed: bool
-                    ) -> bool:
-                        ret = False
-                        if (
-                            msg.source_endpoint
-                            == end_point_default_diagnostic_control
-                        ):
-                            otap_status: MsapScratchPadStatusResp = MsapScratchPadStatusResp(
-                                msg.data_payload
-                            )
-
-                            if otap_status.is_valid():
-                                address_just_size: int = 18
-                                stored_seq_just_size: int = 12
-                                crc_just_size: int = 12
-                                stack_proc_seq_just_size: int = 16
-                                stack_version_just_size: int = 11
-                                app_proc_sec_just_size: int = 14
-                                app_version_just_size: int = 11
-                                fw_aread_id_just_size: int = 24
-                                app_aread_id_just_size: int = 24
-
-                                if header_is_printed is False:
-                                    headerStr: str = addFieldFormatterToStr(
-                                        "Address", address_just_size
-                                    )
-                                    headerStr += addFieldFormatterToStr(
-                                        "Stored seq", stored_seq_just_size
-                                    )
-
-                                    headerStr += addFieldFormatterToStr(
-                                        "Stored crc", crc_just_size
-                                    )
-
-                                    headerStr += addFieldFormatterToStr(
-                                        "Stack proc seq",
-                                        stack_proc_seq_just_size,
-                                    )
-
-                                    headerStr += addFieldFormatterToStr(
-                                        "Proc crc", crc_just_size
-                                    )
-
-                                    headerStr += addFieldFormatterToStr(
-                                        "Stack SW", stack_version_just_size
-                                    )
-
-                                    headerStr += addFieldFormatterToStr(
-                                        "Proc firmware area id",
-                                        fw_aread_id_just_size,
-                                    )
-
-                                    headerStr += addFieldFormatterToStr(
-                                        "App proc seq", app_proc_sec_just_size
-                                    )
-
-                                    headerStr += addFieldFormatterToStr(
-                                        "App SW", app_version_just_size
-                                    )
-
-                                    headerStr += addFieldFormatterToStr(
-                                        "Proc application area id",
-                                        app_aread_id_just_size,
-                                    )
-
-                                    print("")
-                                    print(headerStr)
-
-                                valuesStr: str = addFieldFormatterToStr(
-                                    msg.source_address, address_just_size
-                                )
-                                valuesStr += addFieldFormatterToStr(
-                                    otap_status.storedScratchSeq[0],
-                                    stored_seq_just_size,
-                                )
-
-                                valuesStr += addFieldFormatterToStr(
-                                    hex(otap_status.storedScratchPadCRC),
-                                    crc_just_size,
-                                )
-
-                                valuesStr += addFieldFormatterToStr(
-                                    otap_status.processedScratchPadSeq[0],
-                                    stack_proc_seq_just_size,
-                                )
-
-                                valuesStr += addFieldFormatterToStr(
-                                    hex(otap_status.processedScratchPadCRC),
-                                    crc_just_size,
-                                )
-
-                                valuesStr += addFieldFormatterToStr(
-                                    getStackSwVersionStr(otap_status),
-                                    stack_version_just_size,
-                                )
-
-                                valuesStr += addFieldFormatterToStr(
-                                    hex(otap_status.processedFirmwareAreaId),
-                                    fw_aread_id_just_size,
-                                )
-
-                                valuesStr += addFieldFormatterToStr(
-                                    otap_status.applicationProcessedScratchPadSeq[
-                                        0
-                                    ],
-                                    app_proc_sec_just_size,
-                                )
-
-                                valuesStr += addFieldFormatterToStr(
-                                    getAppSwVersionStr(otap_status),
-                                    app_version_just_size,
-                                )
-
-                                valuesStr += addFieldFormatterToStr(
-                                    hex(
-                                        otap_status.processedApplicationAreaId
-                                    ),
-                                    app_aread_id_just_size,
-                                )
-
-                                node_statuses[msg.source_address] = valuesStr
-
-                                print(valuesStr)
-
-                                seq_field_len: int = 3
-
-                                processed_key = (
-                                    "CRC: {} Stack SW: {} stack proc seq:{}"
-                                    " App SW: {} app proc seq:{}".format(
-                                        hex(
-                                            otap_status.processedScratchPadCRC
-                                        ),
-                                        getStackSwVersionStr(otap_status),
-                                        addFieldFormatterToStr(
-                                            otap_status.processedScratchPadSeq[
-                                                0
-                                            ],
-                                            seq_field_len,
-                                        ),
-                                        getAppSwVersionStr(otap_status),
-                                        addFieldFormatterToStr(
-                                            otap_status.applicationProcessedScratchPadSeq[
-                                                0
-                                            ],
-                                            seq_field_len,
-                                        ),
-                                    )
-                                )
-
-                                stored_key = (
-                                    "CRC: {} Stack SW: {} stack stored seq:"
-                                    "{}".format(
-                                        hex(otap_status.storedScratchPadCRC),
-                                        getStackSwVersionStr(otap_status),
-                                        addFieldFormatterToStr(
-                                            otap_status.storedScratchSeq[0],
-                                            seq_field_len,
-                                        ),
-                                    )
-                                )
-
-                                if processed_key not in processed_scratchpads:
-                                    processed_scratchpads[processed_key] = 1
-                                else:
-                                    processed_scratchpads[processed_key] += 1
-
-                                if stored_key not in stored_scratchpads:
-                                    stored_scratchpads[stored_key] = 1
-                                else:
-                                    stored_scratchpads[stored_key] += 1
-                                ret = True
-                        return ret
-
                     last_msg_received_time = perf_counter()
                     while (
                         perf_counter() - last_msg_received_time
@@ -1230,7 +1062,13 @@ class GatewayCliCommands(cmd.Cmd):
 
                         if data_msg is not None:
                             if (
-                                __sc_handle_message(data_msg, header_printed)
+                                self.__scratchpad_check_all_handle_message(
+                                    data_msg,
+                                    header_printed,
+                                    node_statuses,
+                                    processed_scratchpads,
+                                    stored_scratchpads,
+                                )
                                 is True
                             ):
                                 last_msg_received_time = perf_counter()
@@ -1240,35 +1078,6 @@ class GatewayCliCommands(cmd.Cmd):
                             default_sleep_time: float = 0.1
                             sleep(default_sleep_time)
 
-                    def __print_dict_key_ratios(
-                        itemsDict: dict, dictName: str
-                    ) -> None:
-                        key_len: int = 80
-                        print("")
-                        print("{} stats".format(dictName))
-                        if len(itemsDict) > 0:
-                            value_sum: int = 0
-                            for val in itemsDict.values():
-                                value_sum += val
-
-                            for key in itemsDict:
-                                a = "{}".format(key)
-                                node_count_field_width: int = 4
-                                print(
-                                    a.ljust(key_len)
-                                    + " running on {} node(s) ".format(
-                                        str(itemsDict[key]).ljust(
-                                            node_count_field_width
-                                        )
-                                    )
-                                    + "({}%)".format(
-                                        int((itemsDict[key] / value_sum) * 100)
-                                    )
-                                )
-                            print("Total {} nodes".format(value_sum))
-                        else:
-                            print("{} has no items")
-
                     # Calculate result
                     # Print result to console
                     print("")
@@ -1277,8 +1086,10 @@ class GatewayCliCommands(cmd.Cmd):
                     for key in sorted(node_statuses):
                         print(node_statuses[key])
 
-                    __print_dict_key_ratios(processed_scratchpads, "Processed")
-                    __print_dict_key_ratios(stored_scratchpads, "Stored")
+                    self.__print_dict_key_ratios(
+                        processed_scratchpads, "Processed"
+                    )
+                    self.__print_dict_key_ratios(stored_scratchpads, "Stored")
 
                     print("")
                     print("--")
@@ -1307,6 +1118,186 @@ class GatewayCliCommands(cmd.Cmd):
         else:
             print("Command FAIL. Set sink first")
         print("")
+
+    def __scratchpad_check_all_handle_message(
+        self,
+        msg,
+        header_is_printed: bool,
+        node_statuses=None,
+        processed_scratchpads=None,
+        stored_scratchpads=None,
+    ) -> bool:
+        ret = False
+        if msg.source_endpoint == end_point_default_diagnostic_control:
+            otap_status: MsapScratchPadStatusResp = MsapScratchPadStatusResp(
+                msg.data_payload
+            )
+
+            if otap_status.is_valid():
+                address_just_size: int = 18
+                stored_seq_just_size: int = 12
+                crc_just_size: int = 12
+                stack_proc_seq_just_size: int = 16
+                stack_version_just_size: int = 11
+                app_proc_sec_just_size: int = 14
+                app_version_just_size: int = 11
+                fw_aread_id_just_size: int = 24
+                app_aread_id_just_size: int = 24
+
+                if header_is_printed is False:
+                    headerStr: str = addFieldFormatterToStr(
+                        "Address", address_just_size
+                    )
+                    headerStr += addFieldFormatterToStr(
+                        "Stored seq", stored_seq_just_size
+                    )
+
+                    headerStr += addFieldFormatterToStr(
+                        "Stored crc", crc_just_size
+                    )
+
+                    headerStr += addFieldFormatterToStr(
+                        "Stack proc seq", stack_proc_seq_just_size
+                    )
+
+                    headerStr += addFieldFormatterToStr(
+                        "Proc crc", crc_just_size
+                    )
+
+                    headerStr += addFieldFormatterToStr(
+                        "Stack SW", stack_version_just_size
+                    )
+
+                    headerStr += addFieldFormatterToStr(
+                        "Proc firmware area id", fw_aread_id_just_size
+                    )
+
+                    headerStr += addFieldFormatterToStr(
+                        "App proc seq", app_proc_sec_just_size
+                    )
+
+                    headerStr += addFieldFormatterToStr(
+                        "App SW", app_version_just_size
+                    )
+
+                    headerStr += addFieldFormatterToStr(
+                        "Proc application area id", app_aread_id_just_size
+                    )
+
+                    print("")
+                    print(headerStr)
+
+                valuesStr: str = addFieldFormatterToStr(
+                    msg.source_address, address_just_size
+                )
+                valuesStr += addFieldFormatterToStr(
+                    otap_status.storedScratchSeq[0], stored_seq_just_size
+                )
+
+                valuesStr += addFieldFormatterToStr(
+                    hex(otap_status.storedScratchPadCRC), crc_just_size
+                )
+
+                valuesStr += addFieldFormatterToStr(
+                    otap_status.processedScratchPadSeq[0],
+                    stack_proc_seq_just_size,
+                )
+
+                valuesStr += addFieldFormatterToStr(
+                    hex(otap_status.processedScratchPadCRC), crc_just_size
+                )
+
+                valuesStr += addFieldFormatterToStr(
+                    getStackSwVersionStr(otap_status), stack_version_just_size
+                )
+
+                valuesStr += addFieldFormatterToStr(
+                    hex(otap_status.processedFirmwareAreaId),
+                    fw_aread_id_just_size,
+                )
+
+                valuesStr += addFieldFormatterToStr(
+                    otap_status.applicationProcessedScratchPadSeq[0],
+                    app_proc_sec_just_size,
+                )
+
+                valuesStr += addFieldFormatterToStr(
+                    getAppSwVersionStr(otap_status), app_version_just_size
+                )
+
+                valuesStr += addFieldFormatterToStr(
+                    hex(otap_status.processedApplicationAreaId),
+                    app_aread_id_just_size,
+                )
+
+                node_statuses[msg.source_address] = valuesStr
+
+                print(valuesStr)
+
+                seq_field_len: int = 3
+
+                processed_key = (
+                    "CRC: {} Stack SW: {} stack proc seq:{}"
+                    " App SW: {} app proc seq:{}".format(
+                        hex(otap_status.processedScratchPadCRC),
+                        getStackSwVersionStr(otap_status),
+                        addFieldFormatterToStr(
+                            otap_status.processedScratchPadSeq[0],
+                            seq_field_len,
+                        ),
+                        getAppSwVersionStr(otap_status),
+                        addFieldFormatterToStr(
+                            otap_status.applicationProcessedScratchPadSeq[0],
+                            seq_field_len,
+                        ),
+                    )
+                )
+
+                stored_key = (
+                    "CRC: {} Stack SW: {} stack stored seq:"
+                    "{}".format(
+                        hex(otap_status.storedScratchPadCRC),
+                        getStackSwVersionStr(otap_status),
+                        addFieldFormatterToStr(
+                            otap_status.storedScratchSeq[0], seq_field_len
+                        ),
+                    )
+                )
+
+                if processed_key not in processed_scratchpads:
+                    processed_scratchpads[processed_key] = 1
+                else:
+                    processed_scratchpads[processed_key] += 1
+
+                if stored_key not in stored_scratchpads:
+                    stored_scratchpads[stored_key] = 1
+                else:
+                    stored_scratchpads[stored_key] += 1
+                ret = True
+        return ret
+
+    def __print_dict_key_ratios(self, itemsDict: dict, dictName: str) -> None:
+        key_len: int = 80
+        print("")
+        print("{} stats".format(dictName))
+        if len(itemsDict) > 0:
+            value_sum: int = 0
+            for val in itemsDict.values():
+                value_sum += val
+
+            for key in itemsDict:
+                a = "{}".format(key)
+                node_count_field_width: int = 4
+                print(
+                    a.ljust(key_len)
+                    + " running on {} node(s) ".format(
+                        str(itemsDict[key]).ljust(node_count_field_width)
+                    )
+                    + "({}%)".format(int((itemsDict[key] / value_sum) * 100))
+                )
+            print("Total {} nodes".format(value_sum))
+        else:
+            print("{} has no items")
 
     def create_scratchpad_status_query_msg(
         self, gateway_id, node_address, sink_id
@@ -1396,6 +1387,30 @@ class GatewayCliCommands(cmd.Cmd):
                 )
                 message["qos"] = MQTTqosOptions.exactly_once.value
         return message
+
+    def create_msap_ping_msg(
+        self, gateway_id, node_address, sink_id
+    ) -> object:
+
+        message: object = None
+
+        req: MsapPingReq = MsapPingReq()
+        if req.is_valid():
+            message = self.mqtt_topics.request_message(
+                "send_data",
+                **dict(
+                    sink_id=sink_id,
+                    gw_id=gateway_id,
+                    dest_add=node_address,
+                    src_ep=end_point_this_source,
+                    dst_ep=end_point_default_diagnostic_control,
+                    qos=1,
+                    payload=req.toBytes(),
+                ),
+            )
+            message["qos"] = MQTTqosOptions.exactly_once.value
+
+        return message, req.getReference()
 
     def create_msap_combo_msg(
         self,
@@ -1523,43 +1538,8 @@ class GatewayCliCommands(cmd.Cmd):
                                 )
                             )
 
-                            # Collect responses. Collect responses until there is at
-                            # silence_time_sec silence.
-
-                            def __sc_handle_msap_update_message(msg) -> bool:
-                                ret = False
-
-                                if (
-                                    msg.source_endpoint
-                                    == end_point_default_diagnostic_control
-                                ):
-
-                                    # We are excepting combo message that has
-                                    # MSAP cancel, begin, sc update, end, update
-                                    # Parse responses accordingly.
-                                    if self.parseMsapUpdateComboResponses(
-                                        msg.data_payload
-                                    ):
-                                        if (
-                                            msg.source_address
-                                            not in responded_nodes_ok
-                                        ):
-                                            responded_nodes_ok[
-                                                msg.source_address
-                                            ] = 1
-                                        else:
-                                            responded_nodes_ok[
-                                                msg.source_address
-                                            ] += 1
-                                        ret = True
-                                    else:
-                                        print(
-                                            "Node {} responded nok".format(
-                                                msg.source_address
-                                            )
-                                        )
-
-                                return ret
+                            # Collect responses. Collect responses until
+                            # there is at silence_time_sec silence.
 
                             # Poll results
                             last_msg_received_time = perf_counter()
@@ -1571,8 +1551,8 @@ class GatewayCliCommands(cmd.Cmd):
 
                                 if data_msg is not None:
                                     if (
-                                        __sc_handle_msap_update_message(
-                                            data_msg
+                                        self.__scratchpad_update_only_nodes_h(
+                                            data_msg, responded_nodes_ok
                                         )
                                         is True
                                     ):
@@ -1603,6 +1583,27 @@ class GatewayCliCommands(cmd.Cmd):
         else:
             print("Command FAIL due invalid seq id.")
 
+    def __scratchpad_update_only_nodes_h(
+        self, msg, responded_nodes_ok=None
+    ) -> bool:
+        ret = False
+
+        if msg.source_endpoint == end_point_default_diagnostic_control:
+
+            # We are excepting combo message that has
+            # MSAP cancel, begin, sc update, end, update
+            # Parse responses accordingly.
+            if self.parseMsapUpdateComboResponses(msg.data_payload):
+                if msg.source_address not in responded_nodes_ok:
+                    responded_nodes_ok[msg.source_address] = 1
+                else:
+                    responded_nodes_ok[msg.source_address] += 1
+                ret = True
+            else:
+                print("Node {} responded nok".format(msg.source_address))
+
+        return ret
+
     @staticmethod
     def parseMsapUpdateComboResponses(payload: bytes) -> bool:
         ret: bool = True
@@ -1621,7 +1622,7 @@ class GatewayCliCommands(cmd.Cmd):
                 all_msgs_ok = False
                 break
 
-            msg_type = bytes([msg_data[0]])
+            msg_type: int = int(msg_data[0])
             if msg_type == MsapCancelResp.getType():
                 if MsapCancelResp(msg_data).is_valid():
                     pass
@@ -1654,11 +1655,9 @@ class GatewayCliCommands(cmd.Cmd):
                 if MsapUpdateResp(msg_data).is_valid():
                     pass
                 else:
-                    print("update nok")
                     all_msgs_ok = False
                     break
             else:
-                print("unknown msg")
                 all_msgs_ok = False
                 break
 
@@ -2364,3 +2363,190 @@ class GatewayCliCommands(cmd.Cmd):
                     sinkAddressCheckOk = False
                     break
         return sinkAddressCheckOk
+
+    def do_ping(self, line) -> None:
+        """
+        Pings nodes of network. Collects responses and show
+        results on console
+
+        Usage:
+            Ping
+
+        Returns:
+            Prints stats of responded nodes to console
+        """
+
+        if self.gateway and self.sink:
+            pass
+        else:
+            print("Command FAIL. Set sink first")
+            return
+
+        if self.gateway and self.sink:
+            gateway_id = self.gateway.device_id
+            sink_id = self.sink.device_id
+
+            node_address = address_broadcast
+            # Send ping to each nodes in network (use
+            # broadcast).
+            request_ref: bytes
+            broadcast_message, request_ref = self.create_msap_ping_msg(
+                gateway_id, node_address, sink_id
+            )
+
+            if broadcast_message is not None:
+                self.request_queue.put(broadcast_message)
+                responded_nodes_ok: dict = dict()
+                network_hopcount_histo: dict = dict()
+
+                # Add something to make histogram size look kind same for
+                # most cases
+                base_histo_size: int = 20
+                for x in range(base_histo_size):
+                    network_hopcount_histo[x] = 0
+
+                ping_start_time = perf_counter()
+
+                response_bcast = self.wait_for_answer(
+                    gateway_id, broadcast_message
+                )
+
+                if response_bcast is not None:
+                    if response_bcast.res == GatewayResultCode.GW_RES_OK:
+                        silence_time_sec: int = 10
+                        print(
+                            "Command OK. Collecting nodes answers. Silence "
+                            "time threshold is {} secs.".format(
+                                silence_time_sec
+                            )
+                        )
+                        print("")
+
+                        # Collect responses. Collect responses until there is at
+                        # silence_time_sec silence.
+
+                        def __sc_handle_msap_ping_message(
+                            msg,
+                            req_ref: bytes,
+                            ping_start_time_value: perf_counter,
+                        ) -> bool:
+                            ret = False
+
+                            if (
+                                msg.source_endpoint
+                                == end_point_default_diagnostic_control
+                            ):
+                                # We are excepting combo message that has
+                                # MSAP cancel, begin, sc update, end, update
+                                # Parse responses accordingly.
+                                resp: MsapPingResp = MsapPingResp(
+                                    msg.data_payload
+                                )
+                                if resp.is_valid():
+                                    if resp.getReference() == req_ref:
+                                        if (
+                                            msg.source_address
+                                            not in responded_nodes_ok
+                                        ):
+                                            responded_nodes_ok[
+                                                msg.source_address
+                                            ] = 1
+                                        else:
+                                            responded_nodes_ok[
+                                                msg.source_address
+                                            ] += 1
+
+                                        hopKey: int = msg.hop_count
+                                        if (
+                                            hopKey
+                                            not in network_hopcount_histo
+                                        ):
+                                            network_hopcount_histo[hopKey] = 1
+                                        else:
+                                            network_hopcount_histo[hopKey] += 1
+
+                                        print(
+                                            "T {} ms: Node #{} ping resp from "
+                                            "node address {}".format(
+                                                int(
+                                                    (
+                                                        perf_counter()
+                                                        - ping_start_time_value
+                                                    )
+                                                    * 100
+                                                ),
+                                                len(responded_nodes_ok),
+                                                msg.source_address,
+                                            )
+                                        )
+
+                                        ret = True
+
+                            return ret
+
+                        # Poll results
+                        last_msg_received_time = perf_counter()
+
+                        while (
+                            perf_counter() - last_msg_received_time
+                            < silence_time_sec
+                        ):
+                            data_msg = self.get_message_from_data_queue()
+
+                            if data_msg is not None:
+                                if (
+                                    __sc_handle_msap_ping_message(
+                                        data_msg, request_ref, ping_start_time
+                                    )
+                                    is True
+                                ):
+                                    last_msg_received_time = perf_counter()
+
+                            if data_msg is None:
+                                default_sleep_time: float = 0.1
+                                sleep(default_sleep_time)
+
+                        # Calculate result
+                        difficulty_sum: int = 0
+                        print("")
+                        print(
+                            "Nodes distribution ----------------------------"
+                        )
+                        for key in network_hopcount_histo.keys():
+                            difficulty = int(key) * network_hopcount_histo[key]
+                            difficulty_sum += difficulty
+                            categoryValStr: str = "*" * network_hopcount_histo[
+                                key
+                            ]
+                            print(
+                                "| Hop count "
+                                + "{}".format(key).ljust(4)
+                                + ":"
+                                + " {}".format(categoryValStr)
+                            )
+
+                        print("| C: {}".format(difficulty_sum))
+                        print(
+                            "-----------------------------------------------"
+                        )
+                        print(
+                            "C = sum of each category ([node hop count] * "
+                            "amount of nodes in category[node hop count])"
+                        )
+                        print("Smaller C value should be 'easier network'.")
+
+                        # Print result to console
+                        print(
+                            "Ok response received from {} node(s).".format(
+                                len(responded_nodes_ok)
+                            )
+                        )
+
+                    else:
+                        print("Command FAIL [{}]".format(response_bcast.res))
+                else:
+                    print("Command FAIL due timeout.")
+
+        else:
+            print("Command FAIL due invalid gw or sink selection.")
+        print("")

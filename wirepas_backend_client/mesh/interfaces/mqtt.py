@@ -10,12 +10,7 @@
 import logging
 
 from mesh.state import MeshManagement
-from api.mqtt import (
-    MQTTObserver,
-    Topics,
-    decode_topic_message,
-    topic_message,
-)
+from api.mqtt import MQTTObserver, Topics, decode_topic_message, topic_message
 from tools import Signal
 
 
@@ -184,8 +179,6 @@ class NetworkDiscovery(MQTTObserver):
     def send_data(self, timeout: int, block: bool):
         """ Callback provided by the interface's cb generator
             Args:
-                mqtt_publish: callable that handles the message dispatch
-                topic: where the message goes to - ignored if from_message
         """
 
         ret = super(NetworkDiscovery, self).send_data(
@@ -232,7 +225,8 @@ class NetworkDiscovery(MQTTObserver):
         return on_gateway_data_event_cb
 
     def generate_gateway_response_get_configs_cb(self) -> callable:
-        """ Returns a callback to handle a response with gateway configurations """
+        """ Returns a callback to handle a
+        response with gateway configurations """
 
         @topic_message
         def on_gateway_get_configs_cb(payload, topic: list):
@@ -264,7 +258,8 @@ class NetworkDiscovery(MQTTObserver):
         return on_gateway_otap_status_cb
 
     def generate_gateway_response_set_config_cb(self) -> callable:
-        """ Returns a callback to handle responses to configuration set requests """
+        """ Returns a callback to handle
+        responses to configuration set requests """
 
         @topic_message
         def on_gateway_set_config_response_cb(payload, topic: list):
@@ -294,7 +289,8 @@ class NetworkDiscovery(MQTTObserver):
         return on_gateway_data_response_cb
 
     def generate_gateway_load_scratchpad_response_cb(self) -> callable:
-        """ Returns a callback to handle the loading of a scratchpad into the target sink """
+        """ Returns a callback to handle the
+        loading of a scratchpad into the target sink """
 
         @topic_message
         def on_gateway_load_scratchpad_response_cb(payload, topic: list):

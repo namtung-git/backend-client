@@ -12,7 +12,7 @@ class MsapCancelReq:
 
     @staticmethod
     def getType() -> int:
-        return cmdMsapCancelReq
+        return int(cmdMsapCancelReq[0])
 
     def __init__(self):
         self.__is_valid = True
@@ -37,12 +37,11 @@ class MsapCancelResp:
 
     @staticmethod
     def getType() -> int:
-        return cmdMsapCancelResp
+        return int(cmdMsapCancelResp[0])
 
     def __init__(self, data_bytes):
         # Validate response type
         fmt = "=cc"  # if there is error message this does not pack rest
-        fmt_error_invalid_begin_long: str = "=cc"
 
         if len(data_bytes) == struct.calcsize(fmt):
             message_len: int = data_bytes[1]

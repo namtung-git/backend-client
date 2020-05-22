@@ -14,7 +14,7 @@ class MsapUpdateReq:
 
     @staticmethod
     def getType() -> int:
-        return cmdMsapUpdateReq
+        return int(cmdMsapUpdateReq[0])
 
     def __init__(self):
         pass
@@ -56,7 +56,7 @@ class MsapUpdateResp:
 
     @staticmethod
     def getType() -> int:
-        return cmdMsapUpdateResp
+        return int(cmdMsapUpdateResp[0])
 
     def __init__(self, data_bytes):
         # Validate response type

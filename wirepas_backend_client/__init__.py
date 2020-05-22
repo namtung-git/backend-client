@@ -13,5 +13,6 @@ from . import api
 from . import management
 from . import messages
 from . import test
+from . import tools
 
-__all__ = ["api", "management", "messages", "test"]
+__all__ = ["api", "management", "messages", "test", "tools"]

@@ -10,7 +10,7 @@
         See file LICENSE for full license details.
 """
 # pylint: disable=locally-disabled, logging-format-interpolation
-
+from wirepas_backend_client import tools
 
 from messages.decoders import GenericMessage
 from messages.types import ApplicationTypes

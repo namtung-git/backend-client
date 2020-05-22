@@ -17,7 +17,8 @@ import uuid
 import paho
 import paho.mqtt.client as mqtt
 
-from tools import Signal
+
+from wirepas_backend_client.tools import Signal
 
 
 class MQTT(object):

@@ -13,6 +13,8 @@ from .msap_cancel import MsapCancelReq, MsapCancelResp
 from .msap_begin import MsapBeginReq, MsapBeginResp
 from .msap_end import MsapEndReq, MsapEndResp
 
+from .msap_ping import MsapPingReq, MsapPingResp
+
 __all__ = [
     "MsapScratchpadUpdateReq",
     "MsapScratchpadUpdateResp",
@@ -26,4 +28,6 @@ __all__ = [
     "MsapBeginResp",
     "MsapEndReq",
     "MsapEndResp",
+    "MsapPingReq",
+    "MsapPingResp",
 ]
