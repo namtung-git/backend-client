@@ -23,7 +23,7 @@ from wirepas_backend_client.tools import ParserHelper, LoggerHelper
 from wirepas_backend_client.api import MySQLSettings, MySQLObserver
 from wirepas_backend_client.api import MQTTObserver, MQTTSettings
 from wirepas_backend_client.management import Daemon, Inventory, Reliability
-from wirepas_backend_client.test import TestManager
+from wirepas_backend_client.kpi_tester import TestManager
 
 
 class AdvertiserManager(TestManager):

@@ -11,5 +11,6 @@
 """
 
 from .manager import TestManager
+from .kpi_mesh import start_kpi_tester
 
-__all__ = ["TestManager"]
+__all__ = ["TestManager", "start_kpi_tester"]

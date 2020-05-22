@@ -17,4 +17,4 @@ from .handlers import Backend
 from .settings import WNTSettings
 from .connectors import WNTSocket
 
-__all__ = ["Backend", "WNTSettings", "WNTSocket"]
+__all__ = ["Backend", "WNTSettings", "WNTSocket", "wnt_main"]

@@ -210,7 +210,7 @@ class MultiMessageMqttObserver(MQTTObserver):
         return on_response_cb
 
 
-def main():
+def start_kpi_tester():
     parser = ParserHelper("KPI mesh arguments")
     parser.add_file_settings()
     parser.add_mqtt()
@@ -304,7 +304,3 @@ def main():
         logger.error("\n%s", http_settings)
 
     logger.debug("test_kpi exit!")
-
-
-if __name__ == "__main__":
-    main()
