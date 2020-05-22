@@ -1,5 +1,19 @@
 # Changelog
 
+## [v.1.3.5-rc.2](https://github.com/wirepas/backend-client/tree/v.1.3.5-rc.2) (2020-05-22)
+
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.5-rc.2...v.1.3.5-rc.2)
+
+**Closed issues:**
+
+- Add Ping! command. [\#314](https://github.com/wirepas/backend-client/issues/314)
+
+**Merged pull requests:**
+
+- Refactor code so that has only one starting point. [\#318](https://github.com/wirepas/backend-client/pull/318) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- \#314 [\#317](https://github.com/wirepas/backend-client/pull/317) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- Minor refactoring and code base cleaning [\#316](https://github.com/wirepas/backend-client/pull/316) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+
 ## [v1.3.5-rc.2](https://github.com/wirepas/backend-client/tree/v1.3.5-rc.2) (2020-05-20)
 
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v.1.3.5-rc.1...v1.3.5-rc.2)
@@ -101,6 +115,7 @@
 **Merged pull requests:**
 
 - Fixed broken link [\#260](https://github.com/wirepas/backend-client/pull/260) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- Merge \#250 [\#259](https://github.com/wirepas/backend-client/pull/259) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 
 ## [v1.3.2](https://github.com/wirepas/backend-client/tree/v1.3.2) (2020-02-14)
 
@@ -112,7 +127,6 @@
 
 **Merged pull requests:**
 
-- Merge \#250 [\#259](https://github.com/wirepas/backend-client/pull/259) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Fix comma issue [\#257](https://github.com/wirepas/backend-client/pull/257) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Fix list appending issue [\#256](https://github.com/wirepas/backend-client/pull/256) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Black linter fixes round 1 [\#254](https://github.com/wirepas/backend-client/pull/254) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
@@ -191,6 +205,7 @@
 - Update test vectors [\#213](https://github.com/wirepas/backend-client/pull/213) ([PFigs](https://github.com/PFigs))
 - Update ruuvi.py [\#212](https://github.com/wirepas/backend-client/pull/212) ([PFigs](https://github.com/PFigs))
 - Diagnostic decoder [\#209](https://github.com/wirepas/backend-client/pull/209) ([PFigs](https://github.com/PFigs))
+- Release helper [\#206](https://github.com/wirepas/backend-client/pull/206) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.2](https://github.com/wirepas/backend-client/tree/v1.2.2) (2020-01-15)
 
@@ -199,7 +214,6 @@
 **Merged pull requests:**
 
 - Update version [\#207](https://github.com/wirepas/backend-client/pull/207) ([PFigs](https://github.com/PFigs))
-- Release helper [\#206](https://github.com/wirepas/backend-client/pull/206) ([PFigs](https://github.com/PFigs))
 - cli: fix data tracking exception [\#203](https://github.com/wirepas/backend-client/pull/203) ([PFigs](https://github.com/PFigs))
 - Update travis [\#202](https://github.com/wirepas/backend-client/pull/202) ([PFigs](https://github.com/PFigs))
 - Diagnostics dashboard [\#201](https://github.com/wirepas/backend-client/pull/201) ([PFigs](https://github.com/PFigs))
