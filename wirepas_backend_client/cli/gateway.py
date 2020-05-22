@@ -2473,7 +2473,7 @@ class GatewayCliCommands(cmd.Cmd):
                                                         perf_counter()
                                                         - ping_start_time_value
                                                     )
-                                                    * 100
+                                                    * 1000
                                                 ),
                                                 len(responded_nodes_ok),
                                                 msg.source_address,
