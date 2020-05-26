@@ -1,31 +1,21 @@
 # Changelog
 
-## [v.1.3.5-rc.2](https://github.com/wirepas/backend-client/tree/v.1.3.5-rc.2) (2020-05-22)
-
-[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.5-rc.2...v.1.3.5-rc.2)
-
-**Closed issues:**
-
-- Add Ping! command. [\#314](https://github.com/wirepas/backend-client/issues/314)
-
-**Merged pull requests:**
-
-- Refactor code so that has only one starting point. [\#318](https://github.com/wirepas/backend-client/pull/318) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
-- \#314 [\#317](https://github.com/wirepas/backend-client/pull/317) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
-- Minor refactoring and code base cleaning [\#316](https://github.com/wirepas/backend-client/pull/316) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
-
-## [v1.3.5-rc.2](https://github.com/wirepas/backend-client/tree/v1.3.5-rc.2) (2020-05-20)
+## [v1.3.5-rc.2](https://github.com/wirepas/backend-client/tree/v1.3.5-rc.2) (2020-05-22)
 
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v.1.3.5-rc.1...v1.3.5-rc.2)
 
 **Closed issues:**
 
+- Add Ping! command. [\#314](https://github.com/wirepas/backend-client/issues/314)
 - Disable currently broken commands from CLI [\#309](https://github.com/wirepas/backend-client/issues/309)
 - Implement global scratchpad\_update command that also ask nodes to take firmware into use. [\#306](https://github.com/wirepas/backend-client/issues/306)
 - Implement scratchpad\_check command [\#303](https://github.com/wirepas/backend-client/issues/303)
 
 **Merged pull requests:**
 
+- Refactor code so that has only one starting point. [\#318](https://github.com/wirepas/backend-client/pull/318) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- \#314 [\#317](https://github.com/wirepas/backend-client/pull/317) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- Minor refactoring and code base cleaning [\#316](https://github.com/wirepas/backend-client/pull/316) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Removed sink selection from  scratchpad\_ commands.  [\#313](https://github.com/wirepas/backend-client/pull/313) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Console printout improvements to scractchpad\_check\_all [\#312](https://github.com/wirepas/backend-client/pull/312) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - \#309 [\#311](https://github.com/wirepas/backend-client/pull/311) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
@@ -36,11 +26,7 @@
 
 ## [v.1.3.5-rc.1](https://github.com/wirepas/backend-client/tree/v.1.3.5-rc.1) (2020-05-13)
 
-[Full Changelog](https://github.com/wirepas/backend-client/compare/v.1.3.5.rc.1...v.1.3.5-rc.1)
-
-## [v.1.3.5.rc.1](https://github.com/wirepas/backend-client/tree/v.1.3.5.rc.1) (2020-05-13)
-
-[Full Changelog](https://github.com/wirepas/backend-client/compare/v.1.3.4-rc.5...v.1.3.5.rc.1)
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v.1.3.4-rc.5...v.1.3.5-rc.1)
 
 **Merged pull requests:**
 
@@ -58,18 +44,11 @@
 
 ## [v1.3.4-rc.4](https://github.com/wirepas/backend-client/tree/v1.3.4-rc.4) (2020-04-09)
 
-[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.4-rc.3...v1.3.4-rc.4)
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.4-rc.1...v1.3.4-rc.4)
 
 **Merged pull requests:**
 
 - Minor change to test release script [\#291](https://github.com/wirepas/backend-client/pull/291) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
-
-## [v1.3.4-rc.3](https://github.com/wirepas/backend-client/tree/v1.3.4-rc.3) (2020-04-09)
-
-[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.4-rc.1...v1.3.4-rc.3)
-
-**Merged pull requests:**
-
 - Http.py fixes [\#290](https://github.com/wirepas/backend-client/pull/290) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - \#266 [\#283](https://github.com/wirepas/backend-client/pull/283) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 
@@ -205,7 +184,6 @@
 - Update test vectors [\#213](https://github.com/wirepas/backend-client/pull/213) ([PFigs](https://github.com/PFigs))
 - Update ruuvi.py [\#212](https://github.com/wirepas/backend-client/pull/212) ([PFigs](https://github.com/PFigs))
 - Diagnostic decoder [\#209](https://github.com/wirepas/backend-client/pull/209) ([PFigs](https://github.com/PFigs))
-- Release helper [\#206](https://github.com/wirepas/backend-client/pull/206) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.2](https://github.com/wirepas/backend-client/tree/v1.2.2) (2020-01-15)
 
@@ -214,6 +192,7 @@
 **Merged pull requests:**
 
 - Update version [\#207](https://github.com/wirepas/backend-client/pull/207) ([PFigs](https://github.com/PFigs))
+- Release helper [\#206](https://github.com/wirepas/backend-client/pull/206) ([PFigs](https://github.com/PFigs))
 - cli: fix data tracking exception [\#203](https://github.com/wirepas/backend-client/pull/203) ([PFigs](https://github.com/PFigs))
 - Update travis [\#202](https://github.com/wirepas/backend-client/pull/202) ([PFigs](https://github.com/PFigs))
 - Diagnostics dashboard [\#201](https://github.com/wirepas/backend-client/pull/201) ([PFigs](https://github.com/PFigs))
