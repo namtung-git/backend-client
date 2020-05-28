@@ -240,7 +240,7 @@ def start_kpi_tester():
 
     if mqtt_settings.sanity() and http_settings.sanity():
 
-        default_my_sql_worker_count : int  = 1
+        default_my_sql_worker_count: int = 1
 
         daemon = Daemon(logger=logger)
 

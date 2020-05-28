@@ -62,6 +62,7 @@ class SinkAndGatewayStatusObserver(Thread):
         self.exit_signal = exit_signal
         self.gw_status_queue = gw_status_queue
         self.logger = logger
+        self.dump_status = False
         self.gateways_and_sinks = (
             {}
         )  # This will be populated according query defined in
@@ -71,6 +72,7 @@ class SinkAndGatewayStatusObserver(Thread):
         # too-many-branches
 
     def run(self):
+
         while not self.exit_signal.is_set():
             try:
                 # Http server does not subscribe MQTT configuration. It is
@@ -78,7 +80,8 @@ class SinkAndGatewayStatusObserver(Thread):
                 # all gateways.
 
                 status_msg = self.gw_status_queue.get(block=True, timeout=60)
-                self.logger.info("HTTP status_msg={}".format(status_msg))
+                if self.dump_status:
+                    self.logger.info("HTTP status_msg={}".format(status_msg))
                 # New status of gateway received.
                 if status_msg["gw_id"] not in self.gateways_and_sinks:
                     # New gateway detected
@@ -185,9 +188,13 @@ class SinkAndGatewayStatusObserver(Thread):
         # And delete those sinks in separate loop.
         for i in delete:
             del self.gateways_and_sinks[status_msg["gw_id"]][i]
-        self.logger.info(
-            "HTTP Server gateways_and_sinks={}".format(self.gateways_and_sinks)
-        )
+
+        if self.dump_status is True:
+            self.logger.info(
+                "HTTP Server gateways_and_sinks={}".format(
+                    self.gateways_and_sinks
+                )
+            )
 
     def check_and_refresh_sink(self, sink):
         if "started" in sink:

@@ -19,11 +19,9 @@ import logging
 import multiprocessing
 import queue
 import time
-import threading
 
 from ..stream import StreamObserver
 
-from messages import AdvertiserMessage
 from messages import BootDiagnosticsMessage
 from messages import NeighborDiagnosticsMessage
 from messages import NodeDiagnosticsMessage
@@ -39,16 +37,16 @@ class MySQLObserver(StreamObserver):
     """ MySQLObserver monitors the internal queues and dumps events to the database """
 
     def __init__(
-            self,
-            mysql_settings: Settings,
-            start_signal: multiprocessing.Event,
-            exit_signal: multiprocessing.Event,
-            tx_queue: multiprocessing.Queue,
-            rx_queue: multiprocessing.Queue,
-            parallel: bool = True,
-            n_workers: int = 1,
-            timeout: int = 10,
-            logger=None,
+        self,
+        mysql_settings: Settings,
+        start_signal: multiprocessing.Event,
+        exit_signal: multiprocessing.Event,
+        tx_queue: multiprocessing.Queue,
+        rx_queue: multiprocessing.Queue,
+        parallel: bool = True,
+        n_workers: int = 1,
+        timeout: int = 10,
+        logger=None,
     ) -> "MySQLObserver":
         super(MySQLObserver, self).__init__(
             start_signal=start_signal,
@@ -73,44 +71,23 @@ class MySQLObserver(StreamObserver):
         self.parallel = parallel
         self.n_workers = n_workers
 
-    # def on_data_received(self):
-    #     """ Monitor inbound queue for messages to be stored in MySQL """
-    #
-    #     print("is this obsolete?")
-    #
-    #     while not self.exit_signal.is_set():
-    #
-    #         if self.rx_queue.empty() is False:
-    #             message = self.rx_queue.get(timeout=self.timeout,block=True)
-    #             if message is not None:
-    #                 self._map_message(self.mysql, message)
-    #         else:
-    #             pass
-    #
-    #         elapsed_time_since_flush = time.perf_counter()-last_tx_flush_time
-    #         print(elapsed_time_since_flush)
-    #         if elapsed_time_since_flush > \
-    #                 flush_time_threshold_sec:
-    #             self.on_tx_timer()
-    #             last_tx_flush_time= time.perf_counter()
-
-    def _map_message(mysql, message, incrementCounter:int):
+    def _map_message(mysql, message, incrementCounter: int):
         """ Inserts the message according to its type """
-        ret: bool =True
-        if mysql.put_to_received_packets(message,incrementCounter) is True:
+        ret: bool = True
+        if mysql.put_to_received_packets(message, incrementCounter) is True:
 
             if isinstance(message, DiagnosticsMessage):
-                ret = mysql.put_diagnostics(message,incrementCounter)
+                ret = mysql.put_diagnostics(message, incrementCounter)
             elif isinstance(message, TestNWMessage):
-                ret = mysql.put_testnw_measurements(message,incrementCounter)
+                ret = mysql.put_testnw_measurements(message, incrementCounter)
             elif isinstance(message, BootDiagnosticsMessage):
-                ret = mysql.put_boot_diagnostics(message,incrementCounter)
+                ret = mysql.put_boot_diagnostics(message, incrementCounter)
             elif isinstance(message, NeighborDiagnosticsMessage):
-                ret = mysql.put_neighbor_diagnostics(message,incrementCounter)
+                ret = mysql.put_neighbor_diagnostics(message, incrementCounter)
             elif isinstance(message, NodeDiagnosticsMessage):
-                ret = mysql.put_node_diagnostics(message,incrementCounter)
+                ret = mysql.put_node_diagnostics(message, incrementCounter)
             elif isinstance(message, TrafficDiagnosticsMessage):
-                ret = mysql.put_traffic_diagnostics(message,incrementCounter)
+                ret = mysql.put_traffic_diagnostics(message, incrementCounter)
 
             if ret is False:
                 mysql.logger.warning("Data insertion error (2).")
@@ -136,7 +113,7 @@ class MySQLObserver(StreamObserver):
             mysql.connect(table_creation=False)
             pid = os.getpid()
 
-            incrementCounter:int = 0
+            incrementCounter: int = 0
 
             logger.info("starting MySQL worker %s", pid)
 
@@ -177,19 +154,20 @@ class MySQLObserver(StreamObserver):
 
                 if not exit_signal.is_set():
                     try:
-                        MySQLObserver._map_message(mysql, message,
-                                                   incrementCounter)
-                        incrementCounter+=1
+                        MySQLObserver._map_message(
+                            mysql, message, incrementCounter
+                        )
+                        incrementCounter += 1
                     except MySQLdb.Error:
                         logger.exception(
                             "MySQL worker %s: connection restart failed.", pid
                         )
 
-                elapsed_time_since_flush = time.perf_counter() - \
-                                           last_tx_flush_time
+                elapsed_time_since_flush = (
+                    time.perf_counter() - last_tx_flush_time
+                )
 
-                if elapsed_time_since_flush > \
-                        flush_time_threshold_sec:
+                if elapsed_time_since_flush > flush_time_threshold_sec:
                     mysql.flush_pending_inserts()
                     last_tx_flush_time = time.perf_counter()
 
