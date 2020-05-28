@@ -90,7 +90,6 @@ class Daemon(object):
         """ Default loop. Waits until an exit signal is given or the processes are dead"""
         try:
             while not self.exit_signal.is_set():
-                self.logger.debug("daemon is watching %s", self.heartbeat)
                 for _, register in self.process.items():
                     try:
                         if not register["object"].is_alive():

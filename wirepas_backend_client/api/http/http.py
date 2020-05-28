@@ -168,7 +168,7 @@ class SinkAndGatewayStatusObserver(Thread):
                 self.remove_inactive_sinks(status_msg)
 
             except queue.Empty:
-                self.logger.info("HTTP status_msg receiver running")
+                pass
 
     def remove_inactive_sinks(self, status_msg):
         delete = []

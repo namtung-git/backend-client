@@ -240,6 +240,8 @@ def start_kpi_tester():
 
     if mqtt_settings.sanity() and http_settings.sanity():
 
+        default_my_sql_worker_count : int  = 1
+
         daemon = Daemon(logger=logger)
 
         gw_status_from_mqtt_broker = daemon.create_queue()
@@ -270,7 +272,7 @@ def start_kpi_tester():
             )
             daemon.set_run(
                 storage_name,
-                task_kwargs={"n_workers": 8},
+                task_kwargs={"n_workers": default_my_sql_worker_count},
                 task_as_daemon=False,
             )
 

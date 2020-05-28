@@ -16,6 +16,7 @@ except ImportError:
 
 import logging
 import json
+from time import sleep
 
 
 class MySQL(object):
@@ -24,18 +25,23 @@ class MySQL(object):
     """
 
     def __init__(
-        self,
-        username: str,
-        password: str,
-        hostname: str,
-        database: str,
-        port: int,
-        connection_timeout: int,
-        logger: logging.Logger = None,
+            self,
+            username: str,
+            password: str,
+            hostname: str,
+            database: str,
+            port: int,
+            connection_timeout: int,
+            logger: logging.Logger = None,
     ):
 
         super(MySQL, self).__init__()
 
+        self.stat_inserts_fail = 0
+        self.stat_inserts_ok = 0
+        self.itemsInDBTot = 0
+        self.sql_insert_update_statements = dict()
+        self.sql_insert_variable_statements = dict()
         self.logger = logger or logging.getLogger(__name__)
 
         self.hostname = hostname
@@ -46,6 +52,7 @@ class MySQL(object):
         self.port = port
         self.cursor = None
         self.connection_timeout = connection_timeout
+        self.itemsAddedTot: int = 0
 
     def connect(self, table_creation=True) -> None:
         """ Establishes a connection and service loop. """
@@ -64,7 +71,10 @@ class MySQL(object):
             passwd=self.password,
             port=self.port,
             connect_timeout=self.connection_timeout,
+
         )
+
+        self.database.autocommit = False
 
         self.cursor = self.database.cursor()
         self.cursor.execute("SHOW DATABASES")
@@ -758,8 +768,46 @@ class MySQL(object):
             self.cursor.execute(query)
             self.database.commit()
 
-    def put_to_received_packets(self, message):
+    def store_variable_statement_to_update_list(self, statement: str,
+                                                values: str,
+                                                incrementCounter: int):
+
+        ret: bool = False
+
+        if len(statement) > 0:
+
+            if incrementCounter not in \
+                    self.sql_insert_variable_statements:
+                self.sql_insert_variable_statements[incrementCounter] = list()
+
+            self.sql_insert_variable_statements[incrementCounter].append(
+                (statement, values))
+
+            ret = True
+
+        return ret
+
+    def store_insert_to_update_list(self, sql_insert: str,
+                                    incrementCounter: int) -> bool:
+
+        ret: bool = False
+
+        if len(sql_insert) > 0:
+            if incrementCounter not in self.sql_insert_update_statements:
+                # There should be at least one element already added.
+                # received packet message is first and others relations to it
+                ret = False
+            else:
+                self.sql_insert_update_statements[incrementCounter].append(
+                    sql_insert)
+
+            ret = True
+
+        return ret
+
+    def put_to_received_packets(self, message, incrementCounter: int) -> bool:
         """ Insert received packet to the database """
+
         try:
             hop_count = message.hop_count
         except:
@@ -782,31 +830,60 @@ class MySQL(object):
                 hop_count,
             )
         )
-        self.cursor.execute(query)
-        self.database.commit()
 
-    def put_diagnostics(self, message):
+        if incrementCounter not in self.sql_insert_update_statements:
+            self.sql_insert_update_statements[incrementCounter] = list()
+            self.sql_insert_update_statements[incrementCounter].append(query)
+            ret = True
+        else:
+            # This message should be first one.
+            ret = False
+
+        if ret is False:
+            self.logger.warning("put_to_received_packets "
+                                "failed to store data")
+
+        return ret
+
+    def put_diagnostics(self, message, incrementCounter: int) -> bool:
         """ Dumps the diagnostic object into a table """
+
+        ret: bool = False
 
         statement = (
             "INSERT INTO diagnostics_json (received_packet, apdu) "
             "VALUES (LAST_INSERT_ID(), %s)"
         )
         values = json.dumps(message.serialize())
-        self.cursor.execute(statement, (values,))
-        self.database.commit()
+        ret = self.store_variable_statement_to_update_list(statement, values,
+                                                           incrementCounter)
+        if ret is False:
+            self.logger.warning("put_diagnostics "
+                                "failed to store data")
+        return ret
 
-    def put_advertiser(self, message):
+    def put_advertiser(self, message, incrementCounter: int) -> bool:
+
+        ret: bool = False
+
         """ Dumps the advertiser object into a table """
 
         statement = "INSERT INTO advertiser_json (received_packet, apdu) VALUES (LAST_INSERT_ID(), %s)"
         message.full_adv_serialization = True
         values = json.dumps(message.serialize())
-        self.cursor.execute(statement, (values,))
-        self.database.commit()
 
-    def put_traffic_diagnostics(self, message):
+        ret = self.store_variable_statement_to_update_list(statement, values,
+                                                           incrementCounter)
+
+        if ret is False:
+            self.logger.warning("put_advertiser "
+                                "failed to store data")
+        return ret
+
+    def put_traffic_diagnostics(self, message, incrementCounter: int):
         """ Insert traffic diagnostic packets """
+
+        ret: bool = False
 
         query = (
             "INSERT INTO diagnostic_traffic "
@@ -837,18 +914,26 @@ class MySQL(object):
             )
         )
 
-        self.cursor.execute(query)
-        self.database.commit()
+        ret = self.store_insert_to_update_list(query, incrementCounter)
 
-    def put_neighbor_diagnostics(self, message):
+        if ret is False:
+            self.logger.warning("put_traffic_diagnostics "
+                                "failed to store data")
+
+        return ret
+
+    def put_neighbor_diagnostics(self, message, incrementCounter: int) -> bool:
         """ Insert neighbor diagnostic packets """
+        ret: bool = False
 
         # See if any neighbors, do not do insert
         try:
             if message.neighbor[0]["address"] == 0:
-                return
+                ret = True
+                return ret
         except KeyError:
-            return
+            ret = True
+            return ret
 
         # Insert all neighbors at once
         values = []
@@ -878,11 +963,13 @@ class MySQL(object):
             "VALUES {};".format(",".join(values))
         )
 
-        self.cursor.execute(query)
-        self.database.commit()
+        ret = self.store_insert_to_update_list(query, incrementCounter)
+        return ret
 
-    def put_boot_diagnostics(self, message):
+    def put_boot_diagnostics(self, message, incrementCounter: int) -> bool:
         """ Insert boot diagnostic packets """
+
+        ret: bool = False
 
         query = (
             "INSERT INTO diagnostic_boot "
@@ -907,12 +994,18 @@ class MySQL(object):
                 message.apdu["cur_seq"],
             )
         )
-        self.cursor.execute(query)
-        self.database.commit()
+        ret = self.store_insert_to_update_list(query, incrementCounter)
 
-    def put_node_diagnostics(self, message):
+        if ret is False:
+            self.logger.warning("put_advertiser "
+                                "failed to store data")
+        return ret
+
+    def put_node_diagnostics(self, message, incrementCounter: int) -> bool:
         """ Insert node diagnostic packets """
         # pylint: disable=locally-disabled, too-many-branches
+
+        ret: bool = False
 
         # Remember the last received packet (that was received_packets)
         last_received_packet = self.cursor.lastrowid
@@ -1028,30 +1121,34 @@ class MySQL(object):
                 pending_reroute_packets,
             )
         )
+        ret = self.store_insert_to_update_list(query, incrementCounter)
+        if ret is True:
+            # Create events
+            events = []
+            for i in range(0, 15):
+                event = message.apdu["events_{}".format(i)]
+                if event != 0:
+                    events.append(
+                        "({},{},{})".format(last_received_packet, i, event)
+                    )
 
-        self.cursor.execute(query)
-        self.database.commit()
-
-        # Create events
-        events = []
-        for i in range(0, 15):
-            event = message.apdu["events_{}".format(i)]
-            if event != 0:
-                events.append(
-                    "({},{},{})".format(last_received_packet, i, event)
+            if events:
+                query = (
+                    "INSERT INTO diagnostic_event "
+                    "(received_packet, position, event) "
+                    "VALUES {};".format(",".join(events))
                 )
+                ret = self.store_insert_to_update_list(query, incrementCounter)
 
-        if events:
-            query = (
-                "INSERT INTO diagnostic_event "
-                "(received_packet, position, event) "
-                "VALUES {};".format(",".join(events))
-            )
-            self.cursor.execute(query)
-            self.database.commit()
+        if ret is False:
+            self.logger.warning("put_node_diagnostics "
+                                "failed to store data")
+        return ret
 
-    def put_testnw_measurements(self, message):
+    def put_testnw_measurements(self, message, incrementCounter: int) -> bool:
         """ Insert received test network application packets """
+
+        ret: bool = False
 
         for row in range(message.apdu["row_count"]):
             table_name = "TestData_ID_" + str(message.apdu["testdata_id"][row])
@@ -1068,29 +1165,175 @@ class MySQL(object):
             )
 
             query = (
-                "INSERT INTO "
-                + table_name
-                + " "
-                + "(received_packet,"
-                + "logged_time,"
-                + "launch_time,"
-                + "field_count,"
-                + "ID_ctrl,"
-                + data_column_names
-                + ")"
-                + " VALUES ("
-                + "LAST_INSERT_ID(),"
-                + "{0:.32f},".format(message.rx_time_ms_epoch / 1000)
-                + "{0:.32f},".format(
-                    (message.rx_time_ms_epoch - message.travel_time_ms) / 1000
-                )
-                + str(message.apdu["number_of_fields"][row])
-                + ","
-                + str(message.apdu["id_ctrl"][row])
-                + ","
-                + data_column_values
-                + ")"
+                    "INSERT INTO "
+                    + table_name
+                    + " "
+                    + "(received_packet,"
+                    + "logged_time,"
+                    + "launch_time,"
+                    + "field_count,"
+                    + "ID_ctrl,"
+                    + data_column_names
+                    + ")"
+                    + " VALUES ("
+                    + "LAST_INSERT_ID(),"
+                    + "{0:.32f},".format(message.rx_time_ms_epoch / 1000)
+                    + "{0:.32f},".format(
+                (message.rx_time_ms_epoch - message.travel_time_ms) / 1000
+            )
+                    + str(message.apdu["number_of_fields"][row])
+                    + ","
+                    + str(message.apdu["id_ctrl"][row])
+                    + ","
+                    + data_column_values
+                    + ")"
             )
 
-            self.cursor.execute(query)
-            self.database.commit()
+            ret = self.store_insert_to_update_list(query, incrementCounter)
+            if ret is False:
+                self.logger.warning("put_testnw_measurements "
+                                    "failed to store data")
+                break
+
+        return ret
+
+    def flush_pending_inserts(self):
+
+        dump_staments: bool = False
+        itemcount = len(self.sql_insert_update_statements)
+
+        packet_id_before_update = self.get_latest_inserted_packet_id()
+
+        sql_clause: str = ""
+        try:
+            insertCounter: int = 0
+            commitNeeded: bool = False
+            rowsProcessed: int = 0
+
+            cursor = self.database.cursor()
+
+            first_select_done: bool = False
+
+            for insertRef in self.sql_insert_update_statements.keys():
+                msgs: list = self.sql_insert_update_statements[insertRef]
+                if len(msgs) >= 1:
+                    packetMsg = msgs[0]
+
+                    # [A] Update primary table.
+                    cursor.execute(packetMsg)
+
+                    if first_select_done is False:
+                        # now we have transaction in progress (implicit start)
+                        # Assume that inserts  autoincremented primary key
+                        # values  are monotonically increasing with step size 1
+
+                        # sync packet id from DB
+                        current_packet_id = self.get_latest_inserted_packet_id()
+                        first_select_done = True
+                    else:
+                        # We are inside transaction. Use value and save one
+                        # select per message (access over network to DB)
+                        current_packet_id += 1
+
+                    if dump_staments is True:
+                        print(current_packet_id, packetMsg)
+
+                    rowsProcessed += 1
+                    self.itemsAddedTot += 1
+                    # [B] Update other tables. packet id must match to first
+                    # message that was used to update primary table [A].
+                    for additionalData in msgs[1:]:
+                        modified = self.addPacketId(additionalData,
+                                                    current_packet_id)
+                        if dump_staments is True:
+                            print(current_packet_id, modified)
+
+                    rowsProcessed += 1
+                    self.itemsAddedTot += 1
+                    commitNeeded = True
+
+                    # [C] Check also JSON messages and add them. Packet id
+                    # must match to primary table [A].
+                    if insertRef in self.sql_insert_variable_statements:
+                        jsonMsgs: list = \
+                            self.sql_insert_variable_statements[insertRef]
+                        for jsonMsg in jsonMsgs:
+                            a, b = jsonMsg
+                            modA = self.addPacketId(a, current_packet_id)
+                            if dump_staments is True:
+                                print(current_packet_id, modA, b)
+
+                            cursor.execute(modA, (b,))
+
+                else:
+                    print("only 1 item in sql_insert_update_list")
+
+            # Commit all
+            if commitNeeded is True:
+                self.database.commit()
+
+        except Exception as e:
+            self.database.rollback()
+            print("SQL update error", e)
+
+        packet_id_after_update = self.get_latest_inserted_packet_id()
+
+        # clear lists
+        self.sql_insert_update_statements.clear()
+        self.sql_insert_variable_statements.clear()
+
+        self.itemsInDBTot += packet_id_after_update - packet_id_before_update
+
+        if (packet_id_after_update - packet_id_before_update) - itemcount == 0:
+            self.stat_inserts_ok += 1
+            print("Inserts PASS. Packet id before update:{} and after "
+                  "update:{} ({} items). Inserts ok/nok:{}/{} ({}%) "
+                  .format(packet_id_before_update, packet_id_after_update,
+                          packet_id_after_update - packet_id_before_update,
+                          self.stat_inserts_ok,
+                          self.stat_inserts_fail,
+                          int(self.stat_inserts_ok / (self.stat_inserts_fail +
+                                                      self.stat_inserts_ok)) * 100
+                          ))
+        else:
+            self.stat_inserts_fail += 1
+            print("Inserts FAIL")
+            print("{}, {}, {}, {}, {}".format(itemcount,
+                                              packet_id_before_update,
+                                              packet_id_after_update,
+                                              packet_id_after_update -
+                                              packet_id_before_update,
+                                              (packet_id_after_update -
+                                               packet_id_before_update) -
+                                              itemcount))
+
+            print("i: {} -- {} diff: {}".format(self.itemsAddedTot,
+                                                self.itemsInDBTot,
+                                                self.itemsAddedTot - self.itemsInDBTot))
+
+    def get_latest_inserted_packet_id(self) -> int:
+        ret: int = 0
+        try:
+            sql_select_Query = "SELECT id FROM received_packets ORDER BY ID DESC LIMIT 1"
+            cursor = self.database.cursor()
+            cursor.execute(sql_select_Query)
+            records = cursor.fetchall()
+            if len(records) > 0:
+                ret = records[0][0]
+
+        except Exception as e:
+            print(e)
+            ret = 0
+
+        return ret
+
+    def addPacketId(self, sql_insert_qry, packetId):
+        ret: str = ""
+        replaceStr: str = "LAST_INSERT_ID()"
+        if replaceStr in sql_insert_qry:
+            ret = sql_insert_qry.replace(replaceStr,
+                                         "{}".format(int(packetId)))
+        else:
+            ret = sql_insert_qry
+
+        return ret
