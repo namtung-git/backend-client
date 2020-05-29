@@ -1335,7 +1335,7 @@ class MySQL(object):
                     int((update_stop_time - update_start_time) * 1000),
                     "{:.2f}".format(msgsPerSec),
                     "{:.1f}".format(update_load * 100),
-                ),
+                )
             )
         else:
             self.stat_inserts_fail += 1

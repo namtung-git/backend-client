@@ -25,6 +25,7 @@ from wirepas_backend_client.mesh.set_diagnostics.fea_set_neighbor_diagnostics im
 )
 from wirepas_backend_client.mesh.sink import Sink
 
+
 from wirepas_backend_client.messages.msap_cmds import (
     MsapBeginReq,
     MsapBeginResp,

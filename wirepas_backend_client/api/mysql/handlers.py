@@ -29,7 +29,6 @@ from wirepas_backend_client.messages import NodeDiagnosticsMessage
 from wirepas_backend_client.messages import TestNWMessage
 from wirepas_backend_client.messages import TrafficDiagnosticsMessage
 from wirepas_backend_client.messages import DiagnosticsMessage
-from wirepas_backend_client.messages import AdvertiserMessage
 from wirepas_backend_client.tools import Settings
 
 
