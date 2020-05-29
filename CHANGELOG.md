@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.3.5-rc.6](https://github.com/wirepas/backend-client/tree/v1.3.5-rc.6) (2020-05-29)
+
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.5-rc.5...v1.3.5-rc.6)
+
+**Merged pull requests:**
+
+- Whitespace change to make build system happy for release [\#321](https://github.com/wirepas/backend-client/pull/321) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+
+## [v1.3.5-rc.5](https://github.com/wirepas/backend-client/tree/v1.3.5-rc.5) (2020-05-29)
+
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.5-rc.4...v1.3.5-rc.5)
+
 ## [v1.3.5-rc.4](https://github.com/wirepas/backend-client/tree/v1.3.5-rc.4) (2020-05-29)
 
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.5-rc.3...v1.3.5-rc.4)
@@ -46,6 +58,7 @@
 - \#289 \#300 \#301  [\#302](https://github.com/wirepas/backend-client/pull/302) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Da reliability [\#297](https://github.com/wirepas/backend-client/pull/297) ([PeiChunyan](https://github.com/PeiChunyan))
 - Change for the DA KPI testing [\#295](https://github.com/wirepas/backend-client/pull/295) ([PeiChunyan](https://github.com/PeiChunyan))
+- \#267 [\#282](https://github.com/wirepas/backend-client/pull/282) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 
 ## [v.1.3.4-rc.5](https://github.com/wirepas/backend-client/tree/v.1.3.4-rc.5) (2020-04-09)
 
@@ -76,10 +89,8 @@
 
 **Merged pull requests:**
 
-- \#267 [\#282](https://github.com/wirepas/backend-client/pull/282) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - \#270 [\#281](https://github.com/wirepas/backend-client/pull/281) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - 4 bytes support added into advertiser address. [\#280](https://github.com/wirepas/backend-client/pull/280) ([kahaapal](https://github.com/kahaapal))
-- \[Provisioning\] Extend provisioning session timeout [\#279](https://github.com/wirepas/backend-client/pull/279) ([vgeneves](https://github.com/vgeneves))
 - Fix positioning message decoding [\#273](https://github.com/wirepas/backend-client/pull/273) ([telindgr](https://github.com/telindgr))
 
 ## [v1.3.3](https://github.com/wirepas/backend-client/tree/v1.3.3) (2020-02-28)
@@ -119,6 +130,7 @@
 
 **Merged pull requests:**
 
+- \[Provisioning\] Extend provisioning session timeout [\#279](https://github.com/wirepas/backend-client/pull/279) ([vgeneves](https://github.com/vgeneves))
 - Fix comma issue [\#257](https://github.com/wirepas/backend-client/pull/257) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Fix list appending issue [\#256](https://github.com/wirepas/backend-client/pull/256) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Black linter fixes round 1 [\#254](https://github.com/wirepas/backend-client/pull/254) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
@@ -260,7 +272,6 @@
 - Diagnostic packets [\#182](https://github.com/wirepas/backend-client/pull/182) ([PFigs](https://github.com/PFigs))
 - Update README.md [\#180](https://github.com/wirepas/backend-client/pull/180) ([PFigs](https://github.com/PFigs))
 - Update dependency mysqlclient to v1.4.5 [\#177](https://github.com/wirepas/backend-client/pull/177) ([renovate[bot]](https://github.com/apps/renovate))
-- Update dependency pandas to v0.25.3 [\#175](https://github.com/wirepas/backend-client/pull/175) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency paho-mqtt to v1.5.0 [\#174](https://github.com/wirepas/backend-client/pull/174) ([renovate[bot]](https://github.com/apps/renovate))
 - Reduce TOC level [\#173](https://github.com/wirepas/backend-client/pull/173) ([PFigs](https://github.com/PFigs))
 - Decoder exception handling test [\#171](https://github.com/wirepas/backend-client/pull/171) ([PFigs](https://github.com/PFigs))
@@ -269,6 +280,7 @@
 - Environment keys [\#163](https://github.com/wirepas/backend-client/pull/163) ([PFigs](https://github.com/PFigs))
 - Update wnt interfaces [\#161](https://github.com/wirepas/backend-client/pull/161) ([PFigs](https://github.com/PFigs))
 - Travis service tests [\#160](https://github.com/wirepas/backend-client/pull/160) ([PFigs](https://github.com/PFigs))
+- Update wirepas messaging version and wnt manager imports [\#159](https://github.com/wirepas/backend-client/pull/159) ([JanneSiren](https://github.com/JanneSiren))
 - Influx queries index name [\#158](https://github.com/wirepas/backend-client/pull/158) ([PFigs](https://github.com/PFigs))
 - Update readme [\#155](https://github.com/wirepas/backend-client/pull/155) ([PFigs](https://github.com/PFigs))
 - Diagnostics decoding within MySQL interfaces [\#153](https://github.com/wirepas/backend-client/pull/153) ([PFigs](https://github.com/PFigs))
