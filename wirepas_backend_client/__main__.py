@@ -10,7 +10,6 @@
 """
 
 import argparse
-import sys
 
 from .api.wnt import wnt_main
 from .api.wpe import wpe_main
@@ -46,45 +45,9 @@ def provisioning_server():
 
 def start_backend_client():
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", help="mode help")
     parser.add_argument("--settings", help="settings help")
-
-    parse_ok: bool = False
-
-    try:
-        args = parser.parse_args()
-        parse_ok = True
-    except Exception:
-        print(
-            "Add mode using 'cli' 'wnt_client' 'wpe_client' "
-            "'provisioning_server' or 'kpi_tester' as first argument"
-        )
-
-    # CShop mode argument
-    if parse_ok is True:
-        arg_list: list = [sys.argv[0]]
-        for a in sys.argv[2:]:
-            arg_list.append(a)
-        sys.argv = arg_list
-
-        if args.mode == "cli":
-            gw_cli()
-        elif args.mode == "kpi_tester":
-            start_kpi_tester()
-        elif args.mode == "provisioning_server":
-            provisioning_server()
-        elif args.mode == "wpe_client":
-            wpe_client()
-        elif args.mode == "wnt_client":
-            wnt_client()
-        else:
-            print(
-                "Add mode using 'cli' 'wnt_client' 'wpe_client' "
-                "'provisioning_server' or 'kpi_tester' as first argument"
-            )
-    else:
-        # Launch default
-        gw_cli()
+    parser.parse_args()
+    gw_cli()
 
 
 if __name__ == "__main__":
