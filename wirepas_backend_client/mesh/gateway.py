@@ -7,8 +7,8 @@
         See file LICENSE for full license details.
 """
 
-from mesh.device import MeshDevice
-from mesh.sink import Sink
+from wirepas_backend_client.mesh.device import MeshDevice
+from wirepas_backend_client.mesh.sink import Sink
 
 
 class Gateway(MeshDevice):

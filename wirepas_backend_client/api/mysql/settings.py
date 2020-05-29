@@ -8,7 +8,7 @@
 """
 # pylint: disable=locally-disabled, duplicate-code
 
-from tools import Settings
+from wirepas_backend_client.tools import Settings
 
 
 class MySQLSettings(Settings):

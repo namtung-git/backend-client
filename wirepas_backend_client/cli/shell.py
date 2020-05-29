@@ -19,8 +19,8 @@ import sys
 import time
 import queue
 
-from api import Topics
-from cli.gateway import GatewayCliCommands
+from wirepas_backend_client.api import Topics
+from wirepas_backend_client.cli.gateway import GatewayCliCommands
 
 
 class GatewayShell(GatewayCliCommands):

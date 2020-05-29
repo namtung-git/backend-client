@@ -12,11 +12,11 @@
 import argparse
 import sys
 
-from wirepas_backend_client.api.wnt import wnt_main
-from wirepas_backend_client.api.wpe import wpe_main
-from wirepas_backend_client.cli.cli_starter import start_cli
-from wirepas_backend_client.kpi_tester import start_kpi_tester
-from wirepas_backend_client.provisioning import prov_main
+from .api.wnt import wnt_main
+from .api.wpe import wpe_main
+from .cli import start_cli
+from .kpi_tester import start_kpi_tester
+from .provisioning import prov_main
 
 
 def wnt_client():
@@ -49,29 +49,42 @@ def start_backend_client():
     parser.add_argument("mode", help="mode help")
     parser.add_argument("--settings", help="settings help")
 
-    args = parser.parse_args()
+    parse_ok: bool = False
 
-    # CShop mode argument
-    arg_list: list = [sys.argv[0]]
-    for a in sys.argv[2:]:
-        arg_list.append(a)
-    sys.argv = arg_list
-
-    if args.mode == "cli":
-        gw_cli()
-    elif args.mode == "kpi_tester":
-        start_kpi_tester()
-    elif args.mode == "provisioning_server":
-        provisioning_server()
-    elif args.mode == "wpe_client":
-        wpe_client()
-    elif args.mode == "wnt_client":
-        wnt_client()
-    else:
+    try:
+        args = parser.parse_args()
+        parse_ok = True
+    except Exception:
         print(
             "Add mode using 'cli' 'wnt_client' 'wpe_client' "
             "'provisioning_server' or 'kpi_tester' as first argument"
         )
+
+    # CShop mode argument
+    if parse_ok is True:
+        arg_list: list = [sys.argv[0]]
+        for a in sys.argv[2:]:
+            arg_list.append(a)
+        sys.argv = arg_list
+
+        if args.mode == "cli":
+            gw_cli()
+        elif args.mode == "kpi_tester":
+            start_kpi_tester()
+        elif args.mode == "provisioning_server":
+            provisioning_server()
+        elif args.mode == "wpe_client":
+            wpe_client()
+        elif args.mode == "wnt_client":
+            wnt_client()
+        else:
+            print(
+                "Add mode using 'cli' 'wnt_client' 'wpe_client' "
+                "'provisioning_server' or 'kpi_tester' as first argument"
+            )
+    else:
+        # Launch default
+        gw_cli()
 
 
 if __name__ == "__main__":

@@ -7,8 +7,8 @@
         See file LICENSE for full license details.
 """
 
-from mesh.gateway import Gateway
-from mesh.network import Network
+from wirepas_backend_client.mesh.gateway import Gateway
+from wirepas_backend_client.mesh.network import Network
 
 
 class MeshManagement(object):

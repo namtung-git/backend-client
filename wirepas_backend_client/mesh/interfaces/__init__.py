@@ -6,6 +6,6 @@
 
 # flake8: noqa
 
-from mesh.interfaces.beacon import *
-from mesh.interfaces.mqtt import *
-from mesh.interfaces.remote_api import *
+from .beacon import *
+from .mqtt import *
+from .remote_api import *

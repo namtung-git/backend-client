@@ -1,9 +1,9 @@
 import json
 import wirepas_messaging
 import datetime
-from tools import LoggerHelper
 
-from messages.interface import MessageManager
+from wirepas_backend_client.tools import LoggerHelper
+from wirepas_backend_client.messages.interface import MessageManager
 
 LoggerHelper(module_name="message_decoding").setup()
 

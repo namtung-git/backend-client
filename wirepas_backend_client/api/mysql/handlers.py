@@ -22,13 +22,16 @@ import time
 
 from ..stream import StreamObserver
 
-from messages import BootDiagnosticsMessage
-from messages import NeighborDiagnosticsMessage
-from messages import NodeDiagnosticsMessage
-from messages import TestNWMessage
-from messages import TrafficDiagnosticsMessage
-from messages import DiagnosticsMessage
-from tools import Settings
+
+from wirepas_backend_client.messages import BootDiagnosticsMessage
+from wirepas_backend_client.messages import NeighborDiagnosticsMessage
+from wirepas_backend_client.messages import NodeDiagnosticsMessage
+from wirepas_backend_client.messages import TestNWMessage
+from wirepas_backend_client.messages import TrafficDiagnosticsMessage
+from wirepas_backend_client.messages import DiagnosticsMessage
+from wirepas_backend_client.messages import AdvertiserMessage
+from wirepas_backend_client.tools import Settings
+
 
 from .connectors import MySQL
 
@@ -71,7 +74,7 @@ class MySQLObserver(StreamObserver):
         self.parallel = parallel
         self.n_workers = n_workers
 
-    def _map_message(mysql, message, incrementCounter: int):
+    def _map_message(self, mysql, message, incrementCounter: int):
         """ Inserts the message according to its type """
         ret: bool = True
         if mysql.put_to_received_packets(message, incrementCounter) is True:
@@ -154,9 +157,7 @@ class MySQLObserver(StreamObserver):
 
                 if not exit_signal.is_set():
                     try:
-                        MySQLObserver._map_message(
-                            mysql, message, incrementCounter
-                        )
+                        self._map_message(mysql, message, incrementCounter)
                         incrementCounter += 1
                     except MySQLdb.Error:
                         logger.exception(

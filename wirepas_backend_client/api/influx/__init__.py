@@ -25,7 +25,7 @@
 """
 
 
-from .connectors import Influx
-from .settings import InfluxSettings
+from wirepas_backend_client.api.influx.connectors import Influx
+from wirepas_backend_client.api.influx.settings import InfluxSettings, Settings
 
-__all__ = ["InfluxSettings", "Influx"]
+__all__ = ["InfluxSettings", "Influx", "Settings"]
