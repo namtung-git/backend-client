@@ -179,6 +179,7 @@
 - Mysql: received packets [\#227](https://github.com/wirepas/backend-client/pull/227) ([PFigs](https://github.com/PFigs))
 - Endpoint map: Class property [\#226](https://github.com/wirepas/backend-client/pull/226) ([PFigs](https://github.com/PFigs))
 - Advertiser table [\#225](https://github.com/wirepas/backend-client/pull/225) ([PFigs](https://github.com/PFigs))
+- Disable http cache control [\#224](https://github.com/wirepas/backend-client/pull/224) ([PFigs](https://github.com/PFigs))
 - ADV decoder [\#222](https://github.com/wirepas/backend-client/pull/222) ([PFigs](https://github.com/PFigs))
 - Dockerfile simplification [\#221](https://github.com/wirepas/backend-client/pull/221) ([PFigs](https://github.com/PFigs))
 - Update adv mysql schema [\#220](https://github.com/wirepas/backend-client/pull/220) ([PFigs](https://github.com/PFigs))
@@ -192,7 +193,6 @@
 
 **Merged pull requests:**
 
-- Disable http cache control [\#224](https://github.com/wirepas/backend-client/pull/224) ([PFigs](https://github.com/PFigs))
 - Release v1.2.3 [\#215](https://github.com/wirepas/backend-client/pull/215) ([PFigs](https://github.com/PFigs))
 - Update test vectors [\#213](https://github.com/wirepas/backend-client/pull/213) ([PFigs](https://github.com/PFigs))
 - Update ruuvi.py [\#212](https://github.com/wirepas/backend-client/pull/212) ([PFigs](https://github.com/PFigs))
@@ -211,7 +211,6 @@
 - Diagnostics dashboard [\#201](https://github.com/wirepas/backend-client/pull/201) ([PFigs](https://github.com/PFigs))
 - Advertiser message: interface compliance [\#200](https://github.com/wirepas/backend-client/pull/200) ([PFigs](https://github.com/PFigs))
 - Mesh request example [\#197](https://github.com/wirepas/backend-client/pull/197) ([PFigs](https://github.com/PFigs))
-- Update version to v1.2.2.rc3 [\#196](https://github.com/wirepas/backend-client/pull/196) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.2-rc.3](https://github.com/wirepas/backend-client/tree/v1.2.2-rc.3) (2020-01-07)
 
@@ -219,6 +218,7 @@
 
 **Merged pull requests:**
 
+- Update version to v1.2.2.rc3 [\#196](https://github.com/wirepas/backend-client/pull/196) ([PFigs](https://github.com/PFigs))
 - Diagnostics cbor ids [\#195](https://github.com/wirepas/backend-client/pull/195) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.2-rc.2](https://github.com/wirepas/backend-client/tree/v1.2.2-rc.2) (2019-12-20)
