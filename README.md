@@ -77,9 +77,8 @@ thus require the installation of specific development headers.
 Under Debian, the extra requirements are met with:
 
 ```bash
-    sudo apt-get install default-libmysqlclient-dev \
-                         gcc \
-                         python3-dev
+    sudo apt-get install default-libmysqlclient-dev gcc python3.7-dev
+    
 ```
 
 Please be advised that the name of such packages might change depending on your
