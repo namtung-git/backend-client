@@ -22,14 +22,14 @@ import time
 
 from ..stream import StreamObserver
 
-from messages import AdvertiserMessage
-from messages import BootDiagnosticsMessage
-from messages import NeighborDiagnosticsMessage
-from messages import NodeDiagnosticsMessage
-from messages import TestNWMessage
-from messages import TrafficDiagnosticsMessage
-from messages import DiagnosticsMessage
-from tools import Settings
+from wirepas_backend_client.messages import BootDiagnosticsMessage
+from wirepas_backend_client.messages import NeighborDiagnosticsMessage
+from wirepas_backend_client.messages import NodeDiagnosticsMessage
+from wirepas_backend_client.messages import TestNWMessage
+from wirepas_backend_client.messages import TrafficDiagnosticsMessage
+from wirepas_backend_client.messages import DiagnosticsMessage
+from wirepas_backend_client.messages import AdvertiserMessage
+from wirepas_backend_client.tools import Settings
 
 
 from .connectors import MySQL

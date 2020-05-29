@@ -9,9 +9,14 @@
 
 import logging
 
-from mesh.state import MeshManagement
-from api.mqtt import MQTTObserver, Topics, decode_topic_message, topic_message
-from tools import Signal
+from wirepas_backend_client.mesh.state import MeshManagement
+from wirepas_backend_client.api.mqtt import (
+    MQTTObserver,
+    Topics,
+    decode_topic_message,
+    topic_message,
+)
+from wirepas_backend_client.tools import Signal
 
 
 class NetworkDiscovery(MQTTObserver):

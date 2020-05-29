@@ -3,11 +3,11 @@ from time import time
 from datetime import datetime
 
 # multiple definitions exists
-from api import Topics
+from wirepas_backend_client.api import Topics
 from wirepas_messaging.gateway.api import GatewayResultCode
 from wirepas_backend_client.mesh.state import MeshManagement
 
-from mesh.set_diagnostics.fea_set_neighbor_diagnostic_message_builder import (
+from wirepas_backend_client.mesh.set_diagnostics.fea_set_neighbor_diagnostic_message_builder import (
     ControlMessage,
     DiagnosticControlMessageBuilder,
     SetDiagnosticsIntervals,

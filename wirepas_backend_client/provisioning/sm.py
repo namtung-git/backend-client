@@ -19,8 +19,8 @@ from Crypto.Cipher import AES
 from Crypto.Util import Counter
 
 from wirepas_messaging.gateway.api import GatewayResultCode
-from provisioning.events import ProvisioningEventTimeout
-from provisioning.message import (
+from wirepas_backend_client.provisioning.events import ProvisioningEventTimeout
+from wirepas_backend_client.provisioning.message import (
     ProvisioningMessageDATA,
     ProvisioningMessageNACK,
     ProvisioningMessageTypes,

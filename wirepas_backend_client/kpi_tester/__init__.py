@@ -10,7 +10,7 @@
         See file LICENSE for full license details.
 """
 
-from .manager import TestManager
 from .kpi_mesh import start_kpi_tester
+from .manager import TestManager
 
 __all__ = ["TestManager", "start_kpi_tester"]

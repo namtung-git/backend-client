@@ -13,12 +13,11 @@ import logging
 import multiprocessing
 import queue
 
-from .connectors import MQTT
-from .decorators import decode_topic_message
-from .mqtt_options import MQTTqosOptions
-from ..stream import StreamObserver
-
-from tools import Settings
+from wirepas_backend_client.api.mqtt.connectors import MQTT
+from wirepas_backend_client.api.mqtt.decorators import decode_topic_message
+from wirepas_backend_client.api.mqtt.mqtt_options import MQTTqosOptions
+from wirepas_backend_client.api.stream import StreamObserver
+from wirepas_backend_client.tools import Settings
 
 
 class MQTTObserver(StreamObserver):

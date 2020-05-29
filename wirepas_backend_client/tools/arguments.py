@@ -16,8 +16,8 @@ import sys
 
 import yaml
 
-from tools.utils import JsonSerializer
-from __about__ import __version__
+from wirepas_backend_client.tools.utils import JsonSerializer
+from wirepas_backend_client.__about__ import __version__
 
 
 class Settings:

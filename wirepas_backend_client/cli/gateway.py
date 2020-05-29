@@ -17,15 +17,15 @@ import threading
 from time import sleep, perf_counter
 
 # --
-from api.mqtt import MQTTqosOptions
-from mesh.gateway import Gateway
-from mesh.set_diagnostics.fea_set_neighbor_diagnostics import (
+from wirepas_backend_client.api.mqtt import MQTTqosOptions
+from wirepas_backend_client.mesh.gateway import Gateway
+from wirepas_backend_client.mesh.set_diagnostics.fea_set_neighbor_diagnostics import (
     SetDiagnostics,
     SetDiagnosticsIntervals,
 )
-from mesh.sink import Sink
+from wirepas_backend_client.mesh.sink import Sink
 
-from messages.msap_cmds import (
+from wirepas_backend_client.messages.msap_cmds import (
     MsapBeginReq,
     MsapBeginResp,
     MsapCancelReq,
