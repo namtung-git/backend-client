@@ -1327,11 +1327,11 @@ class MySQL(object):
                     packet_id_after_update - packet_id_before_update,
                     self.stat_inserts_ok,
                     self.stat_inserts_fail,
-                    int(
+                    "{:.1f}".format(
                         self.stat_inserts_ok
                         / (self.stat_inserts_fail + self.stat_inserts_ok)
-                    )
-                    * 100,
+                        * 100.0
+                    ),
                     int((update_stop_time - update_start_time) * 1000),
                     "{:.2f}".format(msgsPerSec),
                     "{:.1f}".format(update_load * 100),
