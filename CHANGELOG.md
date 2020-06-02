@@ -53,6 +53,7 @@
 - Fix the problem that the missed packet calculation stopped after about [\#307](https://github.com/wirepas/backend-client/pull/307) ([PeiChunyan](https://github.com/PeiChunyan))
 - \#303 \#304 [\#305](https://github.com/wirepas/backend-client/pull/305) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Print black version [\#299](https://github.com/wirepas/backend-client/pull/299) ([PeiChunyan](https://github.com/PeiChunyan))
+- Minor change to test release script [\#291](https://github.com/wirepas/backend-client/pull/291) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 
 ## [v.1.3.5-rc.1](https://github.com/wirepas/backend-client/tree/v.1.3.5-rc.1) (2020-05-13)
 
@@ -78,7 +79,6 @@
 
 **Merged pull requests:**
 
-- Minor change to test release script [\#291](https://github.com/wirepas/backend-client/pull/291) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Http.py fixes [\#290](https://github.com/wirepas/backend-client/pull/290) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - \#266 [\#283](https://github.com/wirepas/backend-client/pull/283) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 
@@ -177,6 +177,7 @@
 - Flatten serialization [\#238](https://github.com/wirepas/backend-client/pull/238) ([PFigs](https://github.com/PFigs))
 - MQTT subscriber filters for MQTT viewer [\#237](https://github.com/wirepas/backend-client/pull/237) ([PFigs](https://github.com/PFigs))
 - Wirepas provisioning server example. [\#235](https://github.com/wirepas/backend-client/pull/235) ([vgeneves](https://github.com/vgeneves))
+- Update version to v1.2.2.rc3 [\#196](https://github.com/wirepas/backend-client/pull/196) ([PFigs](https://github.com/PFigs))
 - Update dependency PyYAML to v5.3 [\#186](https://github.com/wirepas/backend-client/pull/186) ([renovate[bot]](https://github.com/apps/renovate))
 
 ## [v1.2.4](https://github.com/wirepas/backend-client/tree/v1.2.4) (2020-01-27)
@@ -202,7 +203,6 @@
 - Update adv mysql schema [\#220](https://github.com/wirepas/backend-client/pull/220) ([PFigs](https://github.com/PFigs))
 - ADV reserved field [\#219](https://github.com/wirepas/backend-client/pull/219) ([PFigs](https://github.com/PFigs))
 - Endpoint property [\#218](https://github.com/wirepas/backend-client/pull/218) ([PFigs](https://github.com/PFigs))
-- Change .settings to settings/examples.yml [\#181](https://github.com/wirepas/backend-client/pull/181) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.3](https://github.com/wirepas/backend-client/tree/v1.2.3) (2020-01-16)
 
@@ -235,7 +235,6 @@
 
 **Merged pull requests:**
 
-- Update version to v1.2.2.rc3 [\#196](https://github.com/wirepas/backend-client/pull/196) ([PFigs](https://github.com/PFigs))
 - Diagnostics cbor ids [\#195](https://github.com/wirepas/backend-client/pull/195) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.2-rc.2](https://github.com/wirepas/backend-client/tree/v1.2.2-rc.2) (2019-12-20)
@@ -275,6 +274,7 @@
 - Advertiser test case [\#184](https://github.com/wirepas/backend-client/pull/184) ([PFigs](https://github.com/PFigs))
 - Update dependency mysqlclient to v1.4.6 [\#183](https://github.com/wirepas/backend-client/pull/183) ([renovate[bot]](https://github.com/apps/renovate))
 - Diagnostic packets [\#182](https://github.com/wirepas/backend-client/pull/182) ([PFigs](https://github.com/PFigs))
+- Change .settings to settings/examples.yml [\#181](https://github.com/wirepas/backend-client/pull/181) ([PFigs](https://github.com/PFigs))
 - Update README.md [\#180](https://github.com/wirepas/backend-client/pull/180) ([PFigs](https://github.com/PFigs))
 - Update dependency mysqlclient to v1.4.5 [\#177](https://github.com/wirepas/backend-client/pull/177) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency pandas to v0.25.3 [\#175](https://github.com/wirepas/backend-client/pull/175) ([renovate[bot]](https://github.com/apps/renovate))
@@ -288,7 +288,6 @@
 - Travis service tests [\#160](https://github.com/wirepas/backend-client/pull/160) ([PFigs](https://github.com/PFigs))
 - Influx queries index name [\#158](https://github.com/wirepas/backend-client/pull/158) ([PFigs](https://github.com/PFigs))
 - Update readme [\#155](https://github.com/wirepas/backend-client/pull/155) ([PFigs](https://github.com/PFigs))
-- Update README.md [\#154](https://github.com/wirepas/backend-client/pull/154) ([jou48](https://github.com/jou48))
 - Diagnostics decoding within MySQL interfaces [\#153](https://github.com/wirepas/backend-client/pull/153) ([PFigs](https://github.com/PFigs))
 - Propagation of ssl fields within influx interfaces [\#152](https://github.com/wirepas/backend-client/pull/152) ([PFigs](https://github.com/PFigs))
 - Fix apdu decoding [\#147](https://github.com/wirepas/backend-client/pull/147) ([PFigs](https://github.com/PFigs))
@@ -320,8 +319,8 @@
 
 - Gitpod integration [\#143](https://github.com/wirepas/backend-client/pull/143) ([PFigs](https://github.com/PFigs))
 - Version bump to v1.2.0 [\#142](https://github.com/wirepas/backend-client/pull/142) ([PFigs](https://github.com/PFigs))
+- Update docker-compose [\#141](https://github.com/wirepas/backend-client/pull/141) ([PFigs](https://github.com/PFigs))
 - Update docs [\#137](https://github.com/wirepas/backend-client/pull/137) ([PFigs](https://github.com/PFigs))
-- Fix settings error message [\#128](https://github.com/wirepas/backend-client/pull/128) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.0-rc.3](https://github.com/wirepas/backend-client/tree/v1.2.0-rc.3) (2019-09-17)
 
@@ -339,6 +338,7 @@
 - Example: influx viewer [\#133](https://github.com/wirepas/backend-client/pull/133) ([PFigs](https://github.com/PFigs))
 - Clearer allow\_unsecure option [\#132](https://github.com/wirepas/backend-client/pull/132) ([PFigs](https://github.com/PFigs))
 - ADV message decoder [\#131](https://github.com/wirepas/backend-client/pull/131) ([PFigs](https://github.com/PFigs))
+- Fix settings error message [\#128](https://github.com/wirepas/backend-client/pull/128) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.0-rc.2](https://github.com/wirepas/backend-client/tree/v1.2.0-rc.2) (2019-09-12)
 
@@ -370,7 +370,6 @@
 
 **Merged pull requests:**
 
-- Update docker-compose [\#141](https://github.com/wirepas/backend-client/pull/141) ([PFigs](https://github.com/PFigs))
 - Update travis [\#126](https://github.com/wirepas/backend-client/pull/126) ([PFigs](https://github.com/PFigs))
 - Fix message data size [\#125](https://github.com/wirepas/backend-client/pull/125) ([PFigs](https://github.com/PFigs))
 - Changes for v1.2.0-rc.2 [\#121](https://github.com/wirepas/backend-client/pull/121) ([PFigs](https://github.com/PFigs))
@@ -378,6 +377,7 @@
 - Test Kpi: Create database [\#117](https://github.com/wirepas/backend-client/pull/117) ([PFigs](https://github.com/PFigs))
 - Extra comma in json file [\#116](https://github.com/wirepas/backend-client/pull/116) ([PFigs](https://github.com/PFigs))
 - Bug fixes: mqtt\_allow\_untrusted and random crash on gateway\_configuration [\#115](https://github.com/wirepas/backend-client/pull/115) ([musicoliv](https://github.com/musicoliv))
+- Update dependency influxdb to v5.2.3 [\#114](https://github.com/wirepas/backend-client/pull/114) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency pandas to v0.25.1 [\#113](https://github.com/wirepas/backend-client/pull/113) ([renovate[bot]](https://github.com/apps/renovate))
 - Set received\_package to be foreign key at TestData\_ID\_x tables [\#111](https://github.com/wirepas/backend-client/pull/111) ([JanneSiren](https://github.com/JanneSiren))
 - fix typo [\#110](https://github.com/wirepas/backend-client/pull/110) ([JanneSiren](https://github.com/JanneSiren))
