@@ -1010,9 +1010,6 @@ class MySQL(object):
 
         ret: bool = False
 
-        # Remember the last received packet (that was received_packets)
-        last_received_packet = self.cursor.lastrowid
-
         pending_ucast_cluster = "NULL"
         pending_ucast_members = "NULL"
         pending_bcast_le_mbers = "NULL"
@@ -1127,12 +1124,16 @@ class MySQL(object):
         ret = self.store_insert_to_update_list(query, incrementCounter)
         if ret is True:
             # Create events
+
             events = []
-            for i in range(0, 15):
+            max_event_count: int = 15
+            for i in range(0, max_event_count):
                 event = message.apdu["events_{}".format(i)]
                 if event != 0:
+                    # LAST_INSERT_ID() will be replaced when doing bulk update
+                    # with packet id
                     events.append(
-                        "({},{},{})".format(last_received_packet, i, event)
+                        "({},{},{})".format("LAST_INSERT_ID()", i, event)
                     )
 
             if events:
@@ -1190,13 +1191,14 @@ class MySQL(object):
                 + data_column_values
                 + ")"
             )
-
             ret = self.store_insert_to_update_list(query, incrementCounter)
             if ret is False:
                 self.logger.warning(
                     "put_testnw_measurements " "failed to store data"
                 )
                 break
+            else:
+                pass
 
         return ret
 
@@ -1205,9 +1207,12 @@ class MySQL(object):
         update_start_time = perf_counter()
 
         dump_statements: bool = False
-        itemcount = len(self.sql_insert_update_statements)
+        dump_sql_stats: bool = True
+        item_count = len(self.sql_insert_update_statements)
 
-        packet_id_before_update = self.get_latest_inserted_packet_id()
+        packet_id_before_update = (
+            self.get_latest_packet_id_from_received_packets()
+        )
         current_packet_id = packet_id_before_update
 
         try:
@@ -1224,16 +1229,17 @@ class MySQL(object):
                     packetMsg = msgs[0]
 
                     # [A] Update primary table.
-                    cursor.execute(packetMsg)
+                    if cursor.execute(packetMsg) == 0:
+                        raise Exception("Data base update failed")
 
                     if first_select_done is False:
                         # now we have transaction in progress (implicit start)
-                        # Assume that inserts  autoincremented primary key
+                        # Assume that inserts auto incremented primary key
                         # values  are monotonically increasing with step size 1
 
                         # sync packet id from DB
                         current_packet_id = (
-                            self.get_latest_inserted_packet_id()
+                            self.get_latest_packet_id_from_received_packets()
                         )
                         first_select_done = True
                     else:
@@ -1249,11 +1255,16 @@ class MySQL(object):
                     # [B] Update other tables. packet id must match to first
                     # message that was used to update primary table [A].
                     for additionalData in msgs[1:]:
-                        modified = self.addPacketId(
+                        modified = self.add_packet_id(
                             additionalData, current_packet_id
                         )
                         if dump_statements is True:
                             print(current_packet_id, modified)
+
+                        if cursor.execute(modified) == 0:
+                            raise Exception(
+                                "Database child table update " "failed"
+                            )
 
                     rowsProcessed += 1
                     self.itemsAddedTot += 1
@@ -1267,11 +1278,14 @@ class MySQL(object):
                         ]
                         for jsonMsg in jsonMsgs:
                             a, b = jsonMsg
-                            modA = self.addPacketId(a, current_packet_id)
+                            modA = self.add_packet_id(a, current_packet_id)
                             if dump_statements is True:
                                 print(current_packet_id, modA, b)
 
-                            cursor.execute(modA, (b,))
+                            if cursor.execute(modA, (b,)) == 0:
+                                raise Exception(
+                                    "No affected rows when " "updating JSON"
+                                )
 
                 else:
                     self.logger.error("only 1 item in sql_insert_update_list")
@@ -1284,7 +1298,9 @@ class MySQL(object):
             self.database.rollback()
             self.logger.error("SQL update error", e)
 
-        packet_id_after_update = self.get_latest_inserted_packet_id()
+        packet_id_after_update = (
+            self.get_latest_packet_id_from_received_packets()
+        )
 
         # clear lists
         self.sql_insert_update_statements.clear()
@@ -1293,7 +1309,27 @@ class MySQL(object):
         self.itemsInDBTot += packet_id_after_update - packet_id_before_update
         update_stop_time = perf_counter()
 
-        if (packet_id_after_update - packet_id_before_update) - itemcount == 0:
+        self.handle_insert_result(
+            dump_sql_stats,
+            item_count,
+            packet_id_after_update,
+            packet_id_before_update,
+            update_start_time,
+            update_stop_time,
+        )
+
+    def handle_insert_result(
+        self,
+        dump_sql_stats,
+        item_count,
+        packet_id_after_update,
+        packet_id_before_update,
+        update_start_time,
+        update_stop_time,
+    ):
+        if (
+            packet_id_after_update - packet_id_before_update
+        ) - item_count == 0:
             self.stat_inserts_ok += 1
 
             msgsPerSec: float = 0
@@ -1318,10 +1354,31 @@ class MySQL(object):
                     update_stop_time - update_start_time
                 ) / interval_time_elapsed_time
 
-            self.logger.debug(
-                "MySQL inserts PASS. Packet id before update:{} and after "
-                "update:{} ({} msgs). Inserts ok/nok:{}/{} ({}%). "
-                "Time elapsed:{} ms ({} msgs/sec). Load:{}%".format(
+            if dump_sql_stats is True:
+                self.logger.debug(
+                    "MySQL inserts PASS. Packet id before update:{} and after "
+                    "update:{} ({} msgs). Inserts ok/nok:{}/{} ({}%). "
+                    "Time elapsed:{} ms ({} msgs/sec). Load:{}%".format(
+                        packet_id_before_update,
+                        packet_id_after_update,
+                        packet_id_after_update - packet_id_before_update,
+                        self.stat_inserts_ok,
+                        self.stat_inserts_fail,
+                        "{:.1f}".format(
+                            self.stat_inserts_ok
+                            / (self.stat_inserts_fail + self.stat_inserts_ok)
+                            * 100.0
+                        ),
+                        int((update_stop_time - update_start_time) * 1000),
+                        "{:.2f}".format(msgsPerSec),
+                        "{:.1f}".format(update_load * 100),
+                    )
+                )
+        else:
+            self.stat_inserts_fail += 1
+            self.logger.error(
+                "MySQL inserts FAIL. Packet id before update:{} and after "
+                "update:{} ({} msgs). Inserts ok/nok:{}/{} ({}%). ".format(
                     packet_id_before_update,
                     packet_id_after_update,
                     packet_id_after_update - packet_id_before_update,
@@ -1332,34 +1389,10 @@ class MySQL(object):
                         / (self.stat_inserts_fail + self.stat_inserts_ok)
                         * 100.0
                     ),
-                    int((update_stop_time - update_start_time) * 1000),
-                    "{:.2f}".format(msgsPerSec),
-                    "{:.1f}".format(update_load * 100),
-                )
-            )
-        else:
-            self.stat_inserts_fail += 1
-            self.logger.error("MySQL inserts FAIL")
-            self.logger.error(
-                "{}, {}, {}, {}, {}".format(
-                    itemcount,
-                    packet_id_before_update,
-                    packet_id_after_update,
-                    packet_id_after_update - packet_id_before_update,
-                    (packet_id_after_update - packet_id_before_update)
-                    - itemcount,
                 )
             )
 
-            self.logger.error(
-                "i: {} -- {} diff: {}".format(
-                    self.itemsAddedTot,
-                    self.itemsInDBTot,
-                    self.itemsAddedTot - self.itemsInDBTot,
-                )
-            )
-
-    def get_latest_inserted_packet_id(self) -> int:
+    def get_latest_packet_id_from_received_packets(self) -> int:
         ret: int = 0
         try:
             sql_select_Query = (
@@ -1377,7 +1410,11 @@ class MySQL(object):
 
         return ret
 
-    def addPacketId(self, sql_insert_qry, packetId):
+    @staticmethod
+    def add_packet_id(sql_insert_qry, packetId):
+        # Replaces all occurrences of LAST_INSERT_ID() with given
+        # packet id. If not match, returns original query
+
         ret: str = ""
         replaceStr: str = "LAST_INSERT_ID()"
         if replaceStr in sql_insert_qry:
