@@ -25,7 +25,6 @@ from wirepas_backend_client.mesh.set_diagnostics.fea_set_neighbor_diagnostics im
 )
 from wirepas_backend_client.mesh.sink import Sink
 
-
 from wirepas_backend_client.messages.msap_cmds import (
     MsapBeginReq,
     MsapBeginResp,
@@ -806,10 +805,8 @@ class GatewayCliCommands(cmd.Cmd):
             gateway_configuration
 
         Returns:
-            Current configuration for each gateway
+            Prints configurations to console.
         """
-
-        ret = list()
 
         for gateway in self.device_manager.gateways:
 
@@ -822,14 +819,83 @@ class GatewayCliCommands(cmd.Cmd):
 
             gw_id = gateway.device_id
 
-            print("requesting configuration for {}".format(gw_id))
+            print(
+                "\nRequesting configuration for gateway '{}'..\n".format(gw_id)
+            )
             configurations = self._get_gateway_configuration(gateway.device_id)
 
             for config in configurations:
                 if config is not None:
-                    ret.append(config)
+                    print(self._format_gateway_configuration_to_string(config))
 
-            # Todo check what return type is needed and return needed item.
+    def _format_gateway_configuration_to_string(self, config: object) -> str:
+        ret: str = ""
+        justA: int = 24
+        justF: int = 24
+        ret += "Sink:".ljust(justF)
+        ret += "id: {}".format(config["sink_id"]).ljust(justA)
+        ret += "nw address: {}".format(config["network_address"]).ljust(justA)
+        ret += "nw channel: {}".format(config["network_channel"]).ljust(justA)
+        ret += "\n"
+
+        ret += "Node:".ljust(justF)
+        ret += "address: {}".format(config["node_address"]).ljust(justA)
+        ret += "role: {}".format(config["node_role"]).ljust(justA)
+        ret += "\n"
+
+        ret += "App config:".ljust(justF)
+        ret += "diag: {}".format(config["app_config_diag"]).ljust(justA)
+        ret += "seq: {}".format(config["app_config_seq"]).ljust(justA)
+        ret += "\n"
+        ret += "App config data:".ljust(justF) + "{}".format(
+            (config["app_config_data"].hex())
+        ).ljust(justA)
+        ret += " ({} bytes)".format(len(config["app_config_data"]))
+        ret += "\n"
+        ret += "App config max size:".ljust(justF) + "{}".format(
+            config["app_config_max_size"]
+        ).ljust(justA)
+        ret += "\n"
+
+        ret += "Stack:".ljust(justF)
+        if config["started"] is True:
+            ret += "started: {}".format("yes").ljust(justA)
+        else:
+            ret += "started: {}".format("no").ljust(justA)
+        ret += "profile: {}".format(config["stack_profile"]).ljust(justA)
+        ret += "max mtu: {}".format(config["max_mtu"]).ljust(justA)
+        ret += "min channel: {}".format(config["min_ch"]).ljust(justA)
+        ret += "max channel: {}".format(config["max_ch"]).ljust(justA)
+        ret += "\n"
+
+        ret += "Access cycle:".ljust(justF)
+        ret += "curr range min: {}".format(
+            config["current_ac_range_min"]
+        ).ljust(justA)
+        ret += "curr range max: {}".format(
+            config["current_ac_range_max"]
+        ).ljust(justA)
+        ret += "min value: {}".format(config["min_ac"]).ljust(justA)
+        ret += "max value: {}".format(config["max_ac"]).ljust(justA)
+        ret += "\n"
+
+        ret += "HW:".ljust(justF)
+        ret += "magic: {}".format(config["hw_magic"]).ljust(justA)
+        fw_str: str = ""
+        for x in config["firmware_version"]:
+            fw_str += "{}.".format(x)
+        fw_str = fw_str[:-1]
+        ret += "firmware: {}".format(fw_str).ljust(justA)
+        ret += "\n"
+
+        ret += "Security:".ljust(justF)
+        if config["are_keys_set"] is True:
+            ret += "keys set: {}".format("yes").ljust(justA)
+        else:
+            ret += "keys set: {}".format("no").ljust(justA)
+        ret += "\n"
+
+        return ret
 
     def _refresh_device_manager(self):
         # refresh device manager (gw, sinks) by requesting configurations from
