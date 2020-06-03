@@ -302,10 +302,9 @@ class GatewayCliCommands(cmd.Cmd):
             - iterations=Inf
             - update_rate=1 # period to print status if no message is acquired
             - show_events=False # will display answers as well
-            - silent=False # when True the loop number is not printed
 
         Returns:
-            Prints
+            Prints messages to console
         """
 
         options = dict(
@@ -318,7 +317,7 @@ class GatewayCliCommands(cmd.Cmd):
             iterations=dict(type=int, default=float("Inf")),
             update_rate=dict(type=int, default=1),
             show_events=dict(type=bool, default=False),
-            silent=dict(type=bool, default=False),
+            silent=dict(type=bool, default=True),
         )
 
         args = self.retrieve_args(line, options)
@@ -347,7 +346,27 @@ class GatewayCliCommands(cmd.Cmd):
                         message, "destination_endpoint", destination_endpoint
                     )
                 ):
-                    cli.on_print(message)
+                    address_str = (
+                        "nw:{}/{}/{}/node:{} sendp:{}".format(
+                            str(message.network_id),
+                            message.gw_id,
+                            message.sink_id,
+                            message.source_address,
+                            message.source_endpoint,
+                        )
+                    ).ljust(50)
+                    travel_time_str = str(
+                        "travel time: {}".format(message.travel_time_ms)
+                    ).ljust(19)
+                    data_str = str(
+                        "data: {}".format(message.data_payload.hex())
+                    )
+
+                    print(
+                        "{} {} {}".format(
+                            address_str, travel_time_str, data_str
+                        )
+                    )
 
             for message in cli.consume_data_queue():
                 print_on_match(message)
