@@ -915,6 +915,14 @@ class GatewayCliCommands(cmd.Cmd):
             config = self._get_gateway_configuration(gateway.device_id)
             self.device_manager.update(gw_id, config)
 
+    @staticmethod
+    def __is_hex(s):
+        try:
+            bytes.fromhex(s)
+            return True
+        except ValueError:
+            return False
+
     def do_set_app_config(self, line):
         """
         Builds and sends an app config message
@@ -923,16 +931,16 @@ class GatewayCliCommands(cmd.Cmd):
             set_app_config  argument=value
 
         Arguments:
-            - sequence=1  # the sequence number - must be higher than the current one
-            - data=001100 # payloady in hex string or plain string
-            - interval=60 # a valid diagnostic interval (by default 60)
+            - seq=1  # the sequence number - must be higher than the current one.
+            - data=001100 # payloady in hex string or plain string.
+            - interval=60 # a valid diagnostic interval (by default 60).
 
         Returns:
-            Result of the request and app config currently set
+            Prints result of the request to console.
         """
         options = dict(
             app_config_seq=dict(type=int, default=None),
-            app_config_data=dict(type=int, default=None),
+            app_config_data=dict(type=str, default=None),
             app_config_diag=dict(type=int, default=60),
         )
 
@@ -944,28 +952,66 @@ class GatewayCliCommands(cmd.Cmd):
             gateway_id = self.gateway.device_id
             sink_id = self.sink.device_id
 
-            if not self.is_valid(args) or not sink_id:
-                self.do_help("set_app_config", args)
+            if self.is_valid(args) is True:
+                app_config_str = args["app_config_data"]
+                if self.__is_hex(app_config_str) is True:
+                    if sink_id:
+                        payload = bytes.fromhex(app_config_str)
+                        message = self.mqtt_topics.request_message(
+                            "set_config",
+                            **dict(
+                                sink_id=sink_id,
+                                gw_id=gateway_id,
+                                new_config={
+                                    "app_config_diag": args["app_config_diag"],
+                                    "app_config_data": payload,
+                                    "app_config_seq": args["app_config_seq"],
+                                },
+                            ),
+                        )
+                        timeout_sec: int = 30
+                        print(
+                            "Args ok. Sending request and waiting response "
+                            "up to {} secs..".format(timeout_sec)
+                        )
 
-            message = self.mqtt_topics.request_message(
-                "set_config",
-                **dict(
-                    sink_id=sink_id,
-                    gw_id=gateway_id,
-                    new_config={
-                        "app_config_diag": args["app_config_diag"],
-                        "app_config_data": args["app_config_data"],
-                        "app_config_seq": args["app_config_seq"],
-                    },
-                ),
-            )
-
-            self.request_queue.put(message)
-            self.wait_for_answer(gateway_id, message)
-
+                        self.request_queue.put(message)
+                        response_sink = self.wait_for_answer(
+                            gateway_id, message, timeout_sec
+                        )
+                        if response_sink is not None:
+                            if (
+                                response_sink.res
+                                == GatewayResultCode.GW_RES_OK
+                            ):
+                                print("Command Ok.")
+                            elif (
+                                response_sink.res
+                                == GatewayResultCode.GW_RES_INVLAID_SEQUENCE_NUMBER
+                            ):
+                                print(
+                                    "Command FAIL. Invalid sequence number. "
+                                    "Use 'gateway_configuration' "
+                                    "cmd check current one."
+                                )
+                            else:
+                                print(
+                                    "Command FAIL. Response was {}.".format(
+                                        response_sink.res
+                                    )
+                                )
+                        else:
+                            print("Command FAIL. Response was empty.")
+                    else:
+                        print("Command FAIL. Sink not set.")
+                else:
+                    print(
+                        "Command FAIL. Arguments not ok. Check app config data parameter."
+                    )
+            else:
+                print("Command FAIL. Arguments not ok.")
         else:
-            self._set_target()
-            self.do_set_app_config(line)
+            print("Command FAIL. Set sink first.")
 
     @staticmethod
     def __print_scratch_pad_response(response) -> None:
