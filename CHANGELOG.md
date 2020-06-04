@@ -1,38 +1,37 @@
 # Changelog
 
+## [v1.3.6-rc.1](https://github.com/wirepas/backend-client/tree/v1.3.6-rc.1) (2020-06-04)
+
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.5...v1.3.6-rc.1)
+
+**Closed issues:**
+
+- Make Track Data packets output more readable [\#315](https://github.com/wirepas/backend-client/issues/315)
+- Installing Backend Client on macOS [\#176](https://github.com/wirepas/backend-client/issues/176)
+- Add support for querying WNT apis from cmd line [\#74](https://github.com/wirepas/backend-client/issues/74)
+- Add examples on how to use the WNT websocket API [\#73](https://github.com/wirepas/backend-client/issues/73)
+- Move message decoding to wirepas\_messaging \(backend apis\) [\#56](https://github.com/wirepas/backend-client/issues/56)
+- Automatic sourcing of messages [\#33](https://github.com/wirepas/backend-client/issues/33)
+- WM Remote API support [\#31](https://github.com/wirepas/backend-client/issues/31)
+- Daemon loop [\#28](https://github.com/wirepas/backend-client/issues/28)
+- Mesh Device missing methods [\#22](https://github.com/wirepas/backend-client/issues/22)
+- Mesh Management redesign [\#21](https://github.com/wirepas/backend-client/issues/21)
+
+**Merged pull requests:**
+
+- Fix set config [\#328](https://github.com/wirepas/backend-client/pull/328) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- Made printing of incoming data packets more user friendly.  [\#327](https://github.com/wirepas/backend-client/pull/327) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- Fixed set app config [\#326](https://github.com/wirepas/backend-client/pull/326) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- Fix missing update of child tables to MySQL. [\#325](https://github.com/wirepas/backend-client/pull/325) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- Print gateway configuration to screen formatted manner [\#324](https://github.com/wirepas/backend-client/pull/324) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+
+## [v1.3.5](https://github.com/wirepas/backend-client/tree/v1.3.5) (2020-06-02)
+
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.5-rc.9...v1.3.5)
+
 ## [v1.3.5-rc.9](https://github.com/wirepas/backend-client/tree/v1.3.5-rc.9) (2020-05-29)
 
-[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.5-rc.7...v1.3.5-rc.9)
-
-**Merged pull requests:**
-
-- Correct SQL update load number so that show fractions too. [\#323](https://github.com/wirepas/backend-client/pull/323) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
-
-## [v1.3.5-rc.7](https://github.com/wirepas/backend-client/tree/v1.3.5-rc.7) (2020-05-29)
-
-[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.5-rc.6...v1.3.5-rc.7)
-
-**Merged pull requests:**
-
-- Add wm-kpi-tester-helper entry point [\#322](https://github.com/wirepas/backend-client/pull/322) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
-
-## [v1.3.5-rc.6](https://github.com/wirepas/backend-client/tree/v1.3.5-rc.6) (2020-05-29)
-
-[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.5-rc.3...v1.3.5-rc.6)
-
-**Merged pull requests:**
-
-- Whitespace change to make build system happy for release [\#321](https://github.com/wirepas/backend-client/pull/321) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
-- \#298 [\#320](https://github.com/wirepas/backend-client/pull/320) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
-- Fix imports of modules [\#319](https://github.com/wirepas/backend-client/pull/319) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
-
-## [v1.3.5-rc.3](https://github.com/wirepas/backend-client/tree/v1.3.5-rc.3) (2020-05-26)
-
-[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.5-rc.2...v1.3.5-rc.3)
-
-## [v1.3.5-rc.2](https://github.com/wirepas/backend-client/tree/v1.3.5-rc.2) (2020-05-22)
-
-[Full Changelog](https://github.com/wirepas/backend-client/compare/v.1.3.5-rc.1...v1.3.5-rc.2)
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v.1.3.5-rc.1...v1.3.5-rc.9)
 
 **Closed issues:**
 
@@ -43,6 +42,11 @@
 
 **Merged pull requests:**
 
+- Correct SQL update load number so that show fractions too. [\#323](https://github.com/wirepas/backend-client/pull/323) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- Add wm-kpi-tester-helper entry point [\#322](https://github.com/wirepas/backend-client/pull/322) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- Whitespace change to make build system happy for release [\#321](https://github.com/wirepas/backend-client/pull/321) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- \#298 [\#320](https://github.com/wirepas/backend-client/pull/320) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- Fix imports of modules [\#319](https://github.com/wirepas/backend-client/pull/319) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Refactor code so that has only one starting point. [\#318](https://github.com/wirepas/backend-client/pull/318) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - \#314 [\#317](https://github.com/wirepas/backend-client/pull/317) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Minor refactoring and code base cleaning [\#316](https://github.com/wirepas/backend-client/pull/316) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
@@ -53,7 +57,6 @@
 - Fix the problem that the missed packet calculation stopped after about [\#307](https://github.com/wirepas/backend-client/pull/307) ([PeiChunyan](https://github.com/PeiChunyan))
 - \#303 \#304 [\#305](https://github.com/wirepas/backend-client/pull/305) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Print black version [\#299](https://github.com/wirepas/backend-client/pull/299) ([PeiChunyan](https://github.com/PeiChunyan))
-- Minor change to test release script [\#291](https://github.com/wirepas/backend-client/pull/291) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 
 ## [v.1.3.5-rc.1](https://github.com/wirepas/backend-client/tree/v.1.3.5-rc.1) (2020-05-13)
 
@@ -79,6 +82,7 @@
 
 **Merged pull requests:**
 
+- Minor change to test release script [\#291](https://github.com/wirepas/backend-client/pull/291) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Http.py fixes [\#290](https://github.com/wirepas/backend-client/pull/290) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - \#266 [\#283](https://github.com/wirepas/backend-client/pull/283) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 
@@ -177,7 +181,6 @@
 - Flatten serialization [\#238](https://github.com/wirepas/backend-client/pull/238) ([PFigs](https://github.com/PFigs))
 - MQTT subscriber filters for MQTT viewer [\#237](https://github.com/wirepas/backend-client/pull/237) ([PFigs](https://github.com/PFigs))
 - Wirepas provisioning server example. [\#235](https://github.com/wirepas/backend-client/pull/235) ([vgeneves](https://github.com/vgeneves))
-- Update version to v1.2.2.rc3 [\#196](https://github.com/wirepas/backend-client/pull/196) ([PFigs](https://github.com/PFigs))
 - Update dependency PyYAML to v5.3 [\#186](https://github.com/wirepas/backend-client/pull/186) ([renovate[bot]](https://github.com/apps/renovate))
 
 ## [v1.2.4](https://github.com/wirepas/backend-client/tree/v1.2.4) (2020-01-27)
@@ -203,6 +206,7 @@
 - Update adv mysql schema [\#220](https://github.com/wirepas/backend-client/pull/220) ([PFigs](https://github.com/PFigs))
 - ADV reserved field [\#219](https://github.com/wirepas/backend-client/pull/219) ([PFigs](https://github.com/PFigs))
 - Endpoint property [\#218](https://github.com/wirepas/backend-client/pull/218) ([PFigs](https://github.com/PFigs))
+- Change .settings to settings/examples.yml [\#181](https://github.com/wirepas/backend-client/pull/181) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.3](https://github.com/wirepas/backend-client/tree/v1.2.3) (2020-01-16)
 
@@ -235,6 +239,7 @@
 
 **Merged pull requests:**
 
+- Update version to v1.2.2.rc3 [\#196](https://github.com/wirepas/backend-client/pull/196) ([PFigs](https://github.com/PFigs))
 - Diagnostics cbor ids [\#195](https://github.com/wirepas/backend-client/pull/195) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.2-rc.2](https://github.com/wirepas/backend-client/tree/v1.2.2-rc.2) (2019-12-20)
@@ -274,7 +279,6 @@
 - Advertiser test case [\#184](https://github.com/wirepas/backend-client/pull/184) ([PFigs](https://github.com/PFigs))
 - Update dependency mysqlclient to v1.4.6 [\#183](https://github.com/wirepas/backend-client/pull/183) ([renovate[bot]](https://github.com/apps/renovate))
 - Diagnostic packets [\#182](https://github.com/wirepas/backend-client/pull/182) ([PFigs](https://github.com/PFigs))
-- Change .settings to settings/examples.yml [\#181](https://github.com/wirepas/backend-client/pull/181) ([PFigs](https://github.com/PFigs))
 - Update README.md [\#180](https://github.com/wirepas/backend-client/pull/180) ([PFigs](https://github.com/PFigs))
 - Update dependency mysqlclient to v1.4.5 [\#177](https://github.com/wirepas/backend-client/pull/177) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency pandas to v0.25.3 [\#175](https://github.com/wirepas/backend-client/pull/175) ([renovate[bot]](https://github.com/apps/renovate))
