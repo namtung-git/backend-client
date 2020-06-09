@@ -207,7 +207,7 @@ To start the gateway against the MQTT broker specified in
 ./examples/settings.yml, issue the following command:
 
 ```shell
-    wm-gw-cli cli --settings ./examples/settings.yml
+    wm-gw-cli --settings ./examples/settings.yml
 ```
 
 Once the client launches, you will be greeted with:
