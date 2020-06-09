@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.3.6-rc.2](https://github.com/wirepas/backend-client/tree/v1.3.6-rc.2) (2020-06-09)
+
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.6-rc.1...v1.3.6-rc.2)
+
+**Merged pull requests:**
+
+- Add Gatewack response check to HTTP.PY API commands. [\#330](https://github.com/wirepas/backend-client/pull/330) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+
 ## [v1.3.6-rc.1](https://github.com/wirepas/backend-client/tree/v1.3.6-rc.1) (2020-06-04)
 
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.5...v1.3.6-rc.1)
@@ -22,7 +30,6 @@
 - Fix set config [\#328](https://github.com/wirepas/backend-client/pull/328) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Made printing of incoming data packets more user friendly.  [\#327](https://github.com/wirepas/backend-client/pull/327) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Fixed set app config [\#326](https://github.com/wirepas/backend-client/pull/326) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
-- Fix missing update of child tables to MySQL. [\#325](https://github.com/wirepas/backend-client/pull/325) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Print gateway configuration to screen formatted manner [\#324](https://github.com/wirepas/backend-client/pull/324) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 
 ## [v1.3.5](https://github.com/wirepas/backend-client/tree/v1.3.5) (2020-06-02)
@@ -42,6 +49,7 @@
 
 **Merged pull requests:**
 
+- Fix missing update of child tables to MySQL. [\#325](https://github.com/wirepas/backend-client/pull/325) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Correct SQL update load number so that show fractions too. [\#323](https://github.com/wirepas/backend-client/pull/323) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Add wm-kpi-tester-helper entry point [\#322](https://github.com/wirepas/backend-client/pull/322) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Whitespace change to make build system happy for release [\#321](https://github.com/wirepas/backend-client/pull/321) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
@@ -56,7 +64,6 @@
 - \#308 [\#310](https://github.com/wirepas/backend-client/pull/310) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Fix the problem that the missed packet calculation stopped after about [\#307](https://github.com/wirepas/backend-client/pull/307) ([PeiChunyan](https://github.com/PeiChunyan))
 - \#303 \#304 [\#305](https://github.com/wirepas/backend-client/pull/305) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
-- Print black version [\#299](https://github.com/wirepas/backend-client/pull/299) ([PeiChunyan](https://github.com/PeiChunyan))
 
 ## [v.1.3.5-rc.1](https://github.com/wirepas/backend-client/tree/v.1.3.5-rc.1) (2020-05-13)
 
@@ -97,6 +104,7 @@
 
 **Merged pull requests:**
 
+- Print black version [\#299](https://github.com/wirepas/backend-client/pull/299) ([PeiChunyan](https://github.com/PeiChunyan))
 - \#267 [\#282](https://github.com/wirepas/backend-client/pull/282) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - \#270 [\#281](https://github.com/wirepas/backend-client/pull/281) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - 4 bytes support added into advertiser address. [\#280](https://github.com/wirepas/backend-client/pull/280) ([kahaapal](https://github.com/kahaapal))
@@ -147,7 +155,6 @@
 - \#247 2 [\#252](https://github.com/wirepas/backend-client/pull/252) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Change HTTP implementation so that when request destination [\#251](https://github.com/wirepas/backend-client/pull/251) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - \#247 [\#249](https://github.com/wirepas/backend-client/pull/249) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
-- Feature provisioning [\#248](https://github.com/wirepas/backend-client/pull/248) ([vgeneves](https://github.com/vgeneves))
 
 ## [v1.3.1](https://github.com/wirepas/backend-client/tree/v1.3.1) (2020-02-04)
 
@@ -162,6 +169,7 @@
 
 **Merged pull requests:**
 
+- Feature provisioning [\#248](https://github.com/wirepas/backend-client/pull/248) ([vgeneves](https://github.com/vgeneves))
 - Diagnostic cbor ids [\#246](https://github.com/wirepas/backend-client/pull/246) ([PFigs](https://github.com/PFigs))
 - Update gitignore [\#245](https://github.com/wirepas/backend-client/pull/245) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Release v1.3.1 [\#243](https://github.com/wirepas/backend-client/pull/243) ([PFigs](https://github.com/PFigs))
@@ -232,6 +240,7 @@
 - Diagnostics dashboard [\#201](https://github.com/wirepas/backend-client/pull/201) ([PFigs](https://github.com/PFigs))
 - Advertiser message: interface compliance [\#200](https://github.com/wirepas/backend-client/pull/200) ([PFigs](https://github.com/PFigs))
 - Mesh request example [\#197](https://github.com/wirepas/backend-client/pull/197) ([PFigs](https://github.com/PFigs))
+- Update diagnostics [\#192](https://github.com/wirepas/backend-client/pull/192) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.2-rc.3](https://github.com/wirepas/backend-client/tree/v1.2.2-rc.3) (2020-01-07)
 
@@ -249,7 +258,6 @@
 **Merged pull requests:**
 
 - RC2 for v1.2.2 [\#193](https://github.com/wirepas/backend-client/pull/193) ([PFigs](https://github.com/PFigs))
-- Update diagnostics [\#192](https://github.com/wirepas/backend-client/pull/192) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.2-rc.1](https://github.com/wirepas/backend-client/tree/v1.2.2-rc.1) (2019-12-17)
 
@@ -290,6 +298,7 @@
 - Environment keys [\#163](https://github.com/wirepas/backend-client/pull/163) ([PFigs](https://github.com/PFigs))
 - Update wnt interfaces [\#161](https://github.com/wirepas/backend-client/pull/161) ([PFigs](https://github.com/PFigs))
 - Travis service tests [\#160](https://github.com/wirepas/backend-client/pull/160) ([PFigs](https://github.com/PFigs))
+- Update wirepas messaging version and wnt manager imports [\#159](https://github.com/wirepas/backend-client/pull/159) ([JanneSiren](https://github.com/JanneSiren))
 - Influx queries index name [\#158](https://github.com/wirepas/backend-client/pull/158) ([PFigs](https://github.com/PFigs))
 - Update readme [\#155](https://github.com/wirepas/backend-client/pull/155) ([PFigs](https://github.com/PFigs))
 - Diagnostics decoding within MySQL interfaces [\#153](https://github.com/wirepas/backend-client/pull/153) ([PFigs](https://github.com/PFigs))
