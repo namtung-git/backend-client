@@ -160,8 +160,6 @@ class MQTTObserver(StreamObserver):
             except Exception:
                 data = None
 
-        self.logger.debug("message for MQTT publish %s", message)
-
         if data is not None and topic is not None:
             self.mqtt.send(
                 message=data,

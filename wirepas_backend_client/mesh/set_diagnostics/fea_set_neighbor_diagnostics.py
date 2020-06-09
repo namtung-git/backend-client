@@ -3,7 +3,7 @@ from time import time
 from datetime import datetime
 
 # multiple definitions exists
-from wirepas_backend_client.api import Topics
+from wirepas_backend_client.api.mqtt import Topics
 from wirepas_messaging.gateway.api import GatewayResultCode
 from wirepas_backend_client.mesh.state import MeshManagement
 

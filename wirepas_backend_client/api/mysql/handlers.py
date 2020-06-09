@@ -75,6 +75,7 @@ class MySQLObserver(StreamObserver):
 
     def _map_message(self, mysql, message, incrementCounter: int):
         """ Inserts the message according to its type """
+
         ret: bool = True
         if mysql.put_to_received_packets(message, incrementCounter) is True:
 

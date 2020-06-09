@@ -19,7 +19,7 @@ import sys
 import time
 import queue
 
-from wirepas_backend_client.api import Topics
+from wirepas_backend_client.api.mqtt import Topics
 from wirepas_backend_client.cli.gateway import GatewayCliCommands
 
 
@@ -301,6 +301,8 @@ class GatewayShell(GatewayCliCommands):
         if timeout:
             response_good: bool = False
 
+            take_list = []
+
             while response_good is False:
                 try:
                     queue_poll_time_sec: float = 0.1
@@ -313,17 +315,20 @@ class GatewayShell(GatewayCliCommands):
                         ):
                             response_good = True
                         else:
-                            # put pack
-                            self.response_queue.put(message)
+                            take_list.append(message)
+
                     else:
                         # put message back to queue back
-                        if self.request_queue.empty():
-                            # wait a bit to avoid busy loop when putting
-                            # same message back and reading it again.
-                            default_sleep_time: float = 0.001
-                            time.sleep(default_sleep_time)
+                        take_list.append(message)
 
-                        self.response_queue.put(message)
+                    if self.request_queue.empty():
+                        for msg in take_list:
+                            self.response_queue.put(msg)
+                        take_list.clear()
+                        # wait a bit to avoid busy loop when putting
+                        # same message back and reading it again.
+                        default_sleep_time: float = 0.001
+                        time.sleep(default_sleep_time)
 
                     if time.perf_counter() - wait_start_time > timeout:
                         print(

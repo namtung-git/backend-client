@@ -14,7 +14,7 @@ from .shell import GatewayShell
 from wirepas_backend_client.management import Daemon
 from wirepas_backend_client.mesh.interfaces.mqtt import NetworkDiscovery
 from wirepas_backend_client.tools import ParserHelper, LoggerHelper
-from wirepas_backend_client.api import MQTTSettings
+from wirepas_backend_client.api.mqtt import MQTTSettings
 
 
 def launch_gw_cli(settings, logger):

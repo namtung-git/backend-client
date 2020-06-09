@@ -39,6 +39,7 @@ class MySQL(object):
 
         self.stat_inserts_fail = 0
         self.stat_inserts_ok = 0
+        self.exceptions_occurred_count = 0
         self.itemsInDBTot = 0
         self.sql_insert_update_statements = dict()
         self.sql_insert_variable_statements = dict()
@@ -52,7 +53,6 @@ class MySQL(object):
         self.port = port
         self.cursor = None
         self.connection_timeout = connection_timeout
-        self.itemsAddedTot: int = 0
         self.prev_update_interval_perf_time = None
 
     def connect(self, table_creation=True) -> None:
@@ -1208,7 +1208,8 @@ class MySQL(object):
 
         dump_statements: bool = False
         dump_sql_stats: bool = True
-        item_count = len(self.sql_insert_update_statements)
+        item_count_to_be_added = len(self.sql_insert_update_statements)
+        exceptions_occurred: int = 0
 
         packet_id_before_update = (
             self.get_latest_packet_id_from_received_packets()
@@ -1217,10 +1218,7 @@ class MySQL(object):
 
         try:
             commitNeeded: bool = False
-            rowsProcessed: int = 0
-
             cursor = self.database.cursor()
-
             first_select_done: bool = False
 
             for insertRef in self.sql_insert_update_statements.keys():
@@ -1250,8 +1248,6 @@ class MySQL(object):
                     if dump_statements is True:
                         print(current_packet_id, packetMsg)
 
-                    rowsProcessed += 1
-                    self.itemsAddedTot += 1
                     # [B] Update other tables. packet id must match to first
                     # message that was used to update primary table [A].
                     for additionalData in msgs[1:]:
@@ -1266,8 +1262,6 @@ class MySQL(object):
                                 "Database child table update " "failed"
                             )
 
-                    rowsProcessed += 1
-                    self.itemsAddedTot += 1
                     commitNeeded = True
 
                     # [C] Check also JSON messages and add them. Packet id
@@ -1295,6 +1289,7 @@ class MySQL(object):
                 self.database.commit()
 
         except Exception as e:
+            exceptions_occurred += 1
             self.database.rollback()
             self.logger.error("SQL update error", e)
 
@@ -1311,11 +1306,12 @@ class MySQL(object):
 
         self.handle_insert_result(
             dump_sql_stats,
-            item_count,
+            item_count_to_be_added,
             packet_id_after_update,
             packet_id_before_update,
             update_start_time,
             update_stop_time,
+            exceptions_occurred,
         )
 
     def handle_insert_result(
@@ -1326,11 +1322,13 @@ class MySQL(object):
         packet_id_before_update,
         update_start_time,
         update_stop_time,
+        exceptions_occurred: int,
     ):
         if (
             packet_id_after_update - packet_id_before_update
         ) - item_count == 0:
             self.stat_inserts_ok += 1
+            self.exceptions_occurred_count = exceptions_occurred
 
             msgsPerSec: float = 0
             if packet_id_after_update - packet_id_before_update > 0:
@@ -1357,8 +1355,8 @@ class MySQL(object):
             if dump_sql_stats is True:
                 self.logger.debug(
                     "MySQL inserts PASS. Packet id before update:{} and after "
-                    "update:{} ({} msgs). Inserts ok/nok:{}/{} ({}%). "
-                    "Time elapsed:{} ms ({} msgs/sec). Load:{}%".format(
+                    "update:{} ({} msgs). Inserts ok/nok:{}/{} ({}%) "
+                    "Time elapsed:{} ms ({} msgs/sec) Load:{}% Exceptions:{}".format(
                         packet_id_before_update,
                         packet_id_after_update,
                         packet_id_after_update - packet_id_before_update,
@@ -1372,13 +1370,14 @@ class MySQL(object):
                         int((update_stop_time - update_start_time) * 1000),
                         "{:.2f}".format(msgsPerSec),
                         "{:.1f}".format(update_load * 100),
+                        self.exceptions_occurred_count,
                     )
                 )
         else:
             self.stat_inserts_fail += 1
             self.logger.error(
                 "MySQL inserts FAIL. Packet id before update:{} and after "
-                "update:{} ({} msgs). Inserts ok/nok:{}/{} ({}%). ".format(
+                "update:{} ({} msgs) Inserts ok/nok:{}/{} ({}%) Exceptions:{}".format(
                     packet_id_before_update,
                     packet_id_after_update,
                     packet_id_after_update - packet_id_before_update,
@@ -1389,6 +1388,7 @@ class MySQL(object):
                         / (self.stat_inserts_fail + self.stat_inserts_ok)
                         * 100.0
                     ),
+                    self.exceptions_occurred_count,
                 )
             )
 

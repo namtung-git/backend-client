@@ -19,6 +19,7 @@ from wirepas_backend_client.tools import ParserHelper, LoggerHelper
 from wirepas_backend_client.api import MySQLSettings, MySQLObserver
 from wirepas_backend_client.api import MQTTSettings, MQTTObserver, Topics
 from wirepas_backend_client.api import HTTPSettings, HTTPObserver
+from wirepas_backend_client.mesh.interfaces.mqtt import NetworkDiscovery
 from wirepas_backend_client.management import Daemon
 
 __test_name__ = "test_kpi"
@@ -264,6 +265,22 @@ def start_kpi_tester():
             control_name = "http"
             use_storage = True
 
+        shared_state = daemon.create_shared_dict(devices=None)
+        data_queue = daemon.create_queue()
+        event_queue = daemon.create_queue()
+
+        discovery = daemon.build(
+            "discovery",
+            NetworkDiscovery,
+            dict(
+                shared_state=shared_state,
+                data_queue=data_queue,
+                event_queue=event_queue,
+                mqtt_settings=MQTTSettings(settings),
+                logger=logger,
+            ),
+        )
+
         if storage_name is not None:
             daemon.build(
                 storage_name,
@@ -295,6 +312,10 @@ def start_kpi_tester():
                 dict(
                     gw_status_queue=gw_status_from_mqtt_broker,
                     http_settings=HTTPSettings(settings),
+                    # data_queue=data_queue,
+                    # event_queue=event_queue,
+                    rx_queue=discovery.tx_queue,
+                    tx_queue=discovery.rx_queue,
                 ),
                 send_to=mqtt_name,
             )
