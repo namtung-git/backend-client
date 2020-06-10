@@ -12,6 +12,8 @@ import logging
 import multiprocessing
 import time
 
+queue_max_size: int = 100000
+
 
 class Daemon(object):
     """
@@ -60,8 +62,8 @@ class Daemon(object):
     def _process_details(self) -> dict:
         """ Initialises the process entry dictionary """
         return dict(
-            tx_queue=self._manager.Queue(),
-            rx_queue=self._manager.Queue(),
+            tx_queue=self._manager.Queue(queue_max_size),
+            rx_queue=self._manager.Queue(queue_max_size),
             exit_signal=None,
             object=None,
             object_kwargs=None,
@@ -84,7 +86,7 @@ class Daemon(object):
 
     def create_queue(self):
         """ Creates and returns a new manager queue """
-        return self._manager.Queue()
+        return self._manager.Queue(queue_max_size)
 
     def wait_loop(self):
         """ Default loop. Waits until an exit signal is given or the processes are dead"""
@@ -126,6 +128,8 @@ class Daemon(object):
         """ Creates the object which will interact with the process """
 
         self.init_process(name)
+
+        self.logger.info("Queues max size is {} items.".format(queue_max_size))
 
         if "start_signal" not in kwargs:
             kwargs["start_signal"] = self.start_signal

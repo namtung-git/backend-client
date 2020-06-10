@@ -737,6 +737,7 @@ class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                                 refresh,
                                 new_messages,
                             ) = self._handle_ping_command(gateway_id, sink_id)
+
                             if command_was_ok is not True:
                                 break
                             else:
@@ -744,6 +745,7 @@ class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                                     for msg in new_messages:
                                         messages.append(msg)
                         else:
+                            command_was_ok = False
                             self._handle_unknown_command(response)
                             break
                         # Renews information about remote gateways
@@ -955,6 +957,11 @@ class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         """ Wait response to request_message. If response received, return it.
             If timeout, return None """
 
+        # HTTP PY is only handler of data request/responses when kpi-tester is
+        # active. When _wait_for_answer is called, there are not other handler
+        # of request messages. If Req ID does not match, drop message.
+        # SQL Injector handles data messages.
+
         wait_start_time = time.perf_counter()
 
         # if request_message is None:
@@ -974,15 +981,6 @@ class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     ):
                         response_good = True
                     else:
-                        take_list.append(message)
-
-                    if self.mqtt_rx_queue.empty():
-                        # wait a bit to avoid busy loop when putting
-                        # same message back and reading it again.
-                        for msg in take_list:
-                            self.mqtt_rx_queue.put(msg)
-                        take_list.clear()
-
                         default_sleep_time: float = 0.001
                         time.sleep(default_sleep_time)
 
