@@ -444,6 +444,20 @@ class ParserHelper:
         )
 
         self.test.add_argument(
+            "--reliability_message_window",
+            default=os.environ.get("WM_BCLI_TEST_MESSAGE_WINDOW", 20),
+            type=int,
+            help="the message window used when checking the missed packet",
+        )
+
+        self.test.add_argument(
+            "--reliability_raw_data",
+            default=os.environ.get("WM_BCLI_TEST_RAW_DATA", False),
+            action="store_true",
+            help="whether the reliability raw data will be save",
+        )
+
+        self.test.add_argument(
             "--nodes",
             default=os.environ.get("WM_BCLI_TEST_NODES", "./nodes.txt"),
             type=str,

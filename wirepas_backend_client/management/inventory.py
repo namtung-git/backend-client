@@ -20,18 +20,21 @@ import time
 # The Reliability can inherit from Inventory class,
 # here I created a new class to test first
 class Reliability(object):
-    maxi_events_size = 20
-    maxi_sequence_in_packet = 255
-    mini_sequence_in_packet = 0
-    sequence_delta = [0, 1, mini_sequence_in_packet - maxi_sequence_in_packet]
+    maxi_times_search_previous_sequence = 5
+    sequence_delta = [0, 1, -255]
 
     def __init__(
-        self, start_delay=None, maximum_duration=None, logger=None
+        self,
+        start_delay=None,
+        maximum_duration=None,
+        logger=None,
+        message_window=None,
     ) -> "Reliability":
         super(Reliability, self).__init__()
 
         self._start_delay = start_delay
         self._maximum_duration = maximum_duration
+        self._message_window = message_window
 
         self._nodes = set()  # unique list of nodes
         self._routers = set()  # unique list of routers
@@ -72,6 +75,28 @@ class Reliability(object):
         """ Procedure when an inventory has completed """
         self._finish = datetime.datetime.utcnow()
         return self._finish
+
+    @staticmethod
+    def previous_sequence_search(
+        current_sequence, all_sequences
+    ) -> (bool, int):
+        """
+        Search the previous sequence number from a sequence list
+        :param current_sequence:  the current sequence
+        :param all_sequences:  the list contains saved sequences
+        :return:
+        """
+        maxi_sequence_in_packet = 255
+        mini_sequence_in_packet = 0
+        if current_sequence == mini_sequence_in_packet:
+            previous_sequence = maxi_sequence_in_packet
+        else:
+            previous_sequence = current_sequence - 1
+
+        if previous_sequence in all_sequences:
+            return True, previous_sequence
+        else:
+            return False, previous_sequence
 
     @staticmethod
     def until(deadline: datetime) -> int:
@@ -122,6 +147,8 @@ class Reliability(object):
     def add_tags_and_missed_tags(
         self,
         tag_address: int,
+        destination_node: int,
+        adv_message_count: int,
         tag_sequence: list = None,
         timestamp: str = None,
     ) -> None:
@@ -130,19 +157,30 @@ class Reliability(object):
 
         Arguments:
             tag_address: the address of the tag
+            destination_node: the node where the tag sends data to
+            adv_message_count: the node's sequence
             tag_sequence (list) : a list of tag sequence
             timestamp (int): a time representation
 
         """
         self._nodes.add(tag_address)
 
-        # creates an event
+        # creates an event: router ID, router seq, tag seq, time
         event = dict(
+            destination_node=destination_node,
+            adv_message_count=adv_message_count,
             tag_sequence=tag_sequence,
-            timestamp=datetime.datetime.fromtimestamp(timestamp / 1e3),
+            timestamp=timestamp,
         )
 
-        # add tags to index
+        # the network should report sequence
+        if not tag_sequence:
+            self.logger.error(
+                "No sequence number is reported. "
+                "Please set the NW to report sequence first"
+            )
+
+        # add event to index, and index key is tag address
         try:
             self._index[tag_address]["count"] += 1
             self._index[tag_address]["events"].append(event)
@@ -151,11 +189,12 @@ class Reliability(object):
                 last_seen=timestamp, events=[event], count=1
             )
             self.logger.debug(
-                "adding tag: {0} / {1}".format(tag_address, event),
+                "adding new tag: {0} / {1}".format(tag_address, event),
                 dict(sequence=self.sequence),
             )
 
-        # put all the sequence in dictionary with key "all_sequence"
+        # use the middle one as the current one
+        # and put all the sequence in dictionary with key "all_sequence"
         current_sequence = self._index[tag_address]["events"][-1][
             "tag_sequence"
         ][0]
@@ -166,49 +205,98 @@ class Reliability(object):
             # For the first time
             self._index[tag_address]["all_sequence"] = [current_sequence]
             self.logger.debug(
-                "adding sequence: {} for tag {} ".format(
+                "adding new sequence: {} for tag {} ".format(
                     current_sequence, tag_address
                 )
             )
 
+        # use a reasonable name for event and all sequences
         tag_event = self._index[tag_address]["events"]
         all_sequences_in_tag_event = self._index[tag_address]["all_sequence"]
 
-        # Be sure the stack is alway the same length
-        while len(tag_event) > Reliability.maxi_events_size:
+        # Be sure the stack is always the same length
+        while len(tag_event) > self._message_window:
             self._index[tag_address]["events"].pop(0)
             self._index[tag_address]["all_sequence"].pop(0)
 
-        if len(tag_event) == Reliability.maxi_events_size:
+        # the missing tag calculating starts after the queue is full
+        if len(tag_event) == self._message_window:
+            # get the middle one's sequence
             middle_one = self._index[tag_address]["events"][
                 int(len(tag_event) / 2)
             ]
             middle_one_sequence = middle_one["tag_sequence"][0]
+            # search the previous sequence
             try:
-                # the previous sequence=sequence-1 or maxi_sequence_in_packet
-                if (middle_one_sequence - 1) in all_sequences_in_tag_event or (
-                    (
-                        middle_one_sequence
-                        == Reliability.mini_sequence_in_packet
+                previous_sequence_exist, previous_sequence = self.previous_sequence_search(
+                    middle_one_sequence, all_sequences_in_tag_event
+                )
+
+                if previous_sequence_exist:
+                    self.logger.info(
+                        dict(
+                            data_usage="reliability",
+                            reliability_tag=tag_address,
+                            reliability_tag_sequence=middle_one[
+                                "tag_sequence"
+                            ][0],
+                            reliability_node=middle_one["destination_node"],
+                            reliability_node_sequence=adv_message_count,
+                            tx_time=middle_one["timestamp"],
+                            missedtag_previous_sequence=None,
+                            missedtag_previous_time=None,
+                            missed_tag=False,
+                        )
                     )
-                    and (
-                        Reliability.maxi_sequence_in_packet
-                        in all_sequences_in_tag_event
-                    )
-                ):
-                    pass
+                # if the previous sequence is not found, try to find what is
+                # the sequence we received before the current one
                 else:
+                    search = 0
+                    while (
+                        search
+                        < Reliability.maxi_times_search_previous_sequence
+                    ):
+                        middle_one_sequence = previous_sequence
+                        previous_sequence_exist, previous_sequence = self.previous_sequence_search(
+                            middle_one_sequence, all_sequences_in_tag_event
+                        )
+                        search += 1
+                        if previous_sequence_exist:
+                            break
+
                     self._missed_packet_tag.append([tag_address, middle_one])
-                    self.logger.debug(
-                        "[MISSED]adding tag: {0} / {1} to missed packet result"
-                        "".format(tag_address, middle_one)
+                    previous_time = None
+                    for item in tag_event:
+                        if item["tag_sequence"][0] == previous_sequence:
+                            previous_time = item["timestamp"]
+
+                    self.logger.info(
+                        dict(
+                            data_usage="reliability",
+                            reliability_tag=tag_address,
+                            reliability_tag_sequence=middle_one[
+                                "tag_sequence"
+                            ][0],
+                            reliability_node=middle_one["destination_node"],
+                            reliability_node_sequence=adv_message_count,
+                            tx_time=middle_one["timestamp"],
+                            missedtag_previous_sequence=previous_sequence,
+                            missedtag_previous_time=previous_time,
+                            missed_tag=True,
+                        )
                     )
+
             except (KeyError, IndexError) as e:
                 self.logger.debug("got exception {}".format(e))
+        else:
+            # before the calculation, all packets go to ES
+            # self.logger.debug("message window is not full, discard ")
+            pass
 
     def add_routers_and_missed_routers(
         self,
         router_address: int,
+        single_message_amount: int,
         adv_message_count: list = None,
         timestamp: str = None,
     ) -> None:
@@ -217,6 +305,7 @@ class Reliability(object):
 
         Arguments:
             router_address: the address of the router
+            single_message_amount: how many tag in one msg from router
             adv_message_count (list): a list of message count derived from apdu
             timestamp (int): a time representation
 
@@ -226,7 +315,7 @@ class Reliability(object):
         # create the dictionary for the router
         event = dict(adv_message_count=adv_message_count, timestamp=timestamp)
 
-        # add tags to index
+        # add router to index
         try:
             self._index[router_address]["count"] += 1
             self._index[router_address]["events"].append(event)
@@ -252,23 +341,43 @@ class Reliability(object):
                 not in Reliability.sequence_delta
             ):
                 self.logger.info(
-                    "[MISSED] adding router: {0} / {1} to missed packet result"
-                    "".format(router_address, event)
+                    dict(
+                        data_usage="reliability",
+                        reliability_node=router_address,
+                        reliability_node_sequence=event["adv_message_count"],
+                        tx_time=event["timestamp"],
+                        missednode_previous_sequence=self._index[
+                            router_address
+                        ]["events"][-2]["adv_message_count"],
+                        missednode_previous_time=self._index[router_address][
+                            "events"
+                        ][-2]["timestamp"],
+                        missed_router=True,
+                        contain_tags=single_message_amount,
+                    )
                 )
+
                 self._missed_packet_router.append(
-                    [
-                        router_address,
-                        self._index[router_address]["events"][-2],
-                        self._index[router_address]["events"][-1],
-                    ]
+                    [router_address, self._index[router_address]["events"][-1]]
                 )
+            else:
+                self.logger.info(
+                    dict(
+                        data_usage="reliability",
+                        reliability_node=router_address,
+                        reliability_node_sequence=event["adv_message_count"],
+                        tx_time=event["timestamp"],
+                        missednode_previous_sequence=None,
+                        missednode_previous_time=None,
+                        missed_router=False,
+                        contain_tags=single_message_amount,
+                    )
+                )
+
         except (KeyError, IndexError) as e:
             self.logger.exception(e)
 
-        if (
-            len(self._index[router_address]["events"])
-            > Reliability.maxi_events_size
-        ):
+        if len(self._index[router_address]["events"]) > self._message_window:
             self._index[router_address]["events"].pop(0)
 
         print("MISSED ROUTER {}".format(self._missed_packet_router))
@@ -288,7 +397,6 @@ class Reliability(object):
     def is_out_of_time(self):
         """ Evaluates if the time has run out for the run """
         time_left = self.until(self.deadline)
-        self.logger.debug("time left {}s ...".format(time_left))
         if time_left <= 0:
             return True
         return False

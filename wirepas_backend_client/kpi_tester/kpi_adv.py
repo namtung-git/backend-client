@@ -217,6 +217,8 @@ class ReliabilityManager(TestManager):
         storage_queue: multiprocessing.Queue = None,
         delay: int = 5,
         duration: int = 5,
+        message_window: int = 20,
+        raw_data=False,
         logger=None,
     ):
 
@@ -231,9 +233,14 @@ class ReliabilityManager(TestManager):
         self.storage_queue = storage_queue
         self.delay = delay
         self.duration = duration
+        self.message_window = message_window
+        self.raw_data = raw_data
 
         self.reliability = Reliability(
-            start_delay=delay, maximum_duration=duration, logger=self.logger
+            start_delay=delay,
+            maximum_duration=duration,
+            logger=self.logger,
+            message_window=self.message_window,
         )
 
         self._test_sequence_number = 0
@@ -264,6 +271,8 @@ class ReliabilityManager(TestManager):
 
         AdvertiserMessage.message_counter = 0
         empty_counter = 0
+        message_head = 2
+        single_message_length = 5
 
         while not self.exit_signal.is_set():
             try:
@@ -282,18 +291,32 @@ class ReliabilityManager(TestManager):
                 else:
                     continue
 
-            self.logger.info(message.serialize())
-
-            for key, value in message.apdu["adv"].items():
-                self.logger.info(
-                    "tag: {0}/ tag sequence: {1} / "
-                    "node: {2} / node sequence: {3}".format(
-                        key,
-                        value,
-                        message.source_address,
-                        message.apdu["adv_message_count"],
+            # self.logger.info(message.serialize())
+            if self.raw_data is True:
+                for key, value in message.apdu["adv"].items():
+                    self.logger.info(
+                        dict(
+                            data_usage="reliability",
+                            reliability_tag=key,
+                            reliability_tag_sequence=value["sequence"],
+                            reliability_node=message.source_address,
+                            reliability_node_sequence=message.apdu[
+                                "adv_message_count"
+                            ],
+                            tx_time=message.tx_time.isoformat("T"),
+                        )
                     )
-                )
+            else:
+                # self.logger.info(
+                #    "reliability raw data is not save"
+                # )
+                pass
+
+            # the total message
+            message_apdu_size = message.data_size
+            single_message_amount = int(
+                (message_apdu_size - message_head) / single_message_length
+            )
 
             if self.storage_queue:
                 self.storage_queue.put(message)
@@ -305,13 +328,16 @@ class ReliabilityManager(TestManager):
                 router_address=message.source_address,
                 adv_message_count=message.apdu["adv_message_count"],
                 timestamp=message.tx_time.isoformat("T"),
+                single_message_amount=single_message_amount,
             )
 
             for tag_address, details in message.apdu["adv"].items():
                 self.reliability.add_tags_and_missed_tags(
                     tag_address=tag_address,
+                    destination_node=message.source_address,
+                    adv_message_count=message.apdu["adv_message_count"],
                     tag_sequence=details["sequence"],
-                    timestamp=details["time"],
+                    timestamp=message.tx_time.isoformat("T"),
                 )
 
             if self.reliability.is_out_of_time():
@@ -467,7 +493,13 @@ def main(args, logger):
             reliability_manager = daemon.build(
                 "reliability_manager",
                 ReliabilityManager,
-                dict(delay=args.delay, duration=args.duration, logger=logger),
+                dict(
+                    delay=args.delay,
+                    duration=args.duration,
+                    message_window=args.reliability_message_window,
+                    raw_data=args.reliability_raw_data,
+                    logger=logger,
+                ),
                 receive_from="mqtt",
                 storage=mysql_available,
                 storage_name=__STORAGE_ENGINE__,
