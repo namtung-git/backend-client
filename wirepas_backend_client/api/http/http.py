@@ -28,7 +28,7 @@
         See file LICENSE for full license details.
 """
 from enum import Enum
-from threading import Thread
+from threading import Thread, Lock
 import binascii
 import http.server
 import logging
@@ -281,8 +281,8 @@ class HTTPObserver(StreamObserver):
         http_settings: Settings,
         start_signal: multiprocessing.Event,
         exit_signal: multiprocessing.Event,
-        tx_queue: multiprocessing.Queue,
-        rx_queue: multiprocessing.Queue,
+        tx_queue: None,
+        rx_queue: None,
         gw_status_queue: multiprocessing.Queue,
         request_wait_timeout: int = 600,
         close_connection: bool = False,
@@ -487,6 +487,8 @@ class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     all the GET requests and processes them into commands.
     """
 
+    _http_api_lock = Lock()  # static
+
     _serverPerformanceValues: Dict[Any, HTTPPerformanceValue] = dict()
 
     class HTTP_response_fields(Enum):
@@ -544,6 +546,16 @@ class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Pragma", "no-cache")
         self.send_header("Expires", "0")
 
+    def log_request(self, code="-", size="-"):
+        # override http server command
+        if self._debug_comms is True:
+            super(HTTPRequestHandler, self).log_request(code, size)
+
+    def log_error(self, format, *args):
+        # override http server command
+        if self._debug_comms is True:
+            super(HTTPRequestHandler, self).log_error(format, args)
+
     def _process_request(self, verb):
         """ Decodes an incoming http request regardless of its verb"""
         __default_command = "info"
@@ -591,12 +603,16 @@ class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         """Process a single HTTP GET request.
         """
+        HTTPRequestHandler._http_api_lock.acquire()
         self._process_request("GET")
+        HTTPRequestHandler._http_api_lock.release()
 
     def do_POST(self):
         """Process a single HTTP POST request.
         """
+        HTTPRequestHandler._http_api_lock.acquire()
         self._process_request("POST")
+        HTTPRequestHandler._http_api_lock.release()
 
     def _mesh_control(self, command, params):
         """ Decodes an incoming payload and acts upon it """
@@ -927,26 +943,35 @@ class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         # If single message fails, false is returned to caller.
         ret: bool = True
         for message in messages:
+
             if len(message) > 0:
                 if self._debug_comms is True:
                     self.logger.info({message["topic"]: str(message["data"])})
 
                 self.mqtt_tx_queue.put(message)
-                response = self._wait_for_answer(message)
 
-                if response is None:
-                    ret = False
-                    break
-                else:
-                    if response.res == GatewayResultCode.GW_RES_OK:
-                        pass
-                    else:
-                        error_code_str = response.res
-                        self.logger.error(
-                            "GW response was not ok:{}".format(error_code_str)
-                        )
+                configWaitResponse: bool = True
+
+                if configWaitResponse:
+                    response = self._wait_for_answer(message)
+
+                    if response is None:
                         ret = False
                         break
+                    else:
+                        if response.res == GatewayResultCode.GW_RES_OK:
+                            pass
+                        else:
+                            error_code_str = response.res
+                            self.logger.error(
+                                "GW response was not ok:{}".format(
+                                    error_code_str
+                                )
+                            )
+                            ret = False
+                            break
+                else:
+                    pass
             else:
                 self.logger.error("MQTT message size is 0")
                 break
@@ -969,10 +994,20 @@ class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         message = None
         if timeout:
             response_good: bool = False
-            take_list = []
             while response_good is False:
+
+                if time.perf_counter() - wait_start_time > timeout:
+                    print(
+                        "Error got no reply for in time. "
+                        "Time waited {:.0f} secs.".format(
+                            time.perf_counter() - wait_start_time
+                        )
+                    )
+                    message = None
+                    break
+
                 try:
-                    queue_poll_time_sec: float = 0.1
+                    queue_poll_time_sec: float = 0.010
                     message = self.mqtt_rx_queue.get(
                         block=block, timeout=queue_poll_time_sec
                     )
@@ -981,19 +1016,7 @@ class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     ):
                         response_good = True
                     else:
-                        default_sleep_time: float = 0.001
-                        time.sleep(default_sleep_time)
-
-                    if time.perf_counter() - wait_start_time > timeout:
-                        print(
-                            "Error got no reply for in time. "
-                            "Time waited {:.0f} secs.".format(
-                                time.perf_counter() - wait_start_time
-                            )
-                        )
-                        message = None
-                        break
-
+                        pass
                 except queue.Empty:
                     # keep polling
                     pass

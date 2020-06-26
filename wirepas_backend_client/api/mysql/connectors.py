@@ -10,13 +10,14 @@
 
 try:
     import MySQLdb
+    from MySQLdb._exceptions import DatabaseError, IntegrityError, DataError
 except ImportError:
     print("Failed to import MySQLdb")
     pass
 
 import logging
 import json
-from time import perf_counter
+from time import perf_counter, time
 
 
 class MySQL(object):
@@ -39,9 +40,11 @@ class MySQL(object):
 
         self.stat_inserts_fail = 0
         self.stat_inserts_ok = 0
+        self.integrity_checks_failed = 0
         self.exceptions_occurred_count = 0
         self.itemsInDBTot = 0
         self.sql_insert_update_statements = dict()
+        self.sql_integrity_check_statements = []
         self.sql_insert_variable_statements = dict()
         self.logger = logger or logging.getLogger(__name__)
 
@@ -54,6 +57,8 @@ class MySQL(object):
         self.cursor = None
         self.connection_timeout = connection_timeout
         self.prev_update_interval_perf_time = None
+        self.integrity_check_sum = 0
+        self.integrity_check_sum_is_failing: bool = False
 
     def connect(self, table_creation=True) -> None:
         """ Establishes a connection and service loop. """
@@ -95,6 +100,8 @@ class MySQL(object):
         if table_creation:
             self.create_tables()
 
+        self.logger.info("MySQL ready.")
+
     def close(self: "MySQL") -> None:
         """ Handles disconnect from database object """
         self.cursor.close()
@@ -106,6 +113,27 @@ class MySQL(object):
         """
         # pylint: disable=locally-disabled, too-many-statements
 
+        # Create integrity test tables
+        try:
+            self.cursor.execute("DROP TABLE integrity_test")
+            self.database.commit()
+        except DatabaseError:
+            pass
+        except DataError:
+            pass
+        except IntegrityError:
+            pass
+
+        query = (
+            "CREATE TABLE IF NOT EXISTS integrity_test ("
+            " message_time TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),"
+            " db_write_time TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),"
+            " checksum_number BIGINT UNSIGNED NOT NULL"
+            ") ENGINE = InnoDB;"
+        )
+        self.cursor.execute(query)
+
+        # Create payload test tables
         query = (
             "CREATE TABLE IF NOT EXISTS known_nodes ("
             "  network_address BIGINT UNSIGNED NOT NULL,"
@@ -807,6 +835,54 @@ class MySQL(object):
 
         return ret
 
+    def check_and_write_integrity_test_data(self, message) -> bool:
+
+        # Incoming message payload should be 102 bytes.
+        # First 8 bytes form ascii hex coded 32 bit uint and rest is fill data
+        # 00000001------------------------------------ up to 102 bytes
+        s = message.data_payload.decode("utf-8")
+        seqStr = s[0:8]
+        try:
+            checksum_number = int(seqStr, 16)
+        except ValueError:
+            errorMsg = "Failed to convert checksum number"
+            self.logger.error(errorMsg)
+            return
+
+        if self.integrity_check_sum == 0:
+            self.integrity_check_sum = checksum_number
+        else:
+            if checksum_number - 1 == self.integrity_check_sum:
+                if self.integrity_check_sum_is_failing is True:
+                    self.logger.info(
+                        "Sequence number now ok. number={}".format(
+                            checksum_number
+                        )
+                    )
+                self.integrity_check_sum_is_failing = False
+            else:
+                self.integrity_checks_failed += 1
+                self.integrity_check_sum_is_failing = True
+                msgStr = "Checksum failed. prev={} curr={}".format(
+                    self.integrity_check_sum, checksum_number
+                )
+                self.logger.error(msgStr)
+
+            self.integrity_check_sum = checksum_number
+
+        epoch_time = int(time())
+
+        statement = (
+            "INSERT INTO integrity_test (message_time, db_write_time,"
+            " checksum_number) VALUES (from_unixtime({}), "
+            "from_unixtime({}), {})".format(
+                message.rx_time_ms_epoch, epoch_time, checksum_number
+            )
+        )
+
+        self.sql_integrity_check_statements.append(statement)
+        return True
+
     def put_to_received_packets(self, message, incrementCounter: int) -> bool:
         """ Insert received packet to the database """
 
@@ -1207,7 +1283,7 @@ class MySQL(object):
         update_start_time = perf_counter()
 
         dump_statements: bool = False
-        dump_sql_stats: bool = True
+        dump_sql_stats: bool = False
         item_count_to_be_added = len(self.sql_insert_update_statements)
         exceptions_occurred: int = 0
 
@@ -1220,6 +1296,10 @@ class MySQL(object):
             commitNeeded: bool = False
             cursor = self.database.cursor()
             first_select_done: bool = False
+
+            if len(self.sql_integrity_check_statements) > 0:
+                commitNeeded = True
+                self.do_integrity_check(cursor)
 
             for insertRef in self.sql_insert_update_statements.keys():
                 msgs: list = self.sql_insert_update_statements[insertRef]
@@ -1250,36 +1330,21 @@ class MySQL(object):
 
                     # [B] Update other tables. packet id must match to first
                     # message that was used to update primary table [A].
-                    for additionalData in msgs[1:]:
-                        modified = self.add_packet_id(
-                            additionalData, current_packet_id
-                        )
-                        if dump_statements is True:
-                            print(current_packet_id, modified)
-
-                        if cursor.execute(modified) == 0:
-                            raise Exception(
-                                "Database child table update " "failed"
-                            )
+                    self.handle_additional_data(
+                        current_packet_id, cursor, dump_statements, msgs
+                    )
 
                     commitNeeded = True
 
                     # [C] Check also JSON messages and add them. Packet id
                     # must match to primary table [A].
                     if insertRef in self.sql_insert_variable_statements:
-                        jsonMsgs: list = self.sql_insert_variable_statements[
-                            insertRef
-                        ]
-                        for jsonMsg in jsonMsgs:
-                            a, b = jsonMsg
-                            modA = self.add_packet_id(a, current_packet_id)
-                            if dump_statements is True:
-                                print(current_packet_id, modA, b)
-
-                            if cursor.execute(modA, (b,)) == 0:
-                                raise Exception(
-                                    "No affected rows when " "updating JSON"
-                                )
+                        self.handle_variable_statements(
+                            current_packet_id,
+                            cursor,
+                            dump_statements,
+                            insertRef,
+                        )
 
                 else:
                     self.logger.error("only 1 item in sql_insert_update_list")
@@ -1313,6 +1378,36 @@ class MySQL(object):
             update_stop_time,
             exceptions_occurred,
         )
+
+    def handle_additional_data(
+        self, current_packet_id, cursor, dump_statements, msgs
+    ):
+        for additionalData in msgs[1:]:
+            modified = self.add_packet_id(additionalData, current_packet_id)
+            if dump_statements is True:
+                print(current_packet_id, modified)
+
+            if cursor.execute(modified) == 0:
+                raise Exception("Database child table update " "failed")
+
+    def handle_variable_statements(
+        self, current_packet_id, cursor, dump_statements, insertRef
+    ):
+        jsonMsgs: list = self.sql_insert_variable_statements[insertRef]
+        for jsonMsg in jsonMsgs:
+            a, b = jsonMsg
+            modA = self.add_packet_id(a, current_packet_id)
+            if dump_statements is True:
+                print(current_packet_id, modA, b)
+
+            if cursor.execute(modA, (b,)) == 0:
+                raise Exception("No affected rows when " "updating JSON")
+
+    def do_integrity_check(self, cursor):
+        for integrity_statement in self.sql_integrity_check_statements:
+            if cursor.execute(integrity_statement) == 0:
+                raise Exception("Integrity check row insert failed")
+        self.sql_integrity_check_statements.clear()
 
     def handle_insert_result(
         self,
@@ -1356,7 +1451,8 @@ class MySQL(object):
                 self.logger.debug(
                     "MySQL inserts PASS. Packet id before update:{} and after "
                     "update:{} ({} msgs). Inserts ok/nok:{}/{} ({}%) "
-                    "Time elapsed:{} ms ({} msgs/sec) Load:{}% Exceptions:{}".format(
+                    "Time elapsed:{} ms ({} msgs/sec) Load:{}% Exceptions:{}"
+                    " IcheckFails:{}".format(
                         packet_id_before_update,
                         packet_id_after_update,
                         packet_id_after_update - packet_id_before_update,
@@ -1371,13 +1467,15 @@ class MySQL(object):
                         "{:.2f}".format(msgsPerSec),
                         "{:.1f}".format(update_load * 100),
                         self.exceptions_occurred_count,
+                        self.integrity_checks_failed,
                     )
                 )
         else:
             self.stat_inserts_fail += 1
             self.logger.error(
                 "MySQL inserts FAIL. Packet id before update:{} and after "
-                "update:{} ({} msgs) Inserts ok/nok:{}/{} ({}%) Exceptions:{}".format(
+                "update:{} ({} msgs) Inserts ok/nok:{}/{} ({}%) Exceptions:{} "
+                "IcheckFails:{}".format(
                     packet_id_before_update,
                     packet_id_after_update,
                     packet_id_after_update - packet_id_before_update,
@@ -1389,6 +1487,7 @@ class MySQL(object):
                         * 100.0
                     ),
                     self.exceptions_occurred_count,
+                    self.integrity_checks_failed,
                 )
             )
 

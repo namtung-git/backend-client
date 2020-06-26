@@ -18,9 +18,11 @@ import subprocess
 import sys
 import time
 import queue
-
-from wirepas_backend_client.api.mqtt import Topics
-from wirepas_backend_client.cli.gateway import GatewayCliCommands
+from threading import Lock
+import threading
+from threading import Timer
+from api.mqtt import Topics
+from cli.gateway import GatewayCliCommands
 
 
 class GatewayShell(GatewayCliCommands):
@@ -61,6 +63,7 @@ class GatewayShell(GatewayCliCommands):
         self._minimal_prints = False
         self._silent_loop = False
         self._max_queue_size = 1000
+        self._max_data_queue_size = 1  # Data queues contains list messges
 
         self._file = None
         self._histfile = os.path.expanduser("~/.wm-shell-history")
@@ -84,6 +87,7 @@ class GatewayShell(GatewayCliCommands):
         self.data_queue = data_queue
         self.event_queue = event_queue
 
+        self.wait_api_lock = Lock()
         self.mqtt_topics = Topics()
         self.exit_signal = exit_signal
         self.timeout = timeout
@@ -91,6 +95,21 @@ class GatewayShell(GatewayCliCommands):
 
         self.device_manager = shared_state["devices"]
         self._shared_state = shared_state
+        self._flush_lock = threading.Lock()
+
+        self.start_data_event_queue_peroidic_flush_timer()
+
+    def start_data_event_queue_peroidic_flush_timer(self):
+        self.data_event_flush_timer_interval_sec: float = 1.0
+        self._perioidicTimer = Timer(
+            self.data_event_flush_timer_interval_sec,
+            self.__data_event_perioid_flush_timeout,
+        ).start()
+
+    def __data_event_perioid_flush_timeout(self):
+        with self._flush_lock:
+            self._trim_queues()
+            self.start_data_event_queue_peroidic_flush_timer()
 
     @staticmethod
     def time_format():
@@ -214,15 +233,16 @@ class GatewayShell(GatewayCliCommands):
 
     def consume_data_queue(self):
         """ Exhausts the data queue """
-        for message in self.consume_queue(self.data_queue):
-            self.on_data_queue_message(message)
-            yield message
+        while self.get_messages_from_data_queue() is not None:
+            pass
 
-    def get_message_from_data_queue(self):
-        message = None
-        if self.data_queue.empty() is not True:
-            message = self.data_queue.get()
-        return message
+    def get_messages_from_data_queue(self) -> list:
+        msgs = None
+        # Data message rate is huge compared to others. Queue contains message
+        # lists that are then processed
+        if self.data_queue.empty() is False:
+            msgs = self.data_queue.get()  # returns message list
+        return msgs
 
     def consume_event_queue(self):
         """ Exhausts the event queue """
@@ -238,7 +258,7 @@ class GatewayShell(GatewayCliCommands):
 
     def _trim_queues(self):
         """ Trim queues ensures that queue size does not run too long"""
-        if self.data_queue.qsize() > self._max_queue_size:
+        if self.data_queue.qsize() > self._max_data_queue_size:
             self.consume_data_queue()
 
         if self.event_queue.qsize() > self._max_queue_size:
@@ -288,7 +308,12 @@ class GatewayShell(GatewayCliCommands):
 
     def wait_for_answer(self, device, request_message, timeout=30, block=True):
         """ Wait response to request_message. If response received, return it.
-            If timeout, return None """
+            If timeout, return None
+
+            !Note this function will discard messages it gets from queue.
+            """
+
+        self.wait_api_lock.acquire()
 
         wait_start_time = time.perf_counter()
 
@@ -300,8 +325,6 @@ class GatewayShell(GatewayCliCommands):
         message = None
         if timeout:
             response_good: bool = False
-
-            take_list = []
 
             while response_good is False:
                 try:
@@ -315,19 +338,15 @@ class GatewayShell(GatewayCliCommands):
                         ):
                             response_good = True
                         else:
-                            take_list.append(message)
+                            pass
 
                     else:
-                        # put message back to queue back
-                        take_list.append(message)
+                        pass
 
                     if self.request_queue.empty():
-                        for msg in take_list:
-                            self.response_queue.put(msg)
-                        take_list.clear()
                         # wait a bit to avoid busy loop when putting
                         # same message back and reading it again.
-                        default_sleep_time: float = 0.001
+                        default_sleep_time: float = 0.1
                         time.sleep(default_sleep_time)
 
                     if time.perf_counter() - wait_start_time > timeout:
@@ -343,6 +362,7 @@ class GatewayShell(GatewayCliCommands):
                     # keep polling
                     pass
 
+        self.wait_api_lock.release()
         return message
 
     def notify(self):
@@ -508,28 +528,28 @@ class GatewayShell(GatewayCliCommands):
 
     def precmd(self, line):
         """ Executes before a command is run in onecmd """
+        with self._flush_lock:  # Either we flush queue or process command
+            self.device_manager = self._shared_state["devices"]
 
-        self.device_manager = self._shared_state["devices"]
+            if (
+                self._file
+                and "playback" not in line
+                and "bye" not in line
+                and "close" not in line
+            ):
+                print(line, file=self._file)
 
-        if (
-            self._file
-            and "playback" not in line
-            and "bye" not in line
-            and "close" not in line
-        ):
-            print(line, file=self._file)
-
-        if self._shared_state["devices"]:
-            self.consume_response_queue()
-            self._trim_queues()
-            self._update_prompt()
+            if self._shared_state["devices"]:
+                self.consume_response_queue()
+                self._update_prompt()
 
         return line
 
     def postcmd(self, stop, line):
         """ Method called after each command is executed """
-        if self._shared_state["devices"]:
-            self._update_prompt()
+        with self._flush_lock:  # Either we flush queue or process command
+            if self._shared_state["devices"]:
+                self._update_prompt()
         return stop
 
     def onecmd(self, line):
@@ -539,17 +559,17 @@ class GatewayShell(GatewayCliCommands):
 
         """
         # pylint: disable=locally-disabled, broad-except
+        with self._flush_lock:  # Either we flush queue or process command
+            if self.exit_signal.is_set():
+                return self.do_bye(line)
 
-        if self.exit_signal.is_set():
-            return self.do_bye(line)
-
-        try:
-            if self.device_manager:
-                return super().onecmd(line)
-        except Exception as err:
-            print("Something went wrong:{}".format(err))
-            if self._raise_errors:
-                raise
+            try:
+                if self.device_manager:
+                    return super().onecmd(line)
+            except Exception as err:
+                print("Something went wrong:{}".format(err))
+                if self._raise_errors:
+                    raise
 
         return False
 

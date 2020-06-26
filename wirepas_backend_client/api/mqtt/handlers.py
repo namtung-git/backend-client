@@ -57,9 +57,6 @@ class MQTTObserver(StreamObserver):
         else:
             self.message_subscribe_handlers = message_subscribe_handlers
 
-        for topic, cb in self.message_subscribe_handlers.items():
-            self.logger.debug("%s-->%s", topic, cb)
-
         if publish_cb is None:
             self.publish_cb = self.generate_data_send_cb()
         else:
@@ -127,6 +124,7 @@ class MQTTObserver(StreamObserver):
         topic, qos, retain, wait_for_publish, data
 
         """
+
         try:
             message = self.rx_queue.get(timeout=timeout, block=block)
         except queue.Empty:

@@ -22,6 +22,9 @@ from wirepas_backend_client.api import HTTPSettings, HTTPObserver
 from wirepas_backend_client.mesh.interfaces.mqtt import NetworkDiscovery
 from wirepas_backend_client.management import Daemon
 
+from queue import Queue
+from threading import Timer
+
 __test_name__ = "test_kpi"
 
 
@@ -85,6 +88,10 @@ class MultiMessageMqttObserver(MQTTObserver):
             ): self.generate_got_gw_configs_cb(self.network_id),
         }
         self.mqtt_topics = Topics()
+        self._data_event_tx_queue = Queue()
+        self._timerRunning: bool = False
+        self._perioidicTimer = None
+        # Set on notify where context is right
 
     def generate_data_received_cb(self) -> callable:
         """ Returns a callback to process the incoming data """
@@ -92,17 +99,45 @@ class MultiMessageMqttObserver(MQTTObserver):
         @decode_topic_message
         def on_data_received(message, topics):
             """ Retrieves a MQTT data message and sends it to the tx_queue """
+
             if self.start_signal.is_set():
                 # In KPI testing all received data packages are directed to
                 # storage
-                if self.storage_queue is not None:
-                    self.storage_queue.put(message)
+
+                # Put data to internal queue first. Then create list that is
+                # sent over multiprocess
+                self._data_event_tx_queue.put(message)
+                if self._timerRunning is False:
+                    self._timerRunning = True
+                    data_event_flush_timer_interval_sec: float = 1.0
+                    self._perioidicTimer = Timer(
+                        data_event_flush_timer_interval_sec,
+                        self.__data_event_perioid_flush_timeout,
+                    ).start()
             else:
                 self.logger.debug(
                     "waiting for start signal, received mqtt data ignored"
                 )
 
         return on_data_received
+
+    def __data_event_perioid_flush_timeout(self):
+
+        txList: list = []
+        while self._data_event_tx_queue.empty() is False:
+            msg = self._data_event_tx_queue.get(True)
+            txList.append(msg)
+            self._data_event_tx_queue.task_done()
+
+        if len(txList):
+            if self.storage_queue is not None:
+                self.storage_queue.put(txList)
+
+        data_event_flush_timer_interval_sec: float = 1.0
+        self._perioidicTimer = Timer(
+            data_event_flush_timer_interval_sec,
+            self.__data_event_perioid_flush_timeout,
+        ).start()
 
     def generate_gw_status_cb(self) -> callable:
         """ Returns a callback to process gw status events """
@@ -190,12 +225,12 @@ class MultiMessageMqttObserver(MQTTObserver):
                         self.gw_status_queue.put(message.__dict__)
 
                 if configuration_processed is True:
-                    self.logger.debug(
+                    self.logger.info(
                         "MQTT gw configuration received for gw '%s'.",
                         message.gw_id,
                     )
                 else:
-                    self.logger.debug(
+                    self.logger.info(
                         "MQTT gw configuration received for gw '%s' but not"
                         " processed due network id "
                         "filter '%s'.",
@@ -241,8 +276,6 @@ def start_kpi_tester():
 
     if mqtt_settings.sanity() and http_settings.sanity():
 
-        default_my_sql_worker_count: int = 1
-
         daemon = Daemon(logger=logger)
 
         gw_status_from_mqtt_broker = daemon.create_queue()
@@ -266,15 +299,17 @@ def start_kpi_tester():
             use_storage = True
 
         shared_state = daemon.create_shared_dict(devices=None)
-        data_queue = daemon.create_queue()
         event_queue = daemon.create_queue()
 
+        # Data written to SQL injector and no one else is using it
+        # Do not consume data message and write them to queue nobody
+        # reads.
         discovery = daemon.build(
             "discovery",
             NetworkDiscovery,
             dict(
                 shared_state=shared_state,
-                data_queue=data_queue,
+                data_queue=None,
                 event_queue=event_queue,
                 mqtt_settings=MQTTSettings(settings),
                 logger=logger,
@@ -287,13 +322,10 @@ def start_kpi_tester():
                 MySQLObserver,
                 dict(mysql_settings=MySQLSettings(settings)),
             )
-            daemon.set_run(
-                storage_name,
-                task_kwargs={"n_workers": default_my_sql_worker_count},
-                task_as_daemon=False,
-            )
+            daemon.set_run(storage_name, task_as_daemon=False)
 
         if mqtt_name is not None:
+            # Component that creates data stream for MySQL
             daemon.build(
                 mqtt_name,
                 MultiMessageMqttObserver,
@@ -306,16 +338,17 @@ def start_kpi_tester():
             )
 
         if mqtt_name is not None:
+            # This component gets request response queue from discovery.
+            # It is needed when waiting response to GW Req messages.
+            # It sends data to MQTT process (send_to)
             daemon.build(
                 control_name,
                 HTTPObserver,
                 dict(
                     gw_status_queue=gw_status_from_mqtt_broker,
                     http_settings=HTTPSettings(settings),
-                    # data_queue=data_queue,
-                    # event_queue=event_queue,
-                    rx_queue=discovery.tx_queue,
-                    tx_queue=discovery.rx_queue,
+                    rx_queue=discovery.tx_queue,  # from discovery object.
+                    tx_queue=None,
                 ),
                 send_to=mqtt_name,
             )

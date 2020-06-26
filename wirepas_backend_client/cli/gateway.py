@@ -368,8 +368,10 @@ class GatewayCliCommands(cmd.Cmd):
                         )
                     )
 
-            for message in cli.consume_data_queue():
-                print_on_match(message)
+            msgs = cli.get_messages_from_data_queue()
+            if msgs is not None:
+                for msg in msgs:
+                    print_on_match(msg)
 
             if show_events:
                 for message in cli.consume_event_queue():
@@ -651,7 +653,6 @@ class GatewayCliCommands(cmd.Cmd):
             sinks_str = ""
             for sink in sorted_sink_list:
                 sinks_str += "{} ".format(sink.device_id)
-                print(sink)
 
             sinks_str = sinks_str[:-1]
 
@@ -1190,23 +1191,22 @@ class GatewayCliCommands(cmd.Cmd):
                         perf_counter() - last_msg_received_time
                         < silence_time_sec
                     ):
-                        data_msg = self.get_message_from_data_queue()
-
-                        if data_msg is not None:
-                            if (
-                                self.__scratchpad_check_all_handle_message(
-                                    data_msg,
-                                    header_printed,
-                                    node_statuses,
-                                    processed_scratchpads,
-                                    stored_scratchpads,
-                                )
-                                is True
-                            ):
-                                last_msg_received_time = perf_counter()
-                                header_printed = True
-
-                        if data_msg is None:
+                        data_msgs = self.get_messages_from_data_queue()
+                        if data_msgs is not None:
+                            for data_msg in data_msgs:
+                                if (
+                                    self.__scratchpad_check_all_handle_message(
+                                        data_msg,
+                                        header_printed,
+                                        node_statuses,
+                                        processed_scratchpads,
+                                        stored_scratchpads,
+                                    )
+                                    is True
+                                ):
+                                    last_msg_received_time = perf_counter()
+                                    header_printed = True
+                        else:
                             default_sleep_time: float = 0.1
                             sleep(default_sleep_time)
 
@@ -1679,18 +1679,21 @@ class GatewayCliCommands(cmd.Cmd):
                                 perf_counter() - last_msg_received_time
                                 < silence_time_sec
                             ):
-                                data_msg = self.get_message_from_data_queue()
+                                data_msgs = self.get_messages_from_data_queue()
 
-                                if data_msg is not None:
-                                    if (
-                                        self.__scratchpad_update_only_nodes_h(
-                                            data_msg, responded_nodes_ok
-                                        )
-                                        is True
-                                    ):
-                                        last_msg_received_time = perf_counter()
+                                for data_msg in data_msgs:
+                                    if data_msg is not None:
+                                        if (
+                                            self.__scratchpad_update_only_nodes_h(
+                                                data_msg, responded_nodes_ok
+                                            )
+                                            is True
+                                        ):
+                                            last_msg_received_time = (
+                                                perf_counter()
+                                            )
 
-                                if data_msg is None:
+                                if data_msgs is None:
                                     default_sleep_time: float = 0.1
                                     sleep(default_sleep_time)
 
@@ -1882,16 +1885,19 @@ class GatewayCliCommands(cmd.Cmd):
                             perf_counter() - last_msg_received_time
                             < silence_time_sec
                         ):
-                            data_msg = self.get_message_from_data_queue()
+                            data_msgs = self.get_messages_from_data_queue()
 
-                            if data_msg is not None:
-                                if (
-                                    __sc_handle_msap_cancel_message(data_msg)
-                                    is True
-                                ):
-                                    last_msg_received_time = perf_counter()
+                            for data_msg in data_msgs:
+                                if data_msg is not None:
+                                    if (
+                                        __sc_handle_msap_cancel_message(
+                                            data_msg
+                                        )
+                                        is True
+                                    ):
+                                        last_msg_received_time = perf_counter()
 
-                            if data_msg is None:
+                            if data_msgs is None:
                                 default_sleep_time: float = 0.1
                                 sleep(default_sleep_time)
 
@@ -2456,10 +2462,11 @@ class GatewayCliCommands(cmd.Cmd):
                                     msg_received = True
                                     self.on_response_queue_message(msg)
 
-                                msg = self.get_message_from_data_queue()
-                                if msg is not None:
+                                msgs = self.get_messages_from_data_queue()
+                                if msgs is not None:
                                     msg_received = True
-                                    self.on_data_queue_message(msg)
+                                    for msg in msgs:
+                                        self.on_data_queue_message(msg)
 
                                 msg = self.get_message_from_event_queue()
                                 if msg is not None:
@@ -2642,18 +2649,20 @@ class GatewayCliCommands(cmd.Cmd):
                             perf_counter() - last_msg_received_time
                             < silence_time_sec
                         ):
-                            data_msg = self.get_message_from_data_queue()
+                            data_msgs = self.get_messages_from_data_queue()
 
-                            if data_msg is not None:
-                                if (
-                                    __sc_handle_msap_ping_message(
-                                        data_msg, request_ref, ping_start_time
-                                    )
-                                    is True
-                                ):
-                                    last_msg_received_time = perf_counter()
-
-                            if data_msg is None:
+                            if data_msgs is not None:
+                                for data_msg in data_msgs:
+                                    if (
+                                        __sc_handle_msap_ping_message(
+                                            data_msg,
+                                            request_ref,
+                                            ping_start_time,
+                                        )
+                                        is True
+                                    ):
+                                        last_msg_received_time = perf_counter()
+                            else:
                                 default_sleep_time: float = 0.1
                                 sleep(default_sleep_time)
 

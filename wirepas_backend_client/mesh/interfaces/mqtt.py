@@ -17,6 +17,8 @@ from wirepas_backend_client.api.mqtt import (
     topic_message,
 )
 from wirepas_backend_client.tools import Signal
+from threading import Timer
+from queue import Queue
 
 
 class NetworkDiscovery(MQTTObserver):
@@ -44,7 +46,7 @@ class NetworkDiscovery(MQTTObserver):
         message_subscribe_handlers=None,
         publish_cb=None,
         network_parameters=None,
-        **kwargs
+        **kwargs,
     ):
 
         try:
@@ -119,9 +121,31 @@ class NetworkDiscovery(MQTTObserver):
         self.shared_state = shared_state
         self.device_manager = MeshManagement()
         self._debug_comms = False
+        self._perioidicTimer = None  # Set on notify where context is right
+        self._timerRunning: bool = False  # picklable
+        self.data_event_flush_timer_interval_sec: float = 1.0
+
+        self._data_event_tx_queue = Queue()
+
+    def __data_event_perioid_flush_timeout(self):
+
+        txList: list = []
+        while self._data_event_tx_queue.empty() is False:
+            msg = self._data_event_tx_queue.get(True)
+            txList.append(msg)
+            self._data_event_tx_queue.task_done()
+        if len(txList) > 0:
+            self.data_queue.put(txList)
+
+        self._perioidicTimer = Timer(
+            self.data_event_flush_timer_interval_sec,
+            self.__data_event_perioid_flush_timeout,
+        ).start()
 
     def notify(self, message, path="response"):
+
         """ Puts the device on the queue"""
+
         if self.shared_state:
             self.shared_state["devices"] = self.device_manager
 
@@ -130,7 +154,19 @@ class NetworkDiscovery(MQTTObserver):
                 self.response_queue.put(message)
 
             elif "data" in path and self.data_queue:
-                self.data_queue.put(message)
+                # Data message rate is huge compared others. Handle it
+                # different way
+
+                # Put data to internal queue first.
+                self._data_event_tx_queue.put(message)
+
+                # Start on this call context.
+                if self._timerRunning is False:
+                    self._timerRunning = True
+                    self._perioidicTimer = Timer(
+                        self.data_event_flush_timer_interval_sec,
+                        self.__data_event_perioid_flush_timeout,
+                    ).start()
 
             elif "event" in path and self.event_queue:
                 self.event_queue.put(message)
@@ -206,7 +242,6 @@ class NetworkDiscovery(MQTTObserver):
         def on_gateway_status_event_cb(payload, topic: list):
             """ Decodes an incoming gateway status event """
 
-            self.logger.debug("status event %s", payload)
             message = self.mqtt_topics.constructor(
                 "event", "status"
             ).from_payload(payload)

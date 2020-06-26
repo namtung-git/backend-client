@@ -174,7 +174,6 @@ class Daemon(object):
 
         self.process[name]["runtime"]["kwargs"] = dict()
         self.process[name]["runtime"]["as_daemon"] = True
-
         return obj
 
     def set_run(self, name, task=None, task_kwargs=None, task_as_daemon=None):
@@ -210,7 +209,6 @@ class Daemon(object):
                 )
 
                 register["runtime"]["object"].start()
-                self.logger.debug("started process: %s", name)
             except (KeyError, TypeError):
                 self.logger.exception("Failed to start services")
                 raise
