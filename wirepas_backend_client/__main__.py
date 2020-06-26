@@ -11,11 +11,11 @@
 
 import argparse
 
-from .api.wnt import wnt_main
-from .api.wpe import wpe_main
-from .cli import start_cli
-from .kpi_tester import start_kpi_tester
-from .provisioning import prov_main
+from wirepas_backend_client.api.wnt import wnt_main
+from wirepas_backend_client.api.wpe import wpe_main
+from wirepas_backend_client.cli import start_cli
+from wirepas_backend_client.kpi_tester import start_kpi_tester
+from wirepas_backend_client.provisioning import prov_main
 
 
 def wnt_client():

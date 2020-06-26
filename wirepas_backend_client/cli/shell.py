@@ -21,8 +21,8 @@ import queue
 from threading import Lock
 import threading
 from threading import Timer
-from api.mqtt import Topics
-from cli.gateway import GatewayCliCommands
+from wirepas_backend_client.api.mqtt import Topics
+from wirepas_backend_client.cli.gateway import GatewayCliCommands
 
 
 class GatewayShell(GatewayCliCommands):
