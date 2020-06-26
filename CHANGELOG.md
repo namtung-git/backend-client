@@ -1,5 +1,14 @@
 # Changelog
 
+## [v1.3.6-rc.4](https://github.com/wirepas/backend-client/tree/v1.3.6-rc.4) (2020-06-26)
+
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.6-rc.3...v1.3.6-rc.4)
+
+**Merged pull requests:**
+
+- Fix backend client low performance when handling incoming messages 1000 items/sec [\#336](https://github.com/wirepas/backend-client/pull/336) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- Add support for the tags per node statistic [\#334](https://github.com/wirepas/backend-client/pull/334) ([PeiChunyan](https://github.com/PeiChunyan))
+
 ## [v1.3.6-rc.3](https://github.com/wirepas/backend-client/tree/v1.3.6-rc.3) (2020-06-12)
 
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.6-rc.2...v1.3.6-rc.3)
@@ -220,6 +229,7 @@
 - ADV decoder [\#222](https://github.com/wirepas/backend-client/pull/222) ([PFigs](https://github.com/PFigs))
 - Dockerfile simplification [\#221](https://github.com/wirepas/backend-client/pull/221) ([PFigs](https://github.com/PFigs))
 - Update adv mysql schema [\#220](https://github.com/wirepas/backend-client/pull/220) ([PFigs](https://github.com/PFigs))
+- ADV reserved field [\#219](https://github.com/wirepas/backend-client/pull/219) ([PFigs](https://github.com/PFigs))
 - Endpoint property [\#218](https://github.com/wirepas/backend-client/pull/218) ([PFigs](https://github.com/PFigs))
 - Change .settings to settings/examples.yml [\#181](https://github.com/wirepas/backend-client/pull/181) ([PFigs](https://github.com/PFigs))
 
@@ -229,7 +239,6 @@
 
 **Merged pull requests:**
 
-- ADV reserved field [\#219](https://github.com/wirepas/backend-client/pull/219) ([PFigs](https://github.com/PFigs))
 - Release v1.2.3 [\#215](https://github.com/wirepas/backend-client/pull/215) ([PFigs](https://github.com/PFigs))
 - Update test vectors [\#213](https://github.com/wirepas/backend-client/pull/213) ([PFigs](https://github.com/PFigs))
 - Update ruuvi.py [\#212](https://github.com/wirepas/backend-client/pull/212) ([PFigs](https://github.com/PFigs))
@@ -248,7 +257,6 @@
 - Diagnostics dashboard [\#201](https://github.com/wirepas/backend-client/pull/201) ([PFigs](https://github.com/PFigs))
 - Advertiser message: interface compliance [\#200](https://github.com/wirepas/backend-client/pull/200) ([PFigs](https://github.com/PFigs))
 - Mesh request example [\#197](https://github.com/wirepas/backend-client/pull/197) ([PFigs](https://github.com/PFigs))
-- Diagnostics cbor ids [\#195](https://github.com/wirepas/backend-client/pull/195) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.2-rc.3](https://github.com/wirepas/backend-client/tree/v1.2.2-rc.3) (2020-01-07)
 
@@ -257,6 +265,7 @@
 **Merged pull requests:**
 
 - Update version to v1.2.2.rc3 [\#196](https://github.com/wirepas/backend-client/pull/196) ([PFigs](https://github.com/PFigs))
+- Diagnostics cbor ids [\#195](https://github.com/wirepas/backend-client/pull/195) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.2-rc.2](https://github.com/wirepas/backend-client/tree/v1.2.2-rc.2) (2019-12-20)
 
