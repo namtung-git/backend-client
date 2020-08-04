@@ -528,8 +528,8 @@ class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         self._debug_comms = False  # if true communication details are logged
         self._http_api_test_mode = (
-            False
-        )  # When on, does not send MQTT messages
+            False  # When on, does not send MQTT messages
+        )
 
         super(HTTPRequestHandler, self).__init__(
             request, client_address, server
@@ -916,7 +916,7 @@ class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             message=response[self.HTTP_response_fields.text.value],
         )
         self.end_headers()
-        body: string
+        body: str
         body = response[self.HTTP_response_fields.text.value]
         self.wfile.write(body.encode("utf-8"))
 

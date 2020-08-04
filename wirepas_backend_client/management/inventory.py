@@ -228,7 +228,10 @@ class Reliability(object):
             middle_one_sequence = middle_one["tag_sequence"][0]
             # search the previous sequence
             try:
-                previous_sequence_exist, previous_sequence = self.previous_sequence_search(
+                (
+                    previous_sequence_exist,
+                    previous_sequence,
+                ) = self.previous_sequence_search(
                     middle_one_sequence, all_sequences_in_tag_event
                 )
 
@@ -257,7 +260,10 @@ class Reliability(object):
                         < Reliability.maxi_times_search_previous_sequence
                     ):
                         middle_one_sequence = previous_sequence
-                        previous_sequence_exist, previous_sequence = self.previous_sequence_search(
+                        (
+                            previous_sequence_exist,
+                            previous_sequence,
+                        ) = self.previous_sequence_search(
                             middle_one_sequence, all_sequences_in_tag_event
                         )
                         search += 1

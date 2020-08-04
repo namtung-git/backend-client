@@ -302,6 +302,7 @@ class GatewayCliCommands(cmd.Cmd):
             - iterations=Inf
             - update_rate=1 # period to print status if no message is acquired
             - show_events=False # will display answers as well
+            - machine_format=False # If yes, format is formatted to machine readable format.
 
         Returns:
             Prints messages to console
@@ -318,10 +319,13 @@ class GatewayCliCommands(cmd.Cmd):
             update_rate=dict(type=int, default=1),
             show_events=dict(type=bool, default=False),
             silent=dict(type=bool, default=True),
+            machine_format=dict(type=bool, default=False),
         )
 
         args = self.retrieve_args(line, options)
         args["cli"] = self
+
+        print(line, options)
 
         def handler_cb(cli, **kwargs):
 
@@ -332,6 +336,7 @@ class GatewayCliCommands(cmd.Cmd):
             gw_id = kwargs.get("gw_id", None)
             sink_id = kwargs.get("sink_id", None)
             show_events = kwargs.get("show_events", None)
+            machine_format = kwargs.get("machine_format", None)
 
             def print_on_match(message):
                 if (
@@ -346,27 +351,30 @@ class GatewayCliCommands(cmd.Cmd):
                         message, "destination_endpoint", destination_endpoint
                     )
                 ):
-                    address_str = (
-                        "nw:{}/{}/{}/node:{} sendp:{}".format(
-                            str(message.network_id),
-                            message.gw_id,
-                            message.sink_id,
-                            message.source_address,
-                            message.source_endpoint,
+                    if machine_format is True:
+                        print(message)
+                    else:
+                        address_str = (
+                            "nw:{}/{}/{}/node:{} sendp:{}".format(
+                                str(message.network_id),
+                                message.gw_id,
+                                message.sink_id,
+                                message.source_address,
+                                message.source_endpoint,
+                            )
+                        ).ljust(50)
+                        travel_time_str = str(
+                            "travel time: {}".format(message.travel_time_ms)
+                        ).ljust(19)
+                        data_str = str(
+                            "data: {}".format(message.data_payload.hex())
                         )
-                    ).ljust(50)
-                    travel_time_str = str(
-                        "travel time: {}".format(message.travel_time_ms)
-                    ).ljust(19)
-                    data_str = str(
-                        "data: {}".format(message.data_payload.hex())
-                    )
 
-                    print(
-                        "{} {} {}".format(
-                            address_str, travel_time_str, data_str
+                        print(
+                            "{} {} {}".format(
+                                address_str, travel_time_str, data_str
+                            )
                         )
-                    )
 
             msgs = cli.get_messages_from_data_queue()
             if msgs is not None:

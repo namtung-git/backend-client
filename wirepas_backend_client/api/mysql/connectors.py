@@ -876,7 +876,7 @@ class MySQL(object):
             "INSERT INTO integrity_test (message_time, db_write_time,"
             " checksum_number) VALUES (from_unixtime({}), "
             "from_unixtime({}), {})".format(
-                message.rx_time_ms_epoch, epoch_time, checksum_number
+                message.rx_time_ms_epoch / 1000, epoch_time, checksum_number
             )
         )
 
