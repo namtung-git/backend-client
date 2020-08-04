@@ -950,7 +950,7 @@ class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
                 self.mqtt_tx_queue.put(message)
 
-                configWaitResponse: bool = True
+                configWaitResponse: bool = False
 
                 if configWaitResponse:
                     response = self._wait_for_answer(message)
