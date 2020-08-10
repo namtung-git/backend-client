@@ -325,8 +325,6 @@ class GatewayCliCommands(cmd.Cmd):
         args = self.retrieve_args(line, options)
         args["cli"] = self
 
-        print(line, options)
-
         def handler_cb(cli, **kwargs):
 
             source_address = kwargs.get("source_address", None)
