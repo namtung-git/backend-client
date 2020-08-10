@@ -354,13 +354,13 @@ class GatewayCliCommands(cmd.Cmd):
                     else:
                         address_str = (
                             "nw:{}/{}/{}/node:{} sendp:{}".format(
-                                str(message.network_id),
+                                message.network_id,
                                 message.gw_id,
                                 message.sink_id,
                                 message.source_address,
                                 message.source_endpoint,
                             )
-                        ).ljust(50)
+                        ).ljust(60)
                         travel_time_str = str(
                             "travel time: {}".format(message.travel_time_ms)
                         ).ljust(19)
