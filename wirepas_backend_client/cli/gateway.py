@@ -1694,19 +1694,20 @@ class GatewayCliCommands(cmd.Cmd):
                             ):
                                 data_msgs = self.get_messages_from_data_queue()
 
-                                for data_msg in data_msgs:
-                                    if data_msg is not None:
-                                        if (
-                                            self.__scratchpad_update_only_nodes_h(
-                                                data_msg, responded_nodes_ok
-                                            )
-                                            is True
-                                        ):
-                                            last_msg_received_time = (
-                                                perf_counter()
-                                            )
+                                if data_msgs is not None:
+                                    for data_msg in data_msgs:
+                                        if data_msg is not None:
+                                            if (
+                                                self.__scratchpad_update_only_nodes_h(
+                                                    data_msg, responded_nodes_ok
+                                                )
+                                                is True
+                                            ):
+                                                last_msg_received_time = (
+                                                    perf_counter()
+                                                )
 
-                                if data_msgs is None:
+                                else:
                                     default_sleep_time: float = 0.1
                                     sleep(default_sleep_time)
 
