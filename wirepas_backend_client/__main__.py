@@ -14,7 +14,6 @@ import argparse
 from wirepas_backend_client.api.wnt import wnt_main
 from wirepas_backend_client.api.wpe import wpe_main
 from wirepas_backend_client.cli import start_cli
-from wirepas_backend_client.kpi_tester import start_kpi_tester
 from wirepas_backend_client.provisioning import prov_main
 
 
@@ -31,11 +30,6 @@ def gw_cli():
 def wpe_client():
     """ launches the wpe client """
     wpe_main()
-
-
-def kpi_tester():
-    """ launches the wpe client """
-    start_kpi_tester()
 
 
 def provisioning_server():

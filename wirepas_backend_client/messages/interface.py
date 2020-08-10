@@ -16,7 +16,6 @@ from .decoders import (
     NodeDiagnosticsMessage,
     PositioningMessage,
     RuuviMessage,
-    TestNWMessage,
     TrafficDiagnosticsMessage,
 )
 from .types import ApplicationTypes
@@ -51,9 +50,6 @@ class MessageManager(object):
     }
     _endpoint[RuuviMessage.source_endpoint] = {
         RuuviMessage.destination_endpoint: RuuviMessage
-    }
-    _endpoint[TestNWMessage.source_endpoint] = {
-        TestNWMessage.destination_endpoint: TestNWMessage
     }
     _endpoint[AdvertiserMessage.source_endpoint] = {
         AdvertiserMessage.destination_endpoint: AdvertiserMessage

@@ -171,7 +171,8 @@ class MeshManagement(object):
             del self._gateways[device_id]
 
         for network in self._networks.values():
-            network.remove(device_id)
+            if device_id in network:
+                network.remove(device_id)
 
     def __str__(self):
         obj = ""

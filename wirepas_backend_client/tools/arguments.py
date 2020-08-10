@@ -520,58 +520,6 @@ class ParserHelper:
             help="Number of test runs to execute",
         )
 
-    def add_database(self):
-        """ Commonly used database arguments """
-        self.database.add_argument(
-            "--db_hostname",
-            default=os.environ.get("WM_SERVICES_MYSQL_HOSTNAME", "127.0.0.1"),
-            action="store",
-            type=str,
-            help="Database hostname",
-        )
-
-        self.database.add_argument(
-            "--db_port",
-            default=os.environ.get("WM_SERVICES_MYSQL_PORT", 3306),
-            action="store",
-            type=int,
-            help="Database port",
-        )
-
-        self.database.add_argument(
-            "--db_database",
-            default=os.environ.get("WM_SERVICES_MYSQL_DATABASE", None),
-            action="store",
-            type=str,
-            help="Database schema to use",
-        )
-
-        self.database.add_argument(
-            "--db_username",
-            default=os.environ.get("WM_SERVICES_MYSQL_USERNAME", None),
-            action="store",
-            type=str,
-            help="Database user",
-        )
-
-        self.database.add_argument(
-            "--db_password",
-            default=os.environ.get("WM_SERVICES_MYSQL_PASSWORD", None),
-            action="store",
-            type=str,
-            help="Database password",
-        )
-
-        self.database.add_argument(
-            "--db_connection_timeout",
-            default=os.environ.get(
-                "WM_SERVICES_MYSQL_CONNECTION_TIMEOUT", 1200
-            ),
-            action="store",
-            type=int,
-            help="Database connection timeout",
-        )
-
     def add_fluentd(self):
         """ Commonly used fluentd arguments """
         self.fluentd.add_argument(
@@ -604,24 +552,6 @@ class ParserHelper:
             action="store",
             type=str,
             help="How to tag outgoing data to fluentd",
-        )
-
-    def add_http(self):
-        """ Commonly used http server arguments """
-        self.http.add_argument(
-            "--http_host",
-            default=os.environ.get("WM_SERVICES_HTTP_HOSTNAME", "127.0.0.1"),
-            action="store",
-            type=str,
-            help=("Hostname or ip-address that HTTP server is bind to."),
-        )
-
-        self.http.add_argument(
-            "--http_port",
-            default=os.environ.get("WM_SERVICES_HTTP_PORT", 8000),
-            action="store",
-            type=int,
-            help="HTTP server port ",
         )
 
     def add_wnt(self):
@@ -682,74 +612,6 @@ class ParserHelper:
             default=os.environ.get("WM_SERVICES_WPE_NETWORK", None),
             type=int,
             help="network id to subscribe to.",
-        )
-
-    def add_influx(self):
-        """ Settings to configure influx access """
-
-        self.influx.add_argument(
-            "--influx_hostname",
-            type=str,
-            required=False,
-            default=os.environ.get("WM_SERVICES_INFLUX_HOSTNAME", None),
-            help="hostname of InfluxDB http API",
-        )
-
-        self.influx.add_argument(
-            "--influx_port",
-            type=int,
-            required=False,
-            default=os.environ.get("WM_SERVICES_INFLUX_PORT", 8886),
-            help="port of InfluxDB http API",
-        )
-
-        self.influx.add_argument(
-            "--influx_username",
-            type=str,
-            required=False,
-            default=os.environ.get("WM_SERVICES_INFLUX_USERNAME", None),
-            help="user of InfluxDB http API",
-        )
-
-        self.influx.add_argument(
-            "--influx_password",
-            type=str,
-            required=False,
-            default=os.environ.get("WM_SERVICES_INFLUX_PASSWORD", None),
-            help="password of InfluxDB http API",
-        )
-
-        self.influx.add_argument(
-            "--influx_database",
-            type=str,
-            required=False,
-            default=os.environ.get("WM_SERVICES_INFLUX_DATABASE", "wirepas"),
-            help="port of InfluxDB http API",
-        )
-
-        self.influx.add_argument(
-            "--influx_skip_ssl",
-            action="store_true",
-            default=os.environ.get("WM_SERVICES_INFLUX_SKIP_SSL", False),
-            required=False,
-            help="When true it will not try to create a TLS handshake",
-        )
-
-        self.influx.add_argument(
-            "--influx_skip_ssl_check",
-            action="store_true",
-            default=os.environ.get("WM_SERVICES_INFLUX_UNSECURE", False),
-            required=False,
-            help="when true, allows unknown certificates to be used with the TLS connection.",
-        )
-
-        self.influx.add_argument(
-            "--query_statement",
-            action="store",
-            type=str,
-            default=os.environ.get("WM_SERVICES_INFLUX_QUERY_STATEMENT", None),
-            required=False,
-            help="A generic query to run against InfluxDB",
         )
 
     def dump(self, path):

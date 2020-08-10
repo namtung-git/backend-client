@@ -606,23 +606,28 @@ class GatewayCliCommands(cmd.Cmd):
         offline_gws: int = 0
         gateways = list(self.device_manager.gateways)
         for gateway in gateways:
+            print(gateway.state.value, gateway.gateway_id)
+
             if gateway.state.value == GatewayState.OFFLINE.value:
                 message = self.mqtt_topics.event_message(
                     "clear", **dict(gw_id=gateway.device_id)
                 )
+
                 message["data"].Clear()
                 message["data"] = message["data"].SerializeToString()
                 message["retain"] = True
 
                 print("sending clear for gateway {}".format(message))
 
-                # remove from state
-                self.device_manager.remove(gateway.device_id)
-                self.notify()
-
                 self.request_queue.put(message)
                 offline_gws += 1
-                continue
+
+                # remove from state
+                if gateway.device_id in self.device_manager.gateways:
+                    self.device_manager.remove(gateway.device_id)
+                    self.notify()
+                    continue
+
         if offline_gws > 0:
             print("Command ok. Offline GW count was {}.".format(offline_gws))
         else:

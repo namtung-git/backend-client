@@ -12,7 +12,6 @@
 from wirepas_backend_client import api
 from wirepas_backend_client import management
 from wirepas_backend_client import messages
-from wirepas_backend_client import kpi_tester
 from wirepas_backend_client import tools
 
-__all__ = ["api", "management", "messages", "kpi_tester", "tools"]
+__all__ = ["api", "management", "messages", "tools"]

@@ -564,46 +564,6 @@ Currently still a [single file][wm_gw_cli], this upcoming submodule
 will contain a re-factor of the gateway client to allow easier
 customization and construction of custom command line interfaces.
 
-### Examples
-
-To better understand the framework inner-working and how you can extend it,
-we recommend that you take a look at the examples
-we have available in the [examples folder][examples]:
-
--   [mqtt_viewer.py][examples_mqtt_viewer]: connects to a MQTT broker and
-    decodes on the fly any message that is known to the
-    framework (see [cookbook][wirepas_cookbook_viz] for usage example)
-
--   [find_all_nodes.py][examples_find_all_nodes]: simple interaction with
-    the Gateway to Backend API that enumerates and prints outs discovered devices
-
--   [influx_viewer.py][examples_influx_viewer]: run custom queries or
-    export date ranges from an influx database where WNT is storing data
-
--   [settings.yml][example_settings]: an example of a yaml file that with
-    commented out settings
-
--   [provisioning_config.yml][example_provisioning]: an example of a yaml file
-    for the provisioning server
-
-Backend Client's entrypoints also act as a good way to guide your development:
-
--   [wm-gw-cli][wm_gw_cli]: code behind the gateway command line
-    interface that exemplifies how to build requests to the sink,
-    receive and send data packets
-
--   [wm-wnt-viewer][wm_wnt]: example on how to consume data streamed
-    by a WNT backend
-
--   [wm-wpe-viewer][wm_wpe]: example on how to consume data streamed
-    by a WPE backend
-
--   [wm-provisioning-server][provisioning_server]: an example implementation
-    of the server side of the wirepas provisioning protocol
-
-For an example on how to build use case test cases, please refer to
-the [kpi_adv.py][kpi_adv] script.
-
 ## Logging to fluentd
 
 The Backend Client has integrated logging with fluentd through Python's
