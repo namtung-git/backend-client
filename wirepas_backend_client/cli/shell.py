@@ -258,14 +258,17 @@ class GatewayShell(GatewayCliCommands):
 
     def _trim_queues(self):
         """ Trim queues ensures that queue size does not run too long"""
-        if self.data_queue.qsize() > self._max_data_queue_size:
-            self.consume_data_queue()
+        try:
+            if self.data_queue.qsize() > self._max_data_queue_size:
+                self.consume_data_queue()
 
-        if self.event_queue.qsize() > self._max_queue_size:
-            self.consume_event_queue()
+            if self.event_queue.qsize() > self._max_queue_size:
+                self.consume_event_queue()
 
-        if self.response_queue.qsize() > self._max_queue_size:
-            self.consume_response_queue()
+            if self.response_queue.qsize() > self._max_queue_size:
+                self.consume_response_queue()
+        except FileNotFoundError:
+            sys.exit("Exiting")
 
     def _update_prompt(self):
         """ Method called to update the prompt command line.
