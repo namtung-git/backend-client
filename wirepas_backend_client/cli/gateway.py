@@ -964,9 +964,9 @@ class GatewayCliCommands(cmd.Cmd):
             set_app_config  argument=value
 
         Arguments:
-            - seq=1  # the sequence number - must be higher than the current one.
-            - data=001100 # payloady in hex string or plain string.
-            - interval=60 # a valid diagnostic interval (by default 60).
+            - app_config_seq=1  # the sequence number - must be higher than the current one.
+            - app_config_data=001100 # payload in hex string or plain string.
+            - app_config_diag=60 # a valid diagnostic interval (by default 60).
 
         Returns:
             Prints result of the request to console.
