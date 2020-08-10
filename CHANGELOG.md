@@ -1,12 +1,20 @@
 # Changelog
 
+## [v1.3.7-rc.2](https://github.com/wirepas/backend-client/tree/v1.3.7-rc.2) (2020-08-10)
+
+[Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.7-rc.1...v1.3.7-rc.2)
+
+**Merged pull requests:**
+
+- Fix CTRL+C [\#344](https://github.com/wirepas/backend-client/pull/344) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+- Remove kpi-tester [\#343](https://github.com/wirepas/backend-client/pull/343) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
+
 ## [v1.3.7-rc.1](https://github.com/wirepas/backend-client/tree/v1.3.7-rc.1) (2020-08-04)
 
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.6...v1.3.7-rc.1)
 
 **Merged pull requests:**
 
-- Merge machine readable log display format feature. [\#341](https://github.com/wirepas/backend-client/pull/341) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Disable HTTP ACK [\#340](https://github.com/wirepas/backend-client/pull/340) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 
 ## [v1.3.6](https://github.com/wirepas/backend-client/tree/v1.3.6) (2020-06-29)
@@ -57,6 +65,7 @@
 
 **Merged pull requests:**
 
+- Merge machine readable log display format feature. [\#341](https://github.com/wirepas/backend-client/pull/341) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Fix set config [\#328](https://github.com/wirepas/backend-client/pull/328) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Made printing of incoming data packets more user friendly.  [\#327](https://github.com/wirepas/backend-client/pull/327) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Fixed set app config [\#326](https://github.com/wirepas/backend-client/pull/326) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
@@ -204,7 +213,6 @@
 - Update gitignore [\#245](https://github.com/wirepas/backend-client/pull/245) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Release v1.3.1 [\#243](https://github.com/wirepas/backend-client/pull/243) ([PFigs](https://github.com/PFigs))
 - Update gw cli [\#236](https://github.com/wirepas/backend-client/pull/236) ([PFigs](https://github.com/PFigs))
-- Update container workdir [\#233](https://github.com/wirepas/backend-client/pull/233) ([PFigs](https://github.com/PFigs))
 
 ## [v1.3.0](https://github.com/wirepas/backend-client/tree/v1.3.0) (2020-01-30)
 
@@ -220,7 +228,6 @@
 - Flatten serialization [\#238](https://github.com/wirepas/backend-client/pull/238) ([PFigs](https://github.com/PFigs))
 - MQTT subscriber filters for MQTT viewer [\#237](https://github.com/wirepas/backend-client/pull/237) ([PFigs](https://github.com/PFigs))
 - Wirepas provisioning server example. [\#235](https://github.com/wirepas/backend-client/pull/235) ([vgeneves](https://github.com/vgeneves))
-- Decode version in diagnostic message [\#232](https://github.com/wirepas/backend-client/pull/232) ([PeiChunyan](https://github.com/PeiChunyan))
 - Update dependency PyYAML to v5.3 [\#186](https://github.com/wirepas/backend-client/pull/186) ([renovate[bot]](https://github.com/apps/renovate))
 
 ## [v1.2.4](https://github.com/wirepas/backend-client/tree/v1.2.4) (2020-01-27)
@@ -234,6 +241,8 @@
 **Merged pull requests:**
 
 - Release v1.2.4 [\#234](https://github.com/wirepas/backend-client/pull/234) ([PFigs](https://github.com/PFigs))
+- Update container workdir [\#233](https://github.com/wirepas/backend-client/pull/233) ([PFigs](https://github.com/PFigs))
+- Decode version in diagnostic message [\#232](https://github.com/wirepas/backend-client/pull/232) ([PeiChunyan](https://github.com/PeiChunyan))
 - Test network application [\#231](https://github.com/wirepas/backend-client/pull/231) ([PFigs](https://github.com/PFigs))
 - Mysql: received packets [\#227](https://github.com/wirepas/backend-client/pull/227) ([PFigs](https://github.com/PFigs))
 - Endpoint map: Class property [\#226](https://github.com/wirepas/backend-client/pull/226) ([PFigs](https://github.com/PFigs))
@@ -242,7 +251,6 @@
 - ADV decoder [\#222](https://github.com/wirepas/backend-client/pull/222) ([PFigs](https://github.com/PFigs))
 - Dockerfile simplification [\#221](https://github.com/wirepas/backend-client/pull/221) ([PFigs](https://github.com/PFigs))
 - Update adv mysql schema [\#220](https://github.com/wirepas/backend-client/pull/220) ([PFigs](https://github.com/PFigs))
-- ADV reserved field [\#219](https://github.com/wirepas/backend-client/pull/219) ([PFigs](https://github.com/PFigs))
 - Endpoint property [\#218](https://github.com/wirepas/backend-client/pull/218) ([PFigs](https://github.com/PFigs))
 - Change .settings to settings/examples.yml [\#181](https://github.com/wirepas/backend-client/pull/181) ([PFigs](https://github.com/PFigs))
 
@@ -252,6 +260,7 @@
 
 **Merged pull requests:**
 
+- ADV reserved field [\#219](https://github.com/wirepas/backend-client/pull/219) ([PFigs](https://github.com/PFigs))
 - Release v1.2.3 [\#215](https://github.com/wirepas/backend-client/pull/215) ([PFigs](https://github.com/PFigs))
 - Update test vectors [\#213](https://github.com/wirepas/backend-client/pull/213) ([PFigs](https://github.com/PFigs))
 - Update ruuvi.py [\#212](https://github.com/wirepas/backend-client/pull/212) ([PFigs](https://github.com/PFigs))
