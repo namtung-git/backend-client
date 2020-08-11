@@ -489,7 +489,9 @@ class GatewayCliCommands(cmd.Cmd):
         ret = None
         gw_config = self._get_gateway_configuration(gateway_device_id)
         if gw_config is not None:
-            sink_config = self._filter_gateway_configuration(gw_config, sink_id)
+            sink_config = self._filter_gateway_configuration(
+                gw_config, sink_id
+            )
             if sink_config is not None:
                 ret = sink_config["node_address"]
         return ret
@@ -859,7 +861,11 @@ class GatewayCliCommands(cmd.Cmd):
             if configurations is not None:
                 for config in configurations:
                     if config is not None:
-                        print(self._format_gateway_configuration_to_string(config))
+                        print(
+                            self._format_gateway_configuration_to_string(
+                                config
+                            )
+                        )
 
     def _format_gateway_configuration_to_string(self, config: object) -> str:
         ret: str = ""
