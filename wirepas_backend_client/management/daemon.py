@@ -220,13 +220,20 @@ class Daemon(object):
             self.logger.debug("entering daemon's wait loop: %s", self.loop_cb)
             self.loop_cb(**self.loop_kwargs)
         except KeyboardInterrupt:
-            self.exit_signal.set()
+            try:
+                self.exit_signal.set()
+            except ConnectionResetError:
+                pass
+
         except Exception as err:
             self.logger.exception(
                 "main execution loop exited with error %s", err
             )
             if not self.exit_signal.is_set():
-                self.exit_signal.set()
+                try:
+                    self.exit_signal.set()
+                except ConnectionResetError:
+                    pass
 
         for name, register in self.process.items():
             self.logger.debug("daemon killing %s", name)
