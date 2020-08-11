@@ -45,9 +45,7 @@ class MessageManager(object):
         _message_type[msg.name] = msg.value
 
     _endpoint = dict()
-    _endpoint[GenericMessage.source_endpoint] = {
-        GenericMessage.destination_endpoint: GenericMessage
-    }
+
     _endpoint[RuuviMessage.source_endpoint] = {
         RuuviMessage.destination_endpoint: RuuviMessage
     }
@@ -73,6 +71,14 @@ class MessageManager(object):
         BootDiagnosticsMessage.destination_endpoint: BootDiagnosticsMessage
     }
 
+    end_points: str = ""
+    for end_point in _endpoint.keys():
+        end_points += str(end_point) + " "
+
+    end_points = end_points[:-1]
+
+    print("Added custom decoder to endpoints {}.".format(end_points))
+
     def __init__(self):
         super(MessageManager, self).__init__()
 
@@ -90,11 +96,19 @@ class MessageManager(object):
         Provides the constructor to build the decoder for the given
         source and destination endpoint pair
         """
+        ret: object
         try:
-            return MessageManager._endpoint[int(source_endpoint)][
-                int(destination_endpoint)
-            ]
+            sep: int = int(source_endpoint)
+            dep: int = int(destination_endpoint)
+
+            if sep in MessageManager._endpoint:
+                ret = MessageManager._endpoint[sep][dep]
+            else:
+                ret = GenericMessage
+
         except KeyError:
-            return GenericMessage
+            ret = GenericMessage
         except ValueError:
-            return GenericMessage
+            ret = GenericMessage
+
+        return ret
