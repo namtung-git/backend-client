@@ -604,7 +604,6 @@ class GatewayCliCommands(cmd.Cmd):
         offline_gws: int = 0
         gateways = list(self.device_manager.gateways)
         for gateway in gateways:
-            print(gateway.state.value, gateway.gateway_id)
 
             if gateway.state.value == GatewayState.OFFLINE.value:
                 message = self.mqtt_topics.event_message(
@@ -624,7 +623,6 @@ class GatewayCliCommands(cmd.Cmd):
                 if gateway.device_id in self.device_manager.gateways:
                     self.device_manager.remove(gateway.device_id)
                     self.notify()
-                    continue
 
         if offline_gws > 0:
             print("Command ok. Offline GW count was {}.".format(offline_gws))
@@ -1697,7 +1695,8 @@ class GatewayCliCommands(cmd.Cmd):
                                         if data_msg is not None:
                                             if (
                                                 self.__scratchpad_update_only_nodes_h(
-                                                    data_msg, responded_nodes_ok
+                                                    data_msg,
+                                                    responded_nodes_ok,
                                                 )
                                                 is True
                                             ):
