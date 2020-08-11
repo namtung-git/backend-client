@@ -465,8 +465,11 @@ class GatewayCliCommands(cmd.Cmd):
         )
         self.request_queue.put(message)
         response = self.wait_for_answer(gateway_device_id, message)
-        if response.res == GatewayResultCode.GW_RES_OK:
-            ret = response.configs
+        if response is not None:
+            if response.res == GatewayResultCode.GW_RES_OK:
+                ret = response.configs
+            else:
+                pass
         else:
             pass
         return ret
@@ -484,11 +487,11 @@ class GatewayCliCommands(cmd.Cmd):
 
     def _lookup_node_address(self, gateway_device_id, sink_id):
         ret = None
-        gwConfig = self._get_gateway_configuration(gateway_device_id)
-        if gwConfig is not None:
-            sinkConfig = self._filter_gateway_configuration(gwConfig, sink_id)
-            if sinkConfig is not None:
-                ret = sinkConfig["node_address"]
+        gw_config = self._get_gateway_configuration(gateway_device_id)
+        if gw_config is not None:
+            sink_config = self._filter_gateway_configuration(gw_config, sink_id)
+            if sink_config is not None:
+                ret = sink_config["node_address"]
         return ret
 
     def do_set_sink(self, line):
@@ -853,9 +856,10 @@ class GatewayCliCommands(cmd.Cmd):
             )
             configurations = self._get_gateway_configuration(gateway.device_id)
 
-            for config in configurations:
-                if config is not None:
-                    print(self._format_gateway_configuration_to_string(config))
+            if configurations is not None:
+                for config in configurations:
+                    if config is not None:
+                        print(self._format_gateway_configuration_to_string(config))
 
     def _format_gateway_configuration_to_string(self, config: object) -> str:
         ret: str = ""
