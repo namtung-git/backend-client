@@ -197,6 +197,17 @@ class Daemon(object):
     def start(self, set_start_signal=False):
         """ Starts the processes and executes the loop """
 
+        self.init_processes()
+
+        if set_start_signal:
+            self.start_signal.set()
+
+        self.run_processes()
+        self.shutdown_processes()
+
+        self.logger.debug("daemon has left")
+
+    def init_processes(self):
         for name, register in self.process.items():
             if "main" in name:
                 continue
@@ -213,21 +224,7 @@ class Daemon(object):
                 self.logger.exception("Failed to start services")
                 raise
 
-        if set_start_signal:
-            self.start_signal.set()
-
-        try:
-            self.logger.debug("entering daemon's wait loop: %s", self.loop_cb)
-            self.loop_cb(**self.loop_kwargs)
-        except KeyboardInterrupt:
-            self.exit_signal.set()
-        except Exception as err:
-            self.logger.exception(
-                "main execution loop exited with error %s", err
-            )
-            if not self.exit_signal.is_set():
-                self.exit_signal.set()
-
+    def shutdown_processes(self):
         for name, register in self.process.items():
             self.logger.debug("daemon killing %s", name)
             if "main" in name:
@@ -243,4 +240,22 @@ class Daemon(object):
                 self.logger.exception("error killing %s: %s", name, err)
                 continue
 
-        self.logger.debug("daemon has left")
+    def run_processes(self):
+        try:
+            self.logger.debug("entering daemon's wait loop: %s", self.loop_cb)
+            self.loop_cb(**self.loop_kwargs)
+        except KeyboardInterrupt:
+            try:
+                self.exit_signal.set()
+            except ConnectionResetError:
+                pass
+
+        except Exception as err:
+            self.logger.exception(
+                "main execution loop exited with error %s", err
+            )
+            if not self.exit_signal.is_set():
+                try:
+                    self.exit_signal.set()
+                except ConnectionResetError:
+                    pass

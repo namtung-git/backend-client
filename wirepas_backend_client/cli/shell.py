@@ -352,18 +352,19 @@ class GatewayShell(GatewayCliCommands):
                         default_sleep_time: float = 0.1
                         time.sleep(default_sleep_time)
 
-                    if time.perf_counter() - wait_start_time > timeout:
-                        print(
-                            "Error got no reply for {} in time. "
-                            "Time waited {:.0f} secs.".format(
-                                device, time.perf_counter() - wait_start_time
-                            )
-                        )
-                        message = None
-                        break
                 except queue.Empty:
                     # keep polling
                     pass
+
+                if time.perf_counter() - wait_start_time > timeout:
+                    print(
+                        "Error got no reply for {} in time. "
+                        "Time waited {:.0f} secs.".format(
+                            device, time.perf_counter() - wait_start_time
+                        )
+                    )
+                    message = None
+                    break
 
         self.wait_api_lock.release()
         return message
