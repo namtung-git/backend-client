@@ -121,11 +121,14 @@
 
 - \#289 \#300 \#301  [\#302](https://github.com/wirepas/backend-client/pull/302) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Da reliability [\#297](https://github.com/wirepas/backend-client/pull/297) ([PeiChunyan](https://github.com/PeiChunyan))
-- Change for the DA KPI testing [\#295](https://github.com/wirepas/backend-client/pull/295) ([PeiChunyan](https://github.com/PeiChunyan))
 
 ## [v.1.3.4-rc.5](https://github.com/wirepas/backend-client/tree/v.1.3.4-rc.5) (2020-04-09)
 
 [Full Changelog](https://github.com/wirepas/backend-client/compare/v1.3.4-rc.4...v.1.3.4-rc.5)
+
+**Merged pull requests:**
+
+- Minor change [\#292](https://github.com/wirepas/backend-client/pull/292) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 
 ## [v1.3.4-rc.4](https://github.com/wirepas/backend-client/tree/v1.3.4-rc.4) (2020-04-09)
 
@@ -133,7 +136,6 @@
 
 **Merged pull requests:**
 
-- Minor change [\#292](https://github.com/wirepas/backend-client/pull/292) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Minor change to test release script [\#291](https://github.com/wirepas/backend-client/pull/291) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - Http.py fixes [\#290](https://github.com/wirepas/backend-client/pull/290) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - \#266 [\#283](https://github.com/wirepas/backend-client/pull/283) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
@@ -149,6 +151,7 @@
 
 **Merged pull requests:**
 
+- Change for the DA KPI testing [\#295](https://github.com/wirepas/backend-client/pull/295) ([PeiChunyan](https://github.com/PeiChunyan))
 - \#267 [\#282](https://github.com/wirepas/backend-client/pull/282) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - \#270 [\#281](https://github.com/wirepas/backend-client/pull/281) ([ErkkiSalonenW](https://github.com/ErkkiSalonenW))
 - 4 bytes support added into advertiser address. [\#280](https://github.com/wirepas/backend-client/pull/280) ([kahaapal](https://github.com/kahaapal))
@@ -210,7 +213,6 @@
 - Set a custom gateway and sink id through the cli [\#239](https://github.com/wirepas/backend-client/issues/239)
 - Add toggle to hide MQTT response "acks" [\#228](https://github.com/wirepas/backend-client/issues/228)
 - Add a command to disable the apdu parsing when running the cli [\#167](https://github.com/wirepas/backend-client/issues/167)
-- Refactor gw command line class [\#102](https://github.com/wirepas/backend-client/issues/102)
 
 **Merged pull requests:**
 
@@ -256,8 +258,8 @@
 - ADV decoder [\#222](https://github.com/wirepas/backend-client/pull/222) ([PFigs](https://github.com/PFigs))
 - Dockerfile simplification [\#221](https://github.com/wirepas/backend-client/pull/221) ([PFigs](https://github.com/PFigs))
 - Update adv mysql schema [\#220](https://github.com/wirepas/backend-client/pull/220) ([PFigs](https://github.com/PFigs))
-- ADV reserved field [\#219](https://github.com/wirepas/backend-client/pull/219) ([PFigs](https://github.com/PFigs))
 - Endpoint property [\#218](https://github.com/wirepas/backend-client/pull/218) ([PFigs](https://github.com/PFigs))
+- Diagnostic decoder [\#209](https://github.com/wirepas/backend-client/pull/209) ([PFigs](https://github.com/PFigs))
 - Change .settings to settings/examples.yml [\#181](https://github.com/wirepas/backend-client/pull/181) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.3](https://github.com/wirepas/backend-client/tree/v1.2.3) (2020-01-16)
@@ -266,10 +268,10 @@
 
 **Merged pull requests:**
 
+- ADV reserved field [\#219](https://github.com/wirepas/backend-client/pull/219) ([PFigs](https://github.com/PFigs))
 - Release v1.2.3 [\#215](https://github.com/wirepas/backend-client/pull/215) ([PFigs](https://github.com/PFigs))
 - Update test vectors [\#213](https://github.com/wirepas/backend-client/pull/213) ([PFigs](https://github.com/PFigs))
 - Update ruuvi.py [\#212](https://github.com/wirepas/backend-client/pull/212) ([PFigs](https://github.com/PFigs))
-- Diagnostic decoder [\#209](https://github.com/wirepas/backend-client/pull/209) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.2](https://github.com/wirepas/backend-client/tree/v1.2.2) (2020-01-15)
 
@@ -293,6 +295,7 @@
 
 - Update version to v1.2.2.rc3 [\#196](https://github.com/wirepas/backend-client/pull/196) ([PFigs](https://github.com/PFigs))
 - Diagnostics cbor ids [\#195](https://github.com/wirepas/backend-client/pull/195) ([PFigs](https://github.com/PFigs))
+- RC2 for v1.2.2 [\#193](https://github.com/wirepas/backend-client/pull/193) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.2-rc.2](https://github.com/wirepas/backend-client/tree/v1.2.2-rc.2) (2019-12-20)
 
@@ -300,7 +303,6 @@
 
 **Merged pull requests:**
 
-- RC2 for v1.2.2 [\#193](https://github.com/wirepas/backend-client/pull/193) ([PFigs](https://github.com/PFigs))
 - Update diagnostics [\#192](https://github.com/wirepas/backend-client/pull/192) ([PFigs](https://github.com/PFigs))
 
 ## [v1.2.2-rc.1](https://github.com/wirepas/backend-client/tree/v1.2.2-rc.1) (2019-12-17)
@@ -343,6 +345,7 @@
 - Update wnt interfaces [\#161](https://github.com/wirepas/backend-client/pull/161) ([PFigs](https://github.com/PFigs))
 - Travis service tests [\#160](https://github.com/wirepas/backend-client/pull/160) ([PFigs](https://github.com/PFigs))
 - Influx queries index name [\#158](https://github.com/wirepas/backend-client/pull/158) ([PFigs](https://github.com/PFigs))
+- Update readme [\#155](https://github.com/wirepas/backend-client/pull/155) ([PFigs](https://github.com/PFigs))
 - Diagnostics decoding within MySQL interfaces [\#153](https://github.com/wirepas/backend-client/pull/153) ([PFigs](https://github.com/PFigs))
 - Propagation of ssl fields within influx interfaces [\#152](https://github.com/wirepas/backend-client/pull/152) ([PFigs](https://github.com/PFigs))
 - Fix apdu decoding [\#147](https://github.com/wirepas/backend-client/pull/147) ([PFigs](https://github.com/PFigs))
@@ -357,7 +360,6 @@
 
 **Merged pull requests:**
 
-- Update readme [\#155](https://github.com/wirepas/backend-client/pull/155) ([PFigs](https://github.com/PFigs))
 - Version bump to v1.2.1 [\#148](https://github.com/wirepas/backend-client/pull/148) ([PFigs](https://github.com/PFigs))
 - V1.2.1 dev [\#146](https://github.com/wirepas/backend-client/pull/146) ([PFigs](https://github.com/PFigs))
 
@@ -407,6 +409,7 @@
 **Closed issues:**
 
 - Add PyPi and GH release to travis pipeline [\#123](https://github.com/wirepas/backend-client/issues/123)
+- Refactor gw command line class [\#102](https://github.com/wirepas/backend-client/issues/102)
 - HTTP control cleanup [\#98](https://github.com/wirepas/backend-client/issues/98)
 - Split api module in more manageable submodules [\#94](https://github.com/wirepas/backend-client/issues/94)
 - Optimize container size [\#93](https://github.com/wirepas/backend-client/issues/93)
