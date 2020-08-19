@@ -1,6 +1,16 @@
 # Backend-client
 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/wirepas/backend-client)
+## Under consideration to be deprecated!
+
+The current architecture of the backend client does not support easy addition of new features and there are quite many stability issues. Based on the initial analysis, major refactoring would be needed to make Backend client to support all the current use cases reliably. Hence, we are considering to break current backend client into focused functionalities that have value for wider community. This may imply that existing functionality is not supported anymore or it is supported in a new repository. More on this as work proceeds.
+
+
+
+
+
+
+
+
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/bf0c23237cf04ea6ac48e98cf10b6a7b)](https://www.codacy.com/manual/wirepas/backend-client?utm_source=github.com&utm_medium=referral&utm_content=wirepas/backend-client&utm_campaign=Badge_Grade) [![Build Status](https://travis-ci.com/wirepas/backend-apis.svg?branch=master)](https://travis-ci.com/wirepas/backend-client)  [![Documentation Status](https://readthedocs.org/projects/backend-client/badge/?version=latest)](https://backend-client.readthedocs.io/en/latest/?badge=latest) [![PyPi](https://img.shields.io/pypi/v/wirepas-backend-client.svg)](https://pypi.org/project/wirepas-backend-client/)
 
