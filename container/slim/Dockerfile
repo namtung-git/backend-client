@@ -1,6 +1,6 @@
 # Copyright 2019 Wirepas Ltd
 
-FROM python:3.7-slim
+FROM python:3.9-slim
 
 ENV PYTHONUNBUFFERED=true
 RUN apt-get update;\

@@ -1,6 +1,6 @@
 # Wirepas Oy
 
-FROM python:3.7-alpine as alpine-installer
+FROM python:3.9-alpine as alpine-installer
 ENV PYTHONUNBUFFERED=true
 RUN apk update \
     && apk add \
