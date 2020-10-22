@@ -10,7 +10,6 @@
 from .decoders import (
     AdvertiserMessage,
     BootDiagnosticsMessage,
-    DiagnosticsMessage,
     GenericMessage,
     NeighborDiagnosticsMessage,
     NodeDiagnosticsMessage,
@@ -54,9 +53,6 @@ class MessageManager(object):
     }
     _endpoint[PositioningMessage.source_endpoint] = {
         PositioningMessage.destination_endpoint: PositioningMessage
-    }
-    _endpoint[DiagnosticsMessage.source_endpoint] = {
-        DiagnosticsMessage.destination_endpoint: DiagnosticsMessage
     }
     _endpoint[TrafficDiagnosticsMessage.source_endpoint] = {
         TrafficDiagnosticsMessage.destination_endpoint: TrafficDiagnosticsMessage
